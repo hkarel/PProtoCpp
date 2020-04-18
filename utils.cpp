@@ -23,8 +23,8 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/utils.h"
-#include "qt/communication/message.h"
+#include "utils.h"
+#include "message.h"
 
 namespace communication {
 

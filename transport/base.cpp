@@ -23,17 +23,18 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/transport/base.h"
+#include "transport/base.h"
 
-#include "break_point.h"
-#include "prog_abort.h"
-#include "spin_locker.h"
-#include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
-#include "qt/version/version_number.h"
-#include "qt/communication/commands_pool.h"
-#include "qt/communication/logger_operators.h"
-#include "qt/communication/utils.h"
+#include "commands_pool.h"
+#include "logger_operators.h"
+#include "utils.h"
+
+#include "shared/break_point.h"
+#include "shared/prog_abort.h"
+#include "shared/spin_locker.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/version/version_number.h"
 
 #include <utility>
 #include <stdexcept>

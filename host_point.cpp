@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/host_point.h"
+#include "host_point.h"
 #include <stdexcept>
 
 namespace communication {

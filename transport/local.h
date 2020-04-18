@@ -29,9 +29,9 @@
 
 #pragma once
 
-#include "simple_ptr.h"
-#include "safe_singleton.h"
-#include "qt/communication/transport/base.h"
+#include "transport/base.h"
+#include "shared/simple_ptr.h"
+#include "shared/safe_singleton.h"
 
 #include <QLocalSocket>
 #include <QLocalServer>

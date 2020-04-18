@@ -28,7 +28,7 @@
 *****************************************************************************/
 
 #pragma once
-#include <QtCore>>
+#include <QtCore>
 
 namespace communication {
 

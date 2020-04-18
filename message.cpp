@@ -23,22 +23,22 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/message.h"
+#include "message.h"
 
-#include "break_point.h"
-#include "prog_abort.h"
-#include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
+#include "shared/break_point.h"
+#include "shared/prog_abort.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/logger/logger_operators.h"
 
 #ifdef LZMA_COMPRESSION
-#include "qt/compression/qlzma.h"
+#include "shared/qt/compression/qlzma.h"
 #endif
 #ifdef PPMD_COMPRESSION
-#include "qt/compression/qppmd.h"
+#include "shared/qt/compression/qppmd.h"
 #endif
 
 #ifdef JSON_SERIALIZE
-#include "qt/communication/serialize/json.h"
+#include "serialize/json.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"

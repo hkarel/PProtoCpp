@@ -29,17 +29,18 @@
 
 #pragma once
 
-#include "list.h"
-#include "defmac.h"
-#include "clife_base.h"
-#include "clife_ptr.h"
-#include "qt/qhashex.h"
-#include "qt/quuidex.h"
-#include "qt/communication/host_point.h"
-#include "qt/communication/serialize/sresult.h"
+#include "host_point.h"
+#include "serialize/sresult.h"
+
+#include "shared/list.h"
+#include "shared/defmac.h"
+#include "shared/clife_base.h"
+#include "shared/clife_ptr.h"
+#include "shared/qt/qhashex.h"
+#include "shared/qt/quuidex.h"
 
 #ifdef BPROTO_SERIALIZE
-#include "qt/communication/serialize/bproto.h"
+#include "serialize/bproto.h"
 #endif
 
 #include <QtCore>

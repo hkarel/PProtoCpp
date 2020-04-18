@@ -32,13 +32,13 @@
 
 #pragma once
 
-#include "list.h"
-#include "clife_base.h"
-#include "clife_ptr.h"
-#include "break_point.h"
-#include "prog_abort.h"
-#include "logger/logger.h"
-#include "qt/stream_init.h"
+#include "shared/list.h"
+#include "shared/clife_base.h"
+#include "shared/clife_ptr.h"
+#include "shared/break_point.h"
+#include "shared/prog_abort.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>

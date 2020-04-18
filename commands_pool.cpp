@@ -23,11 +23,11 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/commands_pool.h"
-#include "qt/communication/commands_base.h"
+#include "commands_pool.h"
+#include "commands_base.h"
 
-#include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/logger/logger_operators.h"
 
 namespace communication {
 namespace command {

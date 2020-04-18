@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "qt/communication/message.h"
+#include "message.h"
 #include <functional>
 
 namespace communication {

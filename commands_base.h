@@ -37,18 +37,19 @@
 
 #pragma once
 
-#include "logger/logger.h"
-#include "qt/qhashex.h"
-#include "qt/quuidex.h"
-#include "qt/communication/message.h"
-#include "qt/version/version_number.h"
+#include "message.h"
+
+#include "shared/logger/logger.h"
+#include "shared/qt/qhashex.h"
+#include "shared/qt/quuidex.h"
+#include "shared/qt/version/version_number.h"
 
 #ifdef BPROTO_SERIALIZE
-#include "qt/communication/bserialize_space.h"
+#include "bserialize_space.h"
 #endif
 
 #ifdef JSON_SERIALIZE
-#include "qt/communication/serialize/json.h"
+#include "serialize/json.h"
 #endif
 
 #include <QtCore>

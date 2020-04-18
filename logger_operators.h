@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "logger/logger.h"
-#include "qt/quuidex.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/quuidex.h"
 
 namespace communication {
 

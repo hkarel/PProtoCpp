@@ -29,15 +29,16 @@
 
 #pragma once
 
-#include "defmac.h"
-#include "list.h"
-#include "clife_base.h"
-#include "clife_ptr.h"
-#include "break_point.h"
-#include "logger/logger.h"
-#include "qt/quuidex.h"
-#include "qt/logger/logger_operators.h"
-#include "qt/communication/serialize/sresult.h"
+#include "serialize/sresult.h"
+
+#include "shared/defmac.h"
+#include "shared/list.h"
+#include "shared/clife_base.h"
+#include "shared/clife_ptr.h"
+#include "shared/break_point.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/quuidex.h"
+#include "shared/qt/logger/logger_operators.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -126,7 +127,7 @@ private:
 
         StackItem() = default;
         StackItem(const Value* value, State state, const char* name = 0)
-            : value(value), state(state), name(name)
+            : name(name), value(value), state(state)
         {}
 
         QByteArray name;

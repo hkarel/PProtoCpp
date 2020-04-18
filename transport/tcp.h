@@ -29,10 +29,11 @@
 
 #pragma once
 
-#include "simple_ptr.h"
-#include "safe_singleton.h"
-#include "qt/communication/host_point.h"
-#include "qt/communication/transport/base.h"
+#include "host_point.h"
+#include "transport/base.h"
+
+#include "shared/simple_ptr.h"
+#include "shared/safe_singleton.h"
 
 #include <QTcpSocket>
 #include <QTcpServer>

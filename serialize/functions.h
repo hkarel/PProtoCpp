@@ -29,13 +29,14 @@
 
 #pragma once
 
-#include "type_name.h"
-#include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
-#include "qt/communication/commands_base.h"
-#include "qt/communication/error_sender.h"
-#include "qt/communication/logger_operators.h"
-#include "qt/communication/serialize/sresult.h"
+#include "commands_base.h"
+#include "error_sender.h"
+#include "logger_operators.h"
+#include "serialize/sresult.h"
+
+#include "shared/type_name.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/logger/logger_operators.h"
 
 #include <sys/time.h>
 #include <typeinfo>

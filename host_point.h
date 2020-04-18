@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "qt/communication/serialize/bproto.h"
+#include "serialize/bproto.h"
 #include <QtCore>
 #include <QHostAddress>
 

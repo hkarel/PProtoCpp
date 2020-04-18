@@ -23,16 +23,17 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/transport/local.h"
+#include "transport/local.h"
 
-#include "break_point.h"
-#include "logger/logger.h"
-#include "qt/logger/logger_operators.h"
-#include "qt/communication/logger_operators.h"
-#include "qt/communication/utils.h"
+#include "logger_operators.h"
+#include "utils.h"
+
+#include "shared/break_point.h"
+#include "shared/logger/logger.h"
+#include "shared/qt/logger/logger_operators.h"
 
 #ifdef JSON_SERIALIZE
-#include "qt/communication/serialize/json.h"
+#include "serialize/json.h"
 #endif
 
 #include <stdexcept>

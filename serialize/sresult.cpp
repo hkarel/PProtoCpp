@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialize/sresult.h"
+#include "serialize/sresult.h"
 
 namespace communication {
 namespace serialize {

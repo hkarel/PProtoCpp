@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialize/functions.h"
+#include "serialize/functions.h"
 
 #define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "Serialize")
 #define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "Serialize")

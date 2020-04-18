@@ -23,7 +23,7 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "qt/communication/serialize/bproto.h"
+#include "serialize/bproto.h"
 
 namespace communication {
 namespace serialize {

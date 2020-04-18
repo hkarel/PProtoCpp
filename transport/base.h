@@ -29,13 +29,14 @@
 
 #pragma once
 
-#include "list.h"
-#include "defmac.h"
-#include "clife_base.h"
-#include "clife_ptr.h"
-#include "qt/thread/qthreadex.h"
-#include "qt/communication/commands_base.h"
-#include "qt/communication/serialize/functions.h"
+#include "commands_base.h"
+#include "serialize/functions.h"
+
+#include "shared/list.h"
+#include "shared/defmac.h"
+#include "shared/clife_base.h"
+#include "shared/clife_ptr.h"
+#include "shared/qt/thread/qthreadex.h"
 
 #include <QtCore>
 #include <atomic>

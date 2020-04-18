@@ -25,11 +25,12 @@
 
 #pragma once
 
-#include "list.h"
-#include "break_point.h"
-#include "logger/logger.h"
-#include "qt/communication/logger_operators.h"
-#include "qt/communication/message.h"
+#include "message.h"
+#include "logger_operators.h"
+
+#include "shared/list.h"
+#include "shared/break_point.h"
+#include "shared/logger/logger.h"
 #include <exception>
 
 #define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "FuncInvok")

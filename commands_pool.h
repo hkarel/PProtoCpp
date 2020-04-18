@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "defmac.h"
-#include "safe_singleton.h"
-#include "qt/quuidex.h"
+#include "shared/defmac.h"
+#include "shared/safe_singleton.h"
+#include "shared/qt/quuidex.h"
 #include <QtCore>
 
 namespace communication {
