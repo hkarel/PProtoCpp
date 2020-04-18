@@ -48,7 +48,7 @@
 
 namespace communication {
 namespace serialize {
-namespace bproto {
+namespace qbinary {
 
 /**
   Структура ByteArray нужна для переопределения потокового оператора '>>'
@@ -264,11 +264,11 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
-} // namespace bproto
+} // namespace qbinary
 } // namespace serialize
 } // namespace communication
 
-namespace bserial = communication::serialize::bproto;
+namespace bserial = communication::serialize::qbinary;
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \

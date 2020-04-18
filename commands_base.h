@@ -44,11 +44,11 @@
 #include "shared/qt/quuidex.h"
 #include "shared/qt/version/version_number.h"
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
 #include "bserialize_space.h"
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 #include "serialize/json.h"
 #endif
 
@@ -139,14 +139,14 @@ struct Data
                 || MessageType3 == Message::Type::Event);
     }
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
     // в целевой структуре функции сериализации toRaw(), fromRaw()
     bserial::RawVector toRawNone() const;
     void fromRawNone(const bserial::RawVector&);
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
     // в целевой структуре функции сериализации toJson(), fromJson()
     QByteArray toJsonNone();
@@ -175,11 +175,11 @@ struct MessageError
 
     void assign(const MessageError& msg) {*this = msg;}
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BASE_BEGIN
         J_SERIALIZE_ITEM( group )
         J_SERIALIZE_ITEM( code  )
@@ -211,11 +211,11 @@ struct MessageFailed
 
     void assign(const MessageFailed& msg) {*this = msg;}
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BASE_BEGIN
         J_SERIALIZE_ITEM( group )
         J_SERIALIZE_ITEM( code  )
@@ -240,11 +240,11 @@ struct Unknown : Data<&command::Unknown,
     QHostAddress  address;          // Адрес и порт хоста для которого
     quint16       port;             // команда неизвестна.
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     DECLARE_J_SERIALIZE_FUNC
 #endif
 };
@@ -263,11 +263,11 @@ struct Error : Data<&command::Error,
     QUuidEx code;        // Глобальный код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BEGIN
         J_SERIALIZE_ITEM( commandId   )
         J_SERIALIZE_ITEM( messageId   )
@@ -289,11 +289,11 @@ struct CloseConnection : Data<&command::CloseConnection,
     QString description;  // Описание причины закрытия соединения,
                           // (сериализуется в utf8)
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BEGIN
         J_SERIALIZE_ITEM( code )
         J_SERIALIZE_ITEM( description )
@@ -303,7 +303,7 @@ struct CloseConnection : Data<&command::CloseConnection,
 
 //------------------------ Функции json-сериализации -------------------------
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template <typename Packer>
 Packer& Unknown::jserialize(Packer& p)
 {
@@ -339,7 +339,7 @@ Packer& Unknown::jserialize(Packer& p)
     p.member("port") & port;
     return p.endObject();
 }
-#endif // JSON_SERIALIZE
+#endif // PPROTO_JSON_SERIALIZE
 
 } // namespace data
 

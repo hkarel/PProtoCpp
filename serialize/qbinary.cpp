@@ -23,11 +23,11 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "serialize/bproto.h"
+#include "serialize/qbinary.h"
 
 namespace communication {
 namespace serialize {
-namespace bproto {
+namespace qbinary {
 
 QDataStream& operator>> (QDataStream& s, ByteArray& ba)
 {
@@ -46,6 +46,6 @@ QDataStream& operator>> (QDataStream& s, ByteArray& ba)
     return s;
 }
 
-} // namespace bproto
+} // namespace qbinary
 } // namespace serialize
 } // namespace communication

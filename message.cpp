@@ -37,7 +37,7 @@
 #include "shared/qt/compression/qppmd.h"
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 #include "serialize/json.h"
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -241,8 +241,8 @@ void Message::initEmptyTraits() const
     _flag.contentIsEmpty     = (_content.isEmpty());
 }
 
-#ifdef BPROTO_SERIALIZE
-BByteArray Message::toBProto() const
+#ifdef PPROTO_QBINARY_SERIALIZE
+BByteArray Message::toQBinary() const
 {
     BByteArray ba;
     ba.reserve(size());
@@ -254,7 +254,7 @@ BByteArray Message::toBProto() const
     return ba;
 }
 
-Message::Ptr Message::fromBProto(const BByteArray& ba)
+Message::Ptr Message::fromQBinary(const BByteArray& ba)
 {
     QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
     STREAM_INIT(stream);
@@ -320,9 +320,9 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     return m;
 }
-#endif // BPROTO_SERIALIZE
+#endif // PPROTO_QBINARY_SERIALIZE
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 BByteArray Message::toJson() const
 {
     initEmptyTraits();
@@ -466,7 +466,7 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
     }
     return m;
 }
-#endif // JSON_SERIALIZE
+#endif // PPROTO_JSON_SERIALIZE
 
 Message::Type Message::type() const
 {

@@ -53,7 +53,7 @@
 namespace communication {
 namespace detail {
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
 template<typename T>
 struct is_error_data  : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
 template<typename T>
@@ -119,9 +119,9 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 {
     return messageWriteBProto(data, message, 0, 0);
 }
-#endif // BPROTO_SERIALIZE
+#endif // PPROTO_QBINARY_SERIALIZE
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 auto messageWriteJson(CommandDataT& data, Message::Ptr& message, int)
      -> decltype(data.toJson(), SResult())
@@ -144,7 +144,7 @@ SResult messageWriteJson(const CommandDataT& data, Message::Ptr& message)
 {
     return messageWriteJson(const_cast<CommandDataT&>(data), message, 0);
 }
-#endif // JSON_SERIALIZE
+#endif // PPROTO_JSON_SERIALIZE
 
 template<typename CommandDataT>
 SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
@@ -153,12 +153,12 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
     SResult res {false};
     switch (contentFormat)
     {
-#ifdef BPROTO_SERIALIZE
-        case SerializeFormat::BProto:
+#ifdef PPROTO_QBINARY_SERIALIZE
+        case SerializeFormat::QBinary:
             res = messageWriteBProto(data, message);
             break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
         case SerializeFormat::Json:
             res = messageWriteJson(data, message);
             break;
@@ -176,11 +176,11 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 struct CreateMessageParams
 {
     const Message::Type type = {Message::Type::Command};
-    const SerializeFormat format = {SerializeFormat::BProto};
+    const SerializeFormat format = {SerializeFormat::QBinary};
 
     CreateMessageParams() = default;
     CreateMessageParams(Message::Type type,
-                        SerializeFormat format = SerializeFormat::BProto)
+                        SerializeFormat format = SerializeFormat::QBinary)
         : type{type}, format{format}
     {}
     CreateMessageParams(SerializeFormat format,
@@ -227,10 +227,10 @@ Message::Ptr createMessage(const CommandDataT& data,
 
 inline Message::Ptr createMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializeFormat::BProto);
+    return Message::create(command, SerializeFormat::QBinary);
 }
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
                                Message::Type type = Message::Type::Command)
@@ -246,7 +246,7 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
 
 namespace detail {
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
 SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
                           typename is_error_data<CommandDataT>::type = 0)
@@ -296,9 +296,9 @@ SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
 {
     return messageReadBProto(message, data, 0, 0);
 }
-#endif // BPROTO_SERIALIZE
+#endif // PPROTO_QBINARY_SERIALIZE
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 auto messageReadJson(const Message::Ptr& message, CommandDataT& data, int)
      -> decltype(data.fromJson(QByteArray()), SResult())
@@ -321,7 +321,7 @@ SResult messageReadJson(const Message::Ptr& message, CommandDataT& data)
 {
     return messageReadJson(message, data, 0);
 }
-#endif // JSON_SERIALIZE
+#endif // PPROTO_JSON_SERIALIZE
 
 template<typename CommandDataT>
 SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
@@ -330,12 +330,12 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
     SResult res {false};
     switch (message->contentFormat())
     {
-#ifdef BPROTO_SERIALIZE
-        case SerializeFormat::BProto:
+#ifdef PPROTO_QBINARY_SERIALIZE
+        case SerializeFormat::QBinary:
             res = messageReadBProto(message, data);
             break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
         case SerializeFormat::Json:
             res = messageReadJson(message, data);
             break;
@@ -469,7 +469,7 @@ SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
 */
 template<typename CommandDataT>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::QBinary,
                        typename detail::not_error_data<CommandDataT>::type = 0)
 {
     if (data.command() != message->command())
@@ -520,7 +520,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 */
 template<typename CommandDataT /*MessageError*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::QBinary,
                        typename detail::is_error_data<CommandDataT>::type = 0)
 {
     message->setType(Message::Type::Answer);
@@ -530,7 +530,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT /*MessageFailed*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::BProto,
+                       SerializeFormat contentFormat = SerializeFormat::QBinary,
                        typename detail::is_failed_data<CommandDataT>::type = 0)
 {
     message->setType(Message::Type::Answer);
@@ -538,7 +538,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
     return detail::messageWriteContent(data, message, contentFormat);
 }
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
 {

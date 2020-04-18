@@ -51,12 +51,12 @@ QDataStream& operator<< (QDataStream& s, const timeval& tv)
 bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
 {
     if (versionLow > versionHigh
-        || BPROTOCOL_VERSION_LOW > BPROTOCOL_VERSION_HIGH)
+        || PPROTO_VERSION_LOW > PPROTO_VERSION_HIGH)
         return false;
-    quint16 protocolVersionLow = BPROTOCOL_VERSION_LOW;
+    quint16 protocolVersionLow = PPROTO_VERSION_LOW;
     if (versionHigh < protocolVersionLow)
         return false;
-    if (versionLow > BPROTOCOL_VERSION_HIGH)
+    if (versionLow > PPROTO_VERSION_HIGH)
         return false;
     return true;
 }

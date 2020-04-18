@@ -33,7 +33,7 @@
 #include "shared/logger/format.h"
 #include "shared/qt/logger/logger_operators.h"
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 #include "serialize/json.h"
 #endif
 

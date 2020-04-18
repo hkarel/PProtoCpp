@@ -146,11 +146,11 @@ Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
 
-#ifdef BPROTO_SERIALIZE
-    _protocolMap << qMakePair(SerializeFormat::BProto, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
+#ifdef PPROTO_QBINARY_SERIALIZE
+    _protocolMap << qMakePair(SerializeFormat::QBinary, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
 #endif
-#ifdef JSON_SERIALIZE
-    _protocolMap << qMakePair(SerializeFormat::Json,   QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
+#ifdef PPROTO_JSON_SERIALIZE
+    _protocolMap << qMakePair(SerializeFormat::Json,    QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
 #endif
 }
 
@@ -300,7 +300,7 @@ void Socket::run()
             {
                 log_debug_m << "Checking protocol compatibility"
                             << ". This protocol version: "
-                            << BPROTOCOL_VERSION_LOW << "-" << BPROTOCOL_VERSION_HIGH
+                            << PPROTO_VERSION_LOW << "-" << PPROTO_VERSION_HIGH
                             << ". Remote protocol version: "
                             << protocolVersionLow << "-" << protocolVersionHigh;
 
@@ -327,7 +327,7 @@ void Socket::run()
                 // Инвертируем версии протокола, иначе на принимающей стороне
                 // будет путаница с восприятием.
                 .arg(protocolVersionLow).arg(protocolVersionHigh)
-                .arg(BPROTOCOL_VERSION_LOW).arg(BPROTOCOL_VERSION_HIGH);
+                .arg(PPROTO_VERSION_LOW).arg(PPROTO_VERSION_HIGH);
 
                 log_verbose_m << "Send request to close connection"
                               << ". Detail: " << closeConnection.description;
@@ -402,12 +402,12 @@ void Socket::run()
                     log_verbose_m << "Message serialize format: ";
                 switch (_messageFormat)
                 {
-#ifdef BPROTO_SERIALIZE
-                    case SerializeFormat::BProto:
-                        logLine << "bproto";
+#ifdef PPROTO_QBINARY_SERIALIZE
+                    case SerializeFormat::QBinary:
+                        logLine << "qbinary";
                         break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                     case SerializeFormat::Json:
                         logLine << "json";
                         break;
@@ -479,12 +479,12 @@ void Socket::run()
                             log_verbose_m << "Message serialize format: ";
                         switch (_messageFormat)
                         {
-#ifdef BPROTO_SERIALIZE
-                            case SerializeFormat::BProto:
-                                logLine << "bproto";
+#ifdef PPROTO_QBINARY_SERIALIZE
+                            case SerializeFormat::QBinary:
+                                logLine << "qbinary";
                                 break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                             case SerializeFormat::Json:
                                 logLine << "json";
                                 break;
@@ -617,7 +617,7 @@ void Socket::run()
                     if (loopBreak || message.empty())
                         break;
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                     if (_messageFormat == SerializeFormat::Json
                         && !message->contentIsEmpty()
                         && message->contentFormat() != SerializeFormat::Json)
@@ -645,12 +645,12 @@ void Socket::run()
                     BByteArray buff;
                     switch (_messageFormat)
                     {
-#ifdef BPROTO_SERIALIZE
-                        case SerializeFormat::BProto:
-                            buff = message->toBProto();
+#ifdef PPROTO_QBINARY_SERIALIZE
+                        case SerializeFormat::QBinary:
+                            buff = message->toQBinary();
                             break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                         case SerializeFormat::Json:
                             buff = message->toJson();
                             if (alog::logger().level() == alog::Level::Debug2)
@@ -788,12 +788,12 @@ void Socket::run()
                     Message::Ptr message;
                     switch (_messageFormat)
                     {
-#ifdef BPROTO_SERIALIZE
-                        case SerializeFormat::BProto:
-                            message = Message::fromBProto(readBuff);
+#ifdef PPROTO_QBINARY_SERIALIZE
+                        case SerializeFormat::QBinary:
+                            message = Message::fromQBinary(readBuff);
                             break;
 #endif
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                         case SerializeFormat::Json:
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
@@ -843,9 +843,9 @@ void Socket::run()
                         else
                         {
                             const char* proto;
-                            if (_messageFormat == SerializeFormat::BProto)
+                            if (_messageFormat == SerializeFormat::QBinary)
                                 proto = "binary";
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
                             else if (_messageFormat == SerializeFormat::Json)
                                 proto = "json";
 #endif

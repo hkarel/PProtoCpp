@@ -39,8 +39,8 @@
 #include "shared/qt/qhashex.h"
 #include "shared/qt/quuidex.h"
 
-#ifdef BPROTO_SERIALIZE
-#include "serialize/bproto.h"
+#ifdef PPROTO_QBINARY_SERIALIZE
+#include "serialize/qbinary.h"
 #endif
 
 #include <QtCore>
@@ -72,8 +72,8 @@ typedef QSetEx<SocketDescriptor> SocketDescriptorSet;
 
 enum class SerializeFormat
 {
-    BProto = 0, // Бинарный формат
-    Json   = 1  // Json формат
+    QBinary = 0, // Qt-бинарный формат
+    Json    = 1  // Json формат
   //LastFormat = 7  Предполагается, что будет не больше 8 форматов
 };
 
@@ -288,7 +288,7 @@ public:
     //   - compression = None
     Ptr cloneForAnswer() const;
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     // Функция записи данных
     template<typename... Args>
     SResult writeContent(const Args&... args);
@@ -299,14 +299,14 @@ public:
 
     // Вспомогательные функции, используются для формирования сырого потока
     // данных для отправки в сетевой сокет
-    BByteArray toBProto() const;
-    static Ptr fromBProto(const BByteArray&);
+    BByteArray toQBinary() const;
+    static Ptr fromQBinary(const BByteArray&);
 
     void toDataStream(QDataStream&) const;
     static Ptr fromDataStream(QDataStream&);
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
     // Функция записи данных для json формата
     template<typename T>
     SResult writeJsonContent(const T&);
@@ -331,7 +331,7 @@ private:
     void initEmptyTraits() const;
     void decompress(BByteArray&) const;
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
     template<typename T, typename... Args>
     void writeInternal(QDataStream& s, const T& t, const Args&... args);
     void writeInternal(QDataStream&) {}
@@ -352,8 +352,8 @@ private:
     QUuidEx _id;
     QUuidEx _command;
 
-    quint16 _protocolVersionLow  = {BPROTOCOL_VERSION_LOW};
-    quint16 _protocolVersionHigh = {BPROTOCOL_VERSION_HIGH};
+    quint16 _protocolVersionLow  = {PPROTO_VERSION_LOW};
+    quint16 _protocolVersionHigh = {PPROTO_VERSION_HIGH};
 
     // Битовые флаги
     // TODO: Проверить значения битовых флагов при пересылке сообщения
@@ -425,12 +425,12 @@ private:
 
 //------------------------- Implementation Message ---------------------------
 
-#ifdef BPROTO_SERIALIZE
+#ifdef PPROTO_QBINARY_SERIALIZE
 template<typename... Args>
 SResult Message::writeContent(const Args&... args)
 {
     _content.clear();
-    setContentFormat(SerializeFormat::BProto);
+    setContentFormat(SerializeFormat::QBinary);
     QDataStream stream {&_content, QIODevice::WriteOnly};
     STREAM_INIT(stream);
     writeInternal(stream, args...);
@@ -469,7 +469,7 @@ void Message::readInternal(QDataStream& s, T& t, Args&... args) const
 }
 #endif
 
-#ifdef JSON_SERIALIZE
+#ifdef PPROTO_JSON_SERIALIZE
 template<typename T>
 SResult Message::writeJsonContent(const T& t)
 {

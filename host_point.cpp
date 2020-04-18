@@ -28,8 +28,6 @@
 
 namespace communication {
 
-DEFINE_B_SERIALIZE_STREAM_OPERATORS
-
 uint qHash(const HostPoint& hp)
 {
     return qHash(qMakePair(hp.address(), hp.port()));
@@ -68,6 +66,8 @@ void HostPoint::setPort(int port)
     _port = quint16(port);
 }
 
+#ifdef PPROTO_QBINARY_SERIALIZE
+DEFINE_B_SERIALIZE_STREAM_OPERATORS
 bserial::RawVector HostPoint::toRaw() const
 {
     B_SERIALIZE_V1(stream)
@@ -83,5 +83,6 @@ void HostPoint::fromRaw(const bserial::RawVector& vect)
     stream >> _port;
     B_DESERIALIZE_END
 }
+#endif
 
 } // namespace communication

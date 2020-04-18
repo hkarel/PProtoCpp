@@ -244,7 +244,7 @@ private:
     QVector<ProtocolSign> _protocolMap;
 
     // Формат сериализации сообщения (не контента)
-    SerializeFormat _messageFormat = {SerializeFormat::BProto};
+    SerializeFormat _messageFormat = {SerializeFormat::QBinary};
 
     bool _serializeSignatureRead = {false};
     bool _serializeSignatureWrite = {false};

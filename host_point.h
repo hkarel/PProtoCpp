@@ -25,7 +25,10 @@
 
 #pragma once
 
-#include "serialize/bproto.h"
+#ifdef PPROTO_QBINARY_SERIALIZE
+#include "serialize/qbinary.h"
+#endif
+
 #include <QtCore>
 #include <QHostAddress>
 
@@ -58,8 +61,10 @@ private:
     QHostAddress _address;
     quint16 _port = {0};
 
+#ifdef PPROTO_QBINARY_SERIALIZE
     // Функции сериализации данных
     DECLARE_B_SERIALIZE_FUNC
+#endif
 };
 uint qHash(const HostPoint&);
 
