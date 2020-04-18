@@ -31,7 +31,7 @@
 #include "shared/break_point.h"
 #include "shared/logger/logger.h"
 #include "shared/logger/format.h"
-#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/logger_operators.h"
 
 #ifdef PPROTO_JSON_SERIALIZE
 #include "serialize/json.h"

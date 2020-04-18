@@ -33,8 +33,8 @@
 #include "shared/prog_abort.h"
 #include "shared/spin_locker.h"
 #include "shared/logger/logger.h"
-#include "shared/qt/logger/logger_operators.h"
-#include "shared/qt/version/version_number.h"
+#include "shared/qt/logger_operators.h"
+#include "shared/qt/version_number.h"
 
 #include <utility>
 #include <stdexcept>

@@ -27,7 +27,7 @@
 #include "commands_base.h"
 
 #include "shared/logger/logger.h"
-#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/logger_operators.h"
 
 namespace communication {
 namespace command {

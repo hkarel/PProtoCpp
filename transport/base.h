@@ -36,7 +36,7 @@
 #include "shared/defmac.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
-#include "shared/qt/thread/qthreadex.h"
+#include "shared/qt/qthreadex.h"
 
 #include <QtCore>
 #include <atomic>

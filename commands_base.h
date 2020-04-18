@@ -42,7 +42,7 @@
 #include "shared/logger/logger.h"
 #include "shared/qt/qhashex.h"
 #include "shared/qt/quuidex.h"
-#include "shared/qt/version/version_number.h"
+#include "shared/qt/version_number.h"
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 #include "bserialize_space.h"

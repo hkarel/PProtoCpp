@@ -36,7 +36,7 @@
 
 #include "shared/type_name.h"
 #include "shared/logger/logger.h"
-#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/logger_operators.h"
 
 #include <sys/time.h>
 #include <typeinfo>

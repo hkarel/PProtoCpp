@@ -25,12 +25,11 @@
 
 #pragma once
 
+#include "host_point.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
 
 namespace communication {
-
-class HostPoint;
 
 /**
   Вспомогательная структура, используется для отправки в лог идентификатора

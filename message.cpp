@@ -28,7 +28,7 @@
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
-#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/logger_operators.h"
 
 #ifdef LZMA_COMPRESSION
 #include "shared/qt/compression/qlzma.h"

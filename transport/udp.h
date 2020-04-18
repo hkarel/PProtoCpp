@@ -29,13 +29,12 @@
 
 #pragma once
 
-#include "defmac.h"
-#include "container_ptr.h"
-#include "simple_ptr.h"
-#include "qt/communication/message.h"
-#include "qt/communication/host_point.h"
-#include "qt/communication/transport/base.h"
-#include "qt/thread/qthreadex.h"
+#include "host_point.h"
+#include "transport/base.h"
+
+#include "shared/defmac.h"
+#include "shared/container_ptr.h"
+#include "shared/simple_ptr.h"
 
 #include <QtCore>
 #include <QUdpSocket>

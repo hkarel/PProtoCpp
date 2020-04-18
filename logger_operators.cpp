@@ -25,8 +25,7 @@
 
 #include "logger_operators.h"
 #include "commands_pool.h"
-#include "host_point.h"
-#include "shared/qt/logger/logger_operators.h"
+#include "shared/qt/logger_operators.h"
 
 namespace alog {
 
