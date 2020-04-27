@@ -62,13 +62,20 @@ struct ByteArray : QByteArray
     ByteArray(const ByteArray&  ba) noexcept : QByteArray(ba) {}
 
     ByteArray& operator= (const ByteArray& ba) noexcept
-        {return (ByteArray&)QByteArray::operator= (ba);}
-
+    {
+        QByteArray::operator= (ba);
+        return *this;
+    }
     ByteArray& operator= (const QByteArray& ba) noexcept
-        {return (ByteArray&)QByteArray::operator= (ba);}
-
+    {
+        QByteArray::operator= (ba);
+        return *this;
+    }
     ByteArray& operator= (const char* str) noexcept
-        {return (ByteArray&)QByteArray::operator= (str);}
+    {
+        QByteArray::operator= (str);
+        return *this;
+    }
 
     // Функции используются в макросах B_SERIALIZE_Vx
     void reserve() {}
