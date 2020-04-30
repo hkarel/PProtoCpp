@@ -304,39 +304,41 @@ struct CloseConnection : Data<&command::CloseConnection,
 //------------------------ Функции json-сериализации -------------------------
 
 #ifdef PPROTO_JSON_SERIALIZE
-template <typename Packer>
-Packer& Unknown::jserialize(Packer& p)
+template <typename This, typename Packer>
+Packer& Unknown::jserialize(const This* ct, Packer& p)
 {
+    This* t = const_cast<This*>(ct);
+
     p.startObject();
-    p.member("commandId")        & commandId;
-    p.member("socketType")       & socketType;
-    p.member("socketDescriptor") & socketDescriptor;
-    p.member("socketName")       & socketName;
+    p.member("commandId")        & t->commandId;
+    p.member("socketType")       & t->socketType;
+    p.member("socketDescriptor") & t->socketDescriptor;
+    p.member("socketName")       & t->socketName;
 
     QString addressProtocol = "ip4";
-    QString address_;
+    QString addressString;
     QString addressScopeId;
 
     if (p.isWriter())
     {
-        address_ = address.toString();
-        if (address.protocol() == QAbstractSocket::IPv6Protocol)
+        addressString = t->address.toString();
+        if (t->address.protocol() == QAbstractSocket::IPv6Protocol)
         {
             addressProtocol = "ip6";
-            addressScopeId = address.scopeId();
+            addressScopeId = t->address.scopeId();
         }
     }
     p.member("addressProtocol") & addressProtocol;
-    p.member("address")         & address_;
+    p.member("address")         & addressString;
     p.member("addressScopeId")  & addressScopeId;
 
     if (p.isReader())
     {
-        address = QHostAddress(address_);
+        t->address = QHostAddress(addressString);
         if (addressProtocol == "ip6")
-            address.setScopeId(addressScopeId);
+            t->address.setScopeId(addressScopeId);
     }
-    p.member("port") & port;
+    p.member("port") & t->port;
     return p.endObject();
 }
 #endif // PPROTO_JSON_SERIALIZE

@@ -242,7 +242,7 @@ struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base,
 template <typename Packer, typename T>
 Packer& operatorAmp(Packer& p, T& t, typename not_enum_type<T>::type = 0)
 {
-    t.jserialize(p);
+    T::jserialize(&t, p);
     return p;
 }
 
@@ -320,11 +320,11 @@ Reader& Reader::operator& (T& t)
 }
 
 template <typename T>
-Writer& Writer::operator& (const T& t)
+Writer& Writer::operator& (const T& ct)
 {
     Writer& w = const_cast<Writer&>(*this);
-    T& t_ = const_cast<T&>(t);
-    return detail::operatorAmp(w, t_);
+    T& t = const_cast<T&>(ct);
+    return detail::operatorAmp(w, t);
 }
 
  namespace detail {
@@ -478,15 +478,15 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 }
 
 #define J_SERIALIZE_FUNC \
-    QByteArray toJson() { \
+    QByteArray toJson() const { \
         serialize::json::Writer writer; \
-        jserialize(writer); \
+        jserialize(this, writer); \
         return QByteArray(writer.getString()); \
     } \
     SResult fromJson(const QByteArray& json) { \
         serialize::json::Reader reader; \
         if (reader.parse(json)) \
-            jserialize(reader); \
+            jserialize(this, reader); \
         return reader.result(); \
     }
 
@@ -495,41 +495,49 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 */
 #define DECLARE_J_SERIALIZE_FUNC \
     J_SERIALIZE_FUNC \
-    template <typename Packer> Packer& jserialize(Packer&);
+    template <typename This, typename Packer> \
+    static Packer& jserialize(const This*, Packer&);
 
 #define J_SERIALIZE_BEGIN \
     J_SERIALIZE_FUNC \
-    template <typename Packer> Packer& jserialize(Packer& p) { \
+    template <typename This, typename Packer> \
+    static Packer& jserialize(const This* ct, Packer& p) { \
+        This* t = const_cast<This*>(ct); \
         p.startObject();
 
 #define J_SERIALIZE_EXTERN_BEGIN(CLASS) \
-    template <typename Packer> Packer& CLASS::jserialize(Packer& p) { \
+    template <typename This, typename Packer> \
+    static Packer& CLASS::jserialize(const This* ct, Packer& p) { \
+        This* t = const_cast<This*>(ct); \
         p.startObject();
 
 #define J_SERIALIZE_ITEM(FIELD) \
-        p.member(#FIELD) & FIELD;
+        p.member(#FIELD) & t->FIELD;
 
 #define J_SERIALIZE_OPT(FIELD) \
-        p.member(#FIELD, true) & FIELD;
+        p.member(#FIELD, true) & t->FIELD;
 
 #define J_SERIALIZE_MAP_ITEM(FIELD_NAME, FIELD) \
-        p.member(FIELD_NAME) & FIELD;
+        p.member(FIELD_NAME) & t->FIELD;
 
 #define J_SERIALIZE_MAP_OPT(FIELD_NAME, FIELD) \
-        p.member(FIELD_NAME, true) & FIELD;
+        p.member(FIELD_NAME, true) & t->FIELD;
 
 #define J_SERIALIZE_END \
         return p.endObject(); \
     }
 
 #define J_SERIALIZE_BASE_BEGIN \
-    template <typename Packer> void jserializeBase(Packer& p) {
+    template <typename Packer> \
+    void jserializeBase(Packer& p) { \
+        decltype(this) t = this;
+        //std::remove_const_t<decltype(this)> t = const_cast<std::remove_const_t<decltype(this)>>(this);
 
 #define J_SERIALIZE_BASE_END \
     }
 
 #define J_SERIALIZE_BASE(CLASS) \
-    CLASS::jserializeBase(p);
+    static_cast<CLASS*>(t)->jserializeBase(p);
 
 #define J_SERIALIZE_ONE(FIELD) \
     J_SERIALIZE_BEGIN \
@@ -543,7 +551,7 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 
 #define J_SERIALIZE_BASE_ONE \
     J_SERIALIZE_BEGIN \
-    this->jserializeBase(p); \
+    t->jserializeBase(p); \
     J_SERIALIZE_END
 
 } // namespace json
