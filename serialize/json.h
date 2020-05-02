@@ -58,6 +58,7 @@ namespace serialize {
 namespace json {
 
 using namespace rapidjson;
+class Reader;
 
 namespace detail {
 template <typename T> Reader& readQArray(Reader&, T&);
