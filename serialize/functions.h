@@ -175,7 +175,7 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 
 struct CreateMessageParams
 {
-    const Message::Type type = {Message::Type::Command};
+    const Message::Type   type   = {Message::Type::Command};
     const SerializeFormat format = {SerializeFormat::QBinary};
 
     CreateMessageParams() = default;
