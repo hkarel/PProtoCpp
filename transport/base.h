@@ -135,7 +135,7 @@ public:
     typedef lst::List<Socket, lst::CompareItemDummy, Allocator> List;
 
     // Статус совместимости версий бинарного протокола
-    enum class ProtocolCompatible {Yes, No, Undefined};
+    enum class ProtocolCompatible {Unknown, Yes, No};
 
     // Возвращает статус подключения с учетом, того что было выполнено
     // подключение к сокету и была выполнена проверка на совместимость
@@ -238,7 +238,7 @@ private:
     DISABLE_DEFAULT_FUNC(Socket)
 
     const SocketType _type;
-    volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Undefined};
+    volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Unknown};
 
     typedef QPair<SerializeFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
     QVector<ProtocolSign> _protocolMap;

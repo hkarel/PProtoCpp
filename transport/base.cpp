@@ -277,7 +277,7 @@ void Socket::run()
     // ответа на запрос о разрыве соединения.
     QUuidEx commandCloseConnectionId;
 
-    _protocolCompatible = ProtocolCompatible::Undefined;
+    _protocolCompatible = ProtocolCompatible::Unknown;
     {
         // Добавляем самое первое сообщение с информацией о совместимости
         Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
@@ -816,7 +816,7 @@ void Socket::run()
                                      << ". Id: " << message->id()
                                      << ". Command: " << CommandNameLog(message->command());
                     }
-                    if (_protocolCompatible == ProtocolCompatible::Undefined
+                    if (_protocolCompatible == ProtocolCompatible::Unknown
                         && message->command() == command::ProtocolCompatible)
                     {
                         processingProtocolCompatibleCommand(message);
