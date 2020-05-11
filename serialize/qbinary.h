@@ -87,17 +87,32 @@ inline QDataStream& operator<< (QDataStream& s, const ByteArray& ba)
 
 typedef QVector<ByteArray> RawVector;
 
-template<typename T>
-struct not_enum_type : std::enable_if<!std::is_enum<T>::value, int> {};
-template<typename T>
-struct is_enum_type : std::enable_if<std::is_enum<T>::value, int> {};
+/**
+  Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
+  для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
+  чтения/записи  enum-типов  реализованными  в этом  модуле.  Данный  фиктивный
+  класс  позволяет  установить  приоритет  использования  потоковых  операторов
+  из текущего модуля.
+*/
+struct DataStream : QDataStream
+{
+    DataStream() : QDataStream() {}
+    explicit DataStream(QIODevice* d) : QDataStream(d) {}
+    DataStream(QByteArray* ba, QIODevice::OpenMode flags) : QDataStream(ba, flags) {}
+    DataStream(const QByteArray& ba) : QDataStream(ba) {}
+};
+
+template<typename T> using not_enum_type_operator =
+typename std::enable_if<!std::is_enum<T>::value, QDataStream>::type;
+
+template<typename T> using enum_type_operator =
+typename std::enable_if<std::is_enum<T>::value, QDataStream>::type;
 
 /**
   Вспомогательные функции для обычных потоковых операторов
 */
 template<typename T>
-QDataStream& getFromStream(QDataStream& s, T& t,
-                           typename not_enum_type<T>::type = 0)
+QDataStream& getFromStream(QDataStream& s, T& t)
 {
     if (s.atEnd())
         return s;
@@ -115,8 +130,7 @@ QDataStream& getFromStream(QDataStream& s, T& t,
     return s;
 }
 template<typename T>
-QDataStream& putToStream(QDataStream& s, const T& t,
-                         typename not_enum_type<T>::type = 0)
+QDataStream& putToStream(QDataStream& s, const T& t)
 {
     const RawVector rv = t.toRaw();
     if (rv.size() > 255)
@@ -134,8 +148,7 @@ QDataStream& putToStream(QDataStream& s, const T& t,
   Вспомогательные функции для enum-типов
 */
 template<typename T>
-QDataStream& getFromStream(QDataStream& s, T& t,
-                           typename is_enum_type<T>::type = 0)
+QDataStream& getFromStreamEnum(QDataStream& s, T& t)
 {
     static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
                   "Base type of enum must be 'unsigned int'");
@@ -149,8 +162,7 @@ QDataStream& getFromStream(QDataStream& s, T& t,
 }
 
 template<typename T>
-QDataStream& putToStream(QDataStream& s, const T t,
-                         typename is_enum_type<T>::type = 0)
+QDataStream& putToStreamEnum(QDataStream& s, T t)
 {
     static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
                   "Base type of enum must be 'unsigned int'");
@@ -277,32 +289,31 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
 
 namespace bserial = communication::serialize::qbinary;
 
+typedef bserial::ByteArray  BByteArray;
+typedef bserial::DataStream BDataStream;
+
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \
-    friend QDataStream& bserial::getFromStream(QDataStream&, T&, \
-                                               typename not_enum_type<T>::type); \
+    friend QDataStream& bserial::getFromStream(QDataStream&, T&); \
     template<typename T> \
-    friend QDataStream& bserial::getFromStream(QDataStream&, T&, \
-                                               typename is_enum_type<T>::type); \
+    friend QDataStream& bserial::putToStream(QDataStream&, const T&); \
+    \
+    template<typename T> \
+    friend QDataStream& bserial::getFromStreamEnum(QDataStream&, T&); \
+    template<typename T> \
+    friend QDataStream& bserial::putToStreamEnum(QDataStream&, T); \
+    \
     template<typename T> \
     friend QDataStream& bserial::getFromStream(QDataStream& s, clife_ptr<T>&); \
+    template<typename T> \
+    friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
     \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
                                                typename derived_from_clife_base<T>::type); \
-    \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
                                                typename not_derived_from_clife_base<T>::type); \
-    template<typename T> \
-    friend QDataStream& bserial::putToStream(QDataStream&, const T&, \
-                                             typename not_enum_type<T>::type); \
-    template<typename T> \
-    friend QDataStream& bserial::putToStream(QDataStream&, const T&, \
-                                             typename is_enum_type<T>::type); \
-    template<typename T> \
-    friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
-    \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
 
@@ -316,30 +327,38 @@ namespace bserial = communication::serialize::qbinary;
   по версиям.
   Примечание: для того чтобы компилятор мог корректно выполнить инстанциирование
   шаблонных параметров требуется соблюдение правил ADL-поиска (или поиска Кёнига),
-  поэтому макрос DEFINE_B_SERIALIZE_STREAM_OPERATORS обязательно должен нахо-
+  поэтому макрос DEFINE_B_SERIALIZE_STREAM_OPERATORS обязательно  должен  нахо-
   диться внутри пространства имен структур для которых выполняется сериализация.
 */
 #define DEFINE_B_SERIALIZE_STREAM_OPERATORS \
+    /* Операторы для НЕ enum-типов */ \
     template<typename T> \
-    inline QDataStream& operator>> (QDataStream& s, T& p) \
+    inline bserial::not_enum_type_operator<T>& operator>> (QDataStream& s, T& p) \
         {return bserial::getFromStream<T>(s, p);} \
     template<typename T> \
-    inline QDataStream& operator<< (QDataStream& s, const T& p) \
+    inline bserial::not_enum_type_operator<T>& operator<< (QDataStream& s, const T& p) \
         {return bserial::putToStream<T>(s, p);} \
+    /* Операторы для enum-типов */ \
+    template<typename T> \
+    inline bserial::enum_type_operator<T>& operator>> (BDataStream& s, T& p) \
+        {return bserial::getFromStreamEnum<T>(s, p);} \
+    template<typename T> \
+    inline bserial::enum_type_operator<T>& operator<< (BDataStream& s, const T& p) \
+        {return bserial::putToStreamEnum<T>(s, p);} \
+    \
     template<typename T> \
     inline QDataStream& operator>> (QDataStream& s, clife_ptr<T>& p) \
         {return bserial::getFromStream<T>(s, p);} \
     template<typename T> \
     inline QDataStream& operator<< (QDataStream& s, const clife_ptr<T>& p) \
         {return bserial::putToStream<T>(s, p);} \
+    \
     template<typename T, typename Compare, typename Allocator> \
     inline QDataStream& operator>> (QDataStream& s, lst::List<T, Compare, Allocator>& p) \
         {return bserial::getFromStream<T, Compare, Allocator>(s, p);} \
     template<typename T, typename Compare, typename Allocator> \
     inline QDataStream& operator<< (QDataStream& s, const lst::List<T, Compare, Allocator>& p) \
         {return bserial::putToStream<T, Compare, Allocator>(s, p);}
-
-typedef bserial::ByteArray BByteArray;
 
 /**
   Макросы для работы с функциями сериализации toRaw(), fromRaw()
@@ -391,7 +410,7 @@ typedef bserial::ByteArray BByteArray;
     to__raw__vect__.reserve(2); \
     { bserial::ByteArray to__raw__ba__; \
       to__raw__ba__.reserve(RESERVE); \
-      { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
+      { BDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -401,7 +420,7 @@ typedef bserial::ByteArray BByteArray;
     } \
     { bserial::ByteArray to__raw__ba__; \
       to__raw__ba__.reserve(RESERVE); \
-      { QDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
+      { BDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -420,7 +439,7 @@ typedef bserial::ByteArray BByteArray;
     bserial::ByteArray utf8__to__qstr__; (void) utf8__to__qstr__; \
     if (VECT.count() >= 1) { \
         const bserial::ByteArray& ba__from__raw__ = VECT.at(0); \
-        QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
+        BDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
                             QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
@@ -428,7 +447,7 @@ typedef bserial::ByteArray BByteArray;
 #define B_DESERIALIZE_N(N, VECT, STREAM) \
     } if (VECT.count() >= N) { \
         const bserial::ByteArray& ba__from__raw__ = VECT.at(N - 1); \
-        QDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
+        BDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
                             QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
