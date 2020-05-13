@@ -1072,7 +1072,7 @@ void Listener::removeClosedSocketsInternal()
             _sockets.remove(i--);
 }
 
-void Listener::incomingConnectionInternal(Socket::Ptr socket,
+void Listener::incomingConnectionInternal(Socket::Ptr socket,   //NOLINT
                                           SocketDescriptor socketDescriptor)
 {
     socket->setListenerSide(true);
