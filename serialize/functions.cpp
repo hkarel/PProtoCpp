@@ -40,12 +40,18 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
     if (message->type() != Message::Type::Answer)
     {
         log_error_m << "Message type must be Message::Type::Answer";
+#ifndef NDEBUG
         prog_abort();
+#endif
+        return SResult(false, 0, "Failed call readFromMessage()");
     }
     if (message->execStatus() != Message::ExecStatus::Error)
     {
         log_error_m << "Message exec status must be Message::ExecStatus::Error";
+#ifndef NDEBUG
         prog_abort();
+#endif
+        return SResult(false, 0, "Failed call readFromMessage()");
     }
     return detail::messageReadContent(message, data, errorSender);
 }
@@ -56,12 +62,18 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
     if (message->type() != Message::Type::Answer)
     {
         log_error_m << "Message type must be Message::Type::Answer";
+#ifndef NDEBUG
         prog_abort();
+#endif
+        return SResult(false, 0, "Failed call readFromMessage()");
     }
     if (message->execStatus() != Message::ExecStatus::Failed)
     {
         log_error_m << "Message exec status must be Message::ExecStatus::Failed";
+#ifndef NDEBUG
         prog_abort();
+#endif
+        return SResult(false, 0, "Failed call readFromMessage()");
     }
     return detail::messageReadContent(message, data, errorSender);
 }

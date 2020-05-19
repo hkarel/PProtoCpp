@@ -449,10 +449,10 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                         << ". Command: " << CommandNameLog(message->command())
                         << ". Struct: "  << abi_type_name<CommandDataT>();
     }
+#ifndef NDEBUG
     prog_abort();
-
-    /* Fix warn -Wreturn-type */
-    return SResult();
+#endif
+    return SResult(false, 0, "Failed call readFromMessage()");
 }
 
 /**
@@ -507,10 +507,10 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
         log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
                     << " cannot be used for 'Answer'-message";
     }
+#ifndef NDEBUG
     prog_abort();
-
-    /* Fix warn -Wreturn-type */
-    return SResult();
+#endif
+    return SResult(false, 0, "Failed call writeToMessage()");
 }
 
 /**
