@@ -526,6 +526,8 @@ void Socket::run()
                 }
                 _serializeSignatureRead = true;
             }
+            if (loopBreak)
+                break;
 
             socketWaitForReadyRead(0);
             CHECK_SOCKET_ERROR
