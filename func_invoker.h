@@ -29,6 +29,7 @@
 #include "logger_operators.h"
 
 #include "shared/list.h"
+#include "shared/defmac.h"
 #include "shared/break_point.h"
 #include "shared/logger/logger.h"
 #include <exception>
@@ -119,6 +120,8 @@ class FunctionInvoker
     };
 
 public:
+    FunctionInvoker() = default;
+
     template<typename T>
     void registration(const QUuidEx& command,
                       void (T::*func)(const Message::Ptr&), T* instance)
@@ -174,6 +177,7 @@ public:
     }
 
 private:
+    DISABLE_DEFAULT_COPY(FunctionInvoker)
     BaseItem::List _functions;
 };
 
