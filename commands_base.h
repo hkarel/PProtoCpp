@@ -231,14 +231,21 @@ struct MessageFailed
 struct Unknown : Data<&command::Unknown,
                        Message::Type::Command>
 {
-    QUuidEx       commandId;        // Идентификатор неизвестной команды.
-    SocketType    socketType;       // Тип сокета для которого было создано
-                                    // сообщение.
-    quint64       socketDescriptor; // Идентификатор сокета.
-    QString       socketName;       // Наименование локального сокета,
-                                    // (сериализуется в utf8).
-    QHostAddress  address;          // Адрес и порт хоста для которого
-    quint16       port;             // команда неизвестна.
+    // Идентификатор неизвестной команды
+    QUuidEx commandId;
+
+    // Тип сокета для которого было создано сообщение
+    SocketType socketType = {SocketType::Unknown};
+
+    // Идентификатор сокета
+    quint64 socketDescriptor = {quint64(-1)};
+
+    // Наименование локального сокета (сериализуется в utf8)
+    QString socketName;
+
+    // Адрес и порт хоста для которого команда неизвестна
+    QHostAddress address;
+    quint16 port = {0};
 
 #ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
@@ -250,7 +257,7 @@ struct Unknown : Data<&command::Unknown,
 };
 
 /**
-  Сообщение об ошибке возникшей на стороне сервера или клиента.  Если по какой-
+  Сообщение об ошибке возникшей  на стороне сервера или клиента.  Если по какой
   либо причине невозможно передать сообщение при помощи MessageError, то исполь-
   зуется эта структура, причем как самостоятельное сообщение
 */
