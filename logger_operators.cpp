@@ -33,6 +33,7 @@ Line& operator<< (Line&  line, const communication::HostPoint& hp)
 {
     if (line.toLogger())
         line << hp.address() << ":" << hp.port();
+
     return line;
 }
 
@@ -50,6 +51,54 @@ Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
         if (commandName.isEmpty() || !cnl.onlyCommandName)
             line << cnl.command;
     }
+    return line;
+}
+
+Line& operator<< (Line& line, communication::Message::Type type)
+{
+    if (line.toLogger())
+        switch (type)
+        {
+            case communication::Message::Type::Command:
+                line << "Command";
+                break;
+
+            case communication::Message::Type::Answer:
+                line << "Answer";
+                break;
+
+            case communication::Message::Type::Event:
+                line << "Event";
+                break;
+
+            default:
+                line << "Unknown";
+        }
+
+    return line;
+}
+
+Line& operator<< (Line& line, communication::Message::ExecStatus execStatus)
+{
+    if (line.toLogger())
+        switch (execStatus)
+        {
+            case communication::Message::ExecStatus::Success:
+                line << "Success";
+                break;
+
+            case communication::Message::ExecStatus::Failed:
+                line << "Failed";
+                break;
+
+            case communication::Message::ExecStatus::Error:
+                line << "Error";
+                break;
+
+            default:
+                line << "Unknown";
+        }
+
     return line;
 }
 

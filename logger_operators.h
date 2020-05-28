@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "message.h"
 #include "host_point.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
@@ -50,5 +51,7 @@ namespace alog {
 
 Line& operator<< (Line&, const communication::HostPoint&);
 Line& operator<< (Line&, const communication::CommandNameLog&);
+Line& operator<< (Line&, communication::Message::Type);
+Line& operator<< (Line&, communication::Message::ExecStatus);
 
 } // namespace alog

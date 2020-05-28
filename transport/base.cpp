@@ -710,7 +710,9 @@ void Socket::run()
                     {
                         log_debug2_m << "Message was sent to socket"
                                      << ". Id: " << message->id()
-                                     << ". Command: " << CommandNameLog(message->command());
+                                     << ". Command: " << CommandNameLog(message->command())
+                                     << ". Type: " << message->type()
+                                     << ". ExecStatus: " << message->execStatus();
                     }
                     if (loopBreak
                         || timer.hasExpired(3 * delay))
@@ -816,7 +818,9 @@ void Socket::run()
                     {
                         log_debug2_m << "Message received"
                                      << ". Id: " << message->id()
-                                     << ". Command: " << CommandNameLog(message->command());
+                                     << ". Command: " << CommandNameLog(message->command())
+                                     << ". Type: " << message->type()
+                                     << ". ExecStatus: " << message->execStatus();
                     }
                     if (_protocolCompatible == ProtocolCompatible::Unknown
                         && message->command() == command::ProtocolCompatible)
