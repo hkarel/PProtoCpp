@@ -29,7 +29,7 @@
 
 namespace alog {
 
-Line& operator<< (Line&  line, const communication::HostPoint& hp)
+Line& operator<< (Line& line, const communication::HostPoint& hp)
 {
     if (line.toLogger())
         line << hp.address() << ":" << hp.port();

@@ -56,9 +56,9 @@ namespace tcp {
 void printHostInfo(alog::Line& logLine, const QString& name, const HostPoint& peerPoint)
 {
     if (!name.isEmpty())
-        logLine << log_format(" '?'. Host: ?", name, peerPoint);
+        logLine << log_format(" '%?'. Host: %?", name, peerPoint);
     else
-        logLine << log_format(" host: ?", peerPoint);
+        logLine << log_format(" host: %?", peerPoint);
 }
 
 bool Socket::init(const HostPoint& peerPoint)
@@ -292,7 +292,7 @@ bool Listener::init(const HostPoint& listenPoint)
     {
         alog::Line logLine = log_error_m << "Start listener is failed";
         if (!name().isEmpty())
-            logLine << log_format(". Listener name: '?'", name());
+            logLine << log_format(". Listener name: '%?'", name());
 
         logLine << ". Connection point: " << _listenPoint
                 << ". Detail: " << errorString();
@@ -301,7 +301,7 @@ bool Listener::init(const HostPoint& listenPoint)
     {
         alog::Line logLine = log_verbose_m << "Start listener";
         if (!name().isEmpty())
-            logLine << log_format(" '?'", name());
+            logLine << log_format(" '%?'", name());
 
         logLine << ". Connection point: " << serverAddress() << ":" << serverPort();
     }
@@ -317,7 +317,7 @@ void Listener::close()
 
     alog::Line logLine = log_verbose_m << "Stop listener";
     if (!name().isEmpty())
-        logLine << log_format(" '?'", name());
+        logLine << log_format(" '%?'", name());
 
     logLine << ". Connection point: " << _listenPoint;
 }
