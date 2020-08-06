@@ -59,6 +59,9 @@ void Properties::setCompressionLevel(int val)
 
 //----------------------------- SocketCommon ---------------------------------
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 bool SocketCommon::send(const Message::Ptr& message)
 {
     if (!isRunning())
@@ -114,6 +117,8 @@ bool SocketCommon::send(const Message::Ptr& message)
     }
     return true;
 }
+
+#pragma GCC diagnostic pop
 
 void SocketCommon::remove(const QUuidEx& command)
 {

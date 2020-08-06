@@ -108,6 +108,9 @@ SocketDescriptorSet& Message::destinationSocketDescriptors()
     return _destinationSocketDescriptors;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 void Message::compress(int level, Compression compression)
 {
     if (this->compression() != Compression::None)
@@ -198,6 +201,8 @@ void Message::decompress(BByteArray& content) const
             prog_abort();
     }
 }
+
+#pragma GCC diagnostic pop
 
 void Message::decompress()
 {

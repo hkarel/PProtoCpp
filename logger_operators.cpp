@@ -54,6 +54,9 @@ Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
     return line;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 Line& operator<< (Line& line, communication::Message::Type type)
 {
     if (line.toLogger())
@@ -101,5 +104,7 @@ Line& operator<< (Line& line, communication::Message::ExecStatus execStatus)
 
     return line;
 }
+
+#pragma GCC diagnostic pop
 
 } // namespace alog
