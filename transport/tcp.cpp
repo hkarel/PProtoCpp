@@ -88,7 +88,7 @@ bool Socket::socketInit()
             printHostInfo(logLine, name(), _peerPoint);
         }
 
-        connectDirection = "to";
+        connectDirection = "Connected to";
         _socket->connectToHost(_peerPoint.address(), _peerPoint.port());
         if (!_socket->waitForConnected(3*1000 /*3 сек*/))
         {
@@ -101,7 +101,7 @@ bool Socket::socketInit()
     }
     else
     {
-        connectDirection = "from";
+        connectDirection = "Connection from";
         if (!_socket->setSocketDescriptor(initSocketDescriptor()))
         {
             alog::Line logLine = log_error_m << "Failed set socket descriptor";
@@ -134,7 +134,7 @@ bool Socket::socketInit()
     }
 
     { //Block for alog::Line
-        alog::Line logLine = log_verbose_m << "Connect " << connectDirection;
+        alog::Line logLine = log_verbose_m << connectDirection;
         printHostInfo(logLine, name(), _peerPoint);
         logLine << ". Socket descriptor: " << _printSocketDescriptor;
     }
