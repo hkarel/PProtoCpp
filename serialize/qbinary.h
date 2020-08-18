@@ -193,18 +193,18 @@ QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
     if (ptr.empty())
         ptr = clife_ptr<T>(new T());
 
-    getFromStream(s, (*ptr));
+    getFromStream(s, *ptr);
     return s;
 }
 
 template<typename T>
 QDataStream& putToStream(QDataStream& s, const clife_ptr<T>& ptr)
 {
-    s << ptr.empty();
+    s << bool(ptr.empty());
     if (ptr.empty())
         return s;
 
-    putToStream(s, (*ptr));
+    putToStream(s, *ptr);
     return s;
 }
 
