@@ -173,7 +173,7 @@ void Socket::printSocketError(const char* file, const char* func, int line,
             << ". Remote host: " << _peerPoint;
 
         if (!name().isEmpty())
-            logLine << ". Socket name: " << name();
+            logLine << log_format(". Connection '%?'", name());
 
         logLine << ". Socket descriptor: " << _printSocketDescriptor;
     }
@@ -184,7 +184,7 @@ void Socket::printSocketError(const char* file, const char* func, int line,
             << "Socket error code: " << int(_socket->error());
 
         if (!name().isEmpty())
-            logLine << ". Socket name: " << name();
+            logLine << log_format(". Connection '%?'", name());
 
         logLine << ". Detail: " << _socket->errorString();
     }
