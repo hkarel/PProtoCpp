@@ -32,13 +32,13 @@
 
 #pragma once
 
+#include "stream_init.h"
 #include "shared/list.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
-#include "shared/qt/stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>
@@ -129,6 +129,7 @@ QDataStream& getFromStream(QDataStream& s, T& t)
     t.fromRaw(rv);
     return s;
 }
+
 template<typename T>
 QDataStream& putToStream(QDataStream& s, const T& t)
 {
