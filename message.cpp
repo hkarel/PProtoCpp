@@ -28,6 +28,7 @@
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
+#include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
 #ifdef LZMA_COMPRESSION
@@ -408,10 +409,14 @@ Message::Ptr Message::fromJson(const BByteArray& ba)
     {
         ParseErrorCode e = doc.GetParseError();
         int o = int(doc.GetErrorOffset());
-        log_error_m << "Failed parce json."
-                    << " Error: " << GetParseError_En(e)
-                    << " Detail: " << " at offset " << o << " near '"
-                    << ba.mid(o, 20) << "...'";
+//        log_error_m << "Failed parce json."
+//                    << " Error: " << GetParseError_En(e)
+//                    << " Detail: " << " at offset " << o << " near '"
+//                    << ba.mid(o, 20) << "...'";
+
+        log_error_m << log_format(
+            "Failed parce json. Error: %? Detail: at offset %? near '%?...'",
+            GetParseError_En(e), o, ba.mid(o, 20));
         return m;
     }
     if (!doc.IsObject())

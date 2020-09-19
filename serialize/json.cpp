@@ -83,11 +83,15 @@ bool Reader::parse(const QByteArray& json)
         setError(1);
         ParseErrorCode e = _document.GetParseError();
         int o = int(_document.GetErrorOffset());
-        log_error_m << "Failed parse json"
-                    << ". JIndex: " << _jsonIndex
-                    << ". Error: " << GetParseError_En(e)
-                    << " Detail: " << " at offset " << o << " near '"
-                    << _jsonContent.mid(o, 20) << "...'";
+//        log_error_m << "Failed parse json"
+//                    << ". JIndex: " << _jsonIndex
+//                    << ". Error: " << GetParseError_En(e)
+//                    << " Detail: " << " at offset " << o << " near '"
+//                    << _jsonContent.mid(o, 20) << "...'";
+
+        log_error_m << log_format(
+            "Failed parse json. JIndex: %?. Error: %? Detail: at offset %? near '%?...'",
+            _jsonIndex, GetParseError_En(e), o, _jsonContent.mid(o, 20));
     }
     else
     {
