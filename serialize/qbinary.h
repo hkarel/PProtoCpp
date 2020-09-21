@@ -471,4 +471,4 @@ typedef bserial::DataStream BDataStream;
     static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
     utf8__to__qstr__.clear(); \
     STREAM >> utf8__to__qstr__; \
-    QSTR = std::move(QString::fromUtf8(utf8__to__qstr__));
+    QSTR = QString::fromUtf8(utf8__to__qstr__);
