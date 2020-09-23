@@ -55,7 +55,7 @@ public:
     void setAddress(const QHostAddress& val){_address = val;}
 
     quint16 port() const {return _port;}
-    void setPort(int val);
+    void setPort(int port);
 
 private:
     QHostAddress _address;

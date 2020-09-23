@@ -53,7 +53,7 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
 #endif
         return SResult(false, 0, "Failed call readFromMessage()");
     }
-    return detail::messageReadContent(message, data, errorSender);
+    return detail::messageReadContent(message, data, std::move(errorSender));
 }
 
 SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
@@ -75,7 +75,7 @@ SResult readFromMessage(const Message::Ptr& message, data::MessageFailed& data,
 #endif
         return SResult(false, 0, "Failed call readFromMessage()");
     }
-    return detail::messageReadContent(message, data, errorSender);
+    return detail::messageReadContent(message, data, std::move(errorSender));
 }
 
 QString errorDescription(const Message::Ptr& message)
