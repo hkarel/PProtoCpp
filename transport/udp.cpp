@@ -51,7 +51,7 @@ const quint64 udpSignature = *((quint64*)PPROTO_UDP_SIGNATURE);
 #else
 const quint32 udpSignature = *((quint32*)PPROTO_UDP_SIGNATURE);
 #endif
-}
+} // namespace
 
 namespace communication {
 namespace transport {
