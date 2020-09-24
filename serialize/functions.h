@@ -353,7 +353,7 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
         error.code        = error::MessageContentParse;
         error.description = res.description();
         Message::Ptr err = createMessage(error, {message->contentFormat()});
-        err->destinationSocketDescriptors().insert(message->socketDescriptor());
+        err->appendDestinationSocket(message->socketDescriptor());
         errorSender(err);
     }
     return res;
