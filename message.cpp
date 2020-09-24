@@ -109,6 +109,11 @@ SocketDescriptorSet& Message::destinationSocketDescriptors()
     return _destinationSocketDescriptors;
 }
 
+void Message::appendDestinationSocket(SocketDescriptor descriptor)
+{
+    _destinationSocketDescriptors.insert(descriptor);
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 

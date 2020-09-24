@@ -218,6 +218,9 @@ public:
     // с идентификатором socketDescriptor
     SocketDescriptorSet& destinationSocketDescriptors();
 
+    // Добавляет сокет назначения в коллекцию destinationSocketDescriptors
+    void appendDestinationSocket(SocketDescriptor);
+
     // Наименование сокета с которого было получено сообщение. Поле имеет валид-
     // ное значение только если тип сокета соответствует SocketType::Local
     QString socketName() const {return _socketName;}
