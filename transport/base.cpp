@@ -39,12 +39,12 @@
 #include <utility>
 #include <stdexcept>
 
-#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "Transport")
-#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "Transport")
-#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "Transport")
-#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "Transport")
-#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "Transport")
-#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "Transport")
+#define log_error_m   alog::logger().error   (alog_line_location, "Transport")
+#define log_warn_m    alog::logger().warn    (alog_line_location, "Transport")
+#define log_info_m    alog::logger().info    (alog_line_location, "Transport")
+#define log_verbose_m alog::logger().verbose (alog_line_location, "Transport")
+#define log_debug_m   alog::logger().debug   (alog_line_location, "Transport")
+#define log_debug2_m  alog::logger().debug2  (alog_line_location, "Transport")
 
 namespace communication {
 namespace transport {
@@ -375,7 +375,7 @@ void Socket::run()
     #define CHECK_SOCKET_ERROR \
         if (!socketIsConnectedInternal()) \
         { \
-            printSocketError(__FILE__, __func__, __LINE__, "Transport"); \
+            printSocketError(alog_line_location, "Transport"); \
             loopBreak = true; \
             break; \
         }

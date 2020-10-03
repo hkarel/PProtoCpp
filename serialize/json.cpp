@@ -27,12 +27,12 @@
 #include "rapidjson/error/en.h"
 #include <atomic>
 
-#define log_error_m   alog::logger().error  (__FILE__, __func__, __LINE__, "JSerialize")
-#define log_warn_m    alog::logger().warn   (__FILE__, __func__, __LINE__, "JSerialize")
-#define log_info_m    alog::logger().info   (__FILE__, __func__, __LINE__, "JSerialize")
-#define log_verbose_m alog::logger().verbose(__FILE__, __func__, __LINE__, "JSerialize")
-#define log_debug_m   alog::logger().debug  (__FILE__, __func__, __LINE__, "JSerialize")
-#define log_debug2_m  alog::logger().debug2 (__FILE__, __func__, __LINE__, "JSerialize")
+#define log_error_m   alog::logger().error   (alog_line_location, "JSerialize")
+#define log_warn_m    alog::logger().warn    (alog_line_location, "JSerialize")
+#define log_info_m    alog::logger().info    (alog_line_location, "JSerialize")
+#define log_verbose_m alog::logger().verbose (alog_line_location, "JSerialize")
+#define log_debug_m   alog::logger().debug   (alog_line_location, "JSerialize")
+#define log_debug2_m  alog::logger().debug2  (alog_line_location, "JSerialize")
 
 namespace communication {
 namespace serialize {

@@ -410,7 +410,7 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
         else
         {
             setError(1);
-            alog::logger().error(__FILE__, __func__, __LINE__, "JSerialize")
+            alog::logger().error(alog_line_location, "JSerialize")
                 << "Stack top is not object"
                 << ". Field: " << stackFieldName()
                 << ". JIndex: " << _jsonIndex;
