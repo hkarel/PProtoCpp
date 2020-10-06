@@ -493,6 +493,11 @@ Reader& Reader::operator& (QByteArray& ba)
     return *this;
 }
 
+Reader& Reader::operator& (SByteArray& ba)
+{
+    return operator& (static_cast<QByteArray&>(ba));
+}
+
 Reader& Reader::operator& (QString& s)
 {
     if (!error())
@@ -808,6 +813,11 @@ Writer& Writer::operator& (const QByteArray& ba)
     ba2.append("\"");
     _writer.RawValue(ba2.constData(), size_t(ba2.length()), kStringType);
     return *this;
+}
+
+Writer& Writer::operator& (const SByteArray& ba)
+{
+    return operator& (static_cast<const QByteArray&>(ba));
 }
 
 Writer& Writer::operator& (const QString& s)

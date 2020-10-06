@@ -30,7 +30,11 @@
 #pragma once
 
 #include "host_point.h"
-#include "serialize/sresult.h"
+#include "serialize/result.h"
+
+#ifdef PPROTO_QBINARY_SERIALIZE
+#include "serialize/qbinary.h"
+#endif
 
 #include "shared/list.h"
 #include "shared/defmac.h"
@@ -38,10 +42,6 @@
 #include "shared/clife_ptr.h"
 #include "shared/qt/qhashex.h"
 #include "shared/qt/quuidex.h"
-
-#ifdef PPROTO_QBINARY_SERIALIZE
-#include "serialize/qbinary.h"
-#endif
 
 #include <QtCore>
 #include <atomic>
@@ -302,8 +302,8 @@ public:
 
     // Вспомогательные функции, используются для формирования сырого потока
     // данных для отправки в сетевой сокет
-    BByteArray toQBinary() const;
-    static Ptr fromQBinary(const BByteArray&);
+    QByteArray toQBinary() const;
+    static Ptr fromQBinary(const QByteArray&);
 
     void toDataStream(QDataStream&) const;
     static Ptr fromDataStream(QDataStream&);
@@ -318,8 +318,8 @@ public:
     template<typename T>
     SResult readJsonContent(T&) const;
 
-    BByteArray toJson() const;
-    static Ptr fromJson(const BByteArray&);
+    QByteArray toJson() const;
+    static Ptr fromJson(const QByteArray&);
 #endif
 
     // Возвращает максимально возможную длину сообщения в сериализованном виде.
@@ -332,7 +332,7 @@ private:
     DISABLE_DEFAULT_COPY(Message)
 
     void initEmptyTraits() const;
-    void decompress(BByteArray&) const;
+    void decompress(QByteArray&) const;
 
 #ifdef PPROTO_QBINARY_SERIALIZE
     template<typename T, typename... Args>
@@ -410,7 +410,7 @@ private:
 
     QVector<quint64> _tags;
     quint64 _maxTimeLife = {quint64(-1)};
-    BByteArray _content;
+    QByteArray _content;
     SocketType _socketType = {SocketType::Unknown};
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
@@ -443,7 +443,7 @@ SResult Message::writeContent(const Args&... args)
 template<typename... Args>
 SResult Message::readContent(Args&... args) const
 {
-    BByteArray content;
+    QByteArray content;
     decompress(content);
     QDataStream stream {content};
     STREAM_INIT(stream);

@@ -32,9 +32,10 @@
 #include "commands_base.h"
 #include "error_sender.h"
 #include "logger_operators.h"
-#include "serialize/sresult.h"
+#include "serialize/result.h"
 
 #include "shared/type_name.h"
+#include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/logger_operators.h"
 
@@ -53,7 +54,6 @@
 namespace communication {
 namespace detail {
 
-#ifdef PPROTO_QBINARY_SERIALIZE
 template<typename T>
 struct is_error_data  : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
 template<typename T>
@@ -62,6 +62,7 @@ template<typename T>
 struct not_error_data : std::enable_if<!std::is_base_of<data::MessageError, T>::value
                                     && !std::is_base_of<data::MessageFailed, T>::value, int> {};
 
+#ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
 SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
                            typename is_error_data<CommandDataT>::type = 0)

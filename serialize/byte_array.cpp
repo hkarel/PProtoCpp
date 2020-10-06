@@ -1,7 +1,7 @@
 /*****************************************************************************
   The MIT License
 
-  Copyright © 2019 Pavel Karelin (hkarel), <hkarel@yandex.ru>
+  Copyright © 2020 Pavel Karelin (hkarel), <hkarel@yandex.ru>
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
@@ -23,27 +23,26 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "serialize/sresult.h"
+#include "serialize/byte_array.h"
 
 namespace communication {
 namespace serialize {
 
-Result::Result(bool val, int code, const QString& description)
+QByteArray readByteArray(QDataStream& s)
 {
-    _d->value = val;
-    _d->code = code;
-    _d->description = description;
-}
-
-Result::Result(Result&& r)
-{
-    _d = r._d;
-}
-
-Result& Result::operator= (Result&& r)
-{
-    _d = r._d;
-    return *this;
+    QByteArray ba;
+    quint32 len;
+    s >> len;
+    if (len != 0xffffffff)
+    {
+        ba.resize(len);
+        if (s.readRawData((char*)ba.constData(), len) != int(len))
+        {
+            ba.clear();
+            s.setStatus(QDataStream::ReadPastEnd);
+        }
+    }
+    return ba;
 }
 
 } // namespace serialize

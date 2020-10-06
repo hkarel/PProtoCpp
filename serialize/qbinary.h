@@ -33,6 +33,8 @@
 #pragma once
 
 #include "stream_init.h"
+#include "serialize/byte_array.h"
+
 #include "shared/list.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
@@ -50,63 +52,7 @@ namespace communication {
 namespace serialize {
 namespace qbinary {
 
-/**
-  Структура ByteArray нужна для переопределения потокового оператора '>>'
-  для QByteArray. Переопределенный оператор '>>' менее универсальный, но
-  дает преимущество по производительности.
-*/
-struct ByteArray : QByteArray
-{
-    ByteArray() noexcept : QByteArray() {}
-    ByteArray(const QByteArray& ba) noexcept : QByteArray(ba) {}
-    ByteArray(const ByteArray&  ba) noexcept : QByteArray(ba) {}
-
-    ByteArray& operator= (const ByteArray& ba) noexcept
-    {
-        QByteArray::operator= (ba);
-        return *this;
-    }
-    ByteArray& operator= (const QByteArray& ba) noexcept
-    {
-        QByteArray::operator= (ba);
-        return *this;
-    }
-    ByteArray& operator= (const char* str) noexcept
-    {
-        QByteArray::operator= (str);
-        return *this;
-    }
-
-    // Функции используются в макросах B_SERIALIZE_Vx
-    void reserve() {}
-    void reserve(size_t size) {QByteArray::reserve(int(size));}
-};
-QDataStream& operator>> (QDataStream&, ByteArray&);
-inline QDataStream& operator<< (QDataStream& s, const ByteArray& ba)
-    {return operator<< (s, static_cast<const QByteArray&>(ba));}
-
-typedef QVector<ByteArray> RawVector;
-
-/**
-  Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
-  для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
-  чтения/записи  enum-типов  реализованными  в этом  модуле.  Данный  фиктивный
-  класс  позволяет  установить  приоритет  использования  потоковых  операторов
-  из текущего модуля.
-*/
-struct DataStream : QDataStream
-{
-    DataStream() : QDataStream() {}
-    explicit DataStream(QIODevice* d) : QDataStream(d) {}
-    DataStream(QByteArray* ba, QIODevice::OpenMode flags) : QDataStream(ba, flags) {}
-    DataStream(const QByteArray& ba) : QDataStream(ba) {}
-};
-
-template<typename T> using not_enum_type_operator =
-typename std::enable_if<!std::is_enum<T>::value, QDataStream>::type;
-
-template<typename T> using enum_type_operator =
-typename std::enable_if<std::is_enum<T>::value, QDataStream>::type;
+typedef QVector<QByteArray> RawVector;
 
 /**
   Вспомогательные функции для обычных потоковых операторов
@@ -122,8 +68,7 @@ QDataStream& getFromStream(QDataStream& s, T& t)
     RawVector rv {int(size)};
     for (quint8 i = 0; i < size; ++i)
     {
-        ByteArray ba;
-        s >> ba;
+        QByteArray ba {serialize::readByteArray(s)}; // s >> ba;
         rv[i] = std::move(ba);
     }
     t.fromRaw(rv);
@@ -136,11 +81,11 @@ QDataStream& putToStream(QDataStream& s, const T& t)
     const RawVector rv = t.toRaw();
     if (rv.size() > 255)
     {
-        log_error << "Limit exceeded on number of versions for b-serializeation (255)";
+        log_error << "For qbinary serialize the limit of versions is exceeded (255)";
         prog_abort();
     }
     s << quint8(rv.size());
-    for (const ByteArray& ba : rv)
+    for (const QByteArray& ba : rv)
         s << ba;
     return s;
 }
@@ -284,14 +229,43 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
+/**
+  Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
+  для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
+  чтения/записи  enum-типов  реализованными  в этом  модуле.  Данный  фиктивный
+  класс  позволяет  установить  приоритет  использования  потоковых  операторов
+  из текущего модуля.
+*/
+struct DataStream : QDataStream
+{
+    DataStream() : QDataStream() {}
+    explicit DataStream(QIODevice* d) : QDataStream(d) {}
+    DataStream(QByteArray* ba, QIODevice::OpenMode flags) : QDataStream(ba, flags) {}
+    DataStream(const QByteArray& ba) : QDataStream(ba) {}
+};
+
+template<typename T> using not_enum_type_operator =
+typename std::enable_if<!std::is_enum<T>::value, QDataStream>::type;
+
+template<typename T> using enum_type_operator =
+typename std::enable_if<std::is_enum<T>::value, QDataStream>::type;
+
+/**
+  Вспомогательная структура, используются в макросах B_SERIALIZE_Vx
+*/
+struct Reserve
+{
+    Reserve(QByteArray& ba) : val(ba) {}
+    QByteArray& val;
+    void size() {}
+    void size(int sz) {val.reserve(sz);}
+};
+
 } // namespace qbinary
 } // namespace serialize
 } // namespace communication
 
 namespace bserial = communication::serialize::qbinary;
-
-typedef bserial::ByteArray  BByteArray;
-typedef bserial::DataStream BDataStream;
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \
@@ -341,10 +315,10 @@ typedef bserial::DataStream BDataStream;
         {return bserial::putToStream<T>(s, p);} \
     /* Операторы для enum-типов */ \
     template<typename T> \
-    inline bserial::enum_type_operator<T>& operator>> (BDataStream& s, T& p) \
+    inline bserial::enum_type_operator<T>& operator>> (bserial::DataStream& s, T& p) \
         {return bserial::getFromStreamEnum<T>(s, p);} \
     template<typename T> \
-    inline bserial::enum_type_operator<T>& operator<< (BDataStream& s, const T& p) \
+    inline bserial::enum_type_operator<T>& operator<< (bserial::DataStream& s, const T& p) \
         {return bserial::putToStreamEnum<T>(s, p);} \
     \
     template<typename T> \
@@ -409,9 +383,9 @@ typedef bserial::DataStream BDataStream;
 #define B_SERIALIZE_V1(STREAM, RESERVE...) \
     bserial::RawVector to__raw__vect__; \
     to__raw__vect__.reserve(2); \
-    { bserial::ByteArray to__raw__ba__; \
-      to__raw__ba__.reserve(RESERVE); \
-      { BDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
+    { QByteArray to__raw__ba__; \
+      bserial::Reserve{to__raw__ba__}.size(RESERVE); \
+      { bserial::DataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -419,9 +393,9 @@ typedef bserial::DataStream BDataStream;
       } \
       to__raw__vect__.append(to__raw__ba__); \
     } \
-    { bserial::ByteArray to__raw__ba__; \
-      to__raw__ba__.reserve(RESERVE); \
-      { BDataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
+    { QByteArray to__raw__ba__; \
+      bserial::Reserve{to__raw__ba__}.size(RESERVE); \
+      { bserial::DataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -437,19 +411,18 @@ typedef bserial::DataStream BDataStream;
     return to__raw__vect__;
 
 #define B_DESERIALIZE_V1(VECT, STREAM) \
-    bserial::ByteArray utf8__to__qstr__; (void) utf8__to__qstr__; \
     if (VECT.count() >= 1) { \
-        const bserial::ByteArray& ba__from__raw__ = VECT.at(0); \
-        BDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
-                            QIODevice::ReadOnly | QIODevice::Unbuffered}; \
+        const QByteArray& ba__from__raw__ = VECT.at(0); \
+        bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
+                                    QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
 #define B_DESERIALIZE_N(N, VECT, STREAM) \
     } if (VECT.count() >= N) { \
-        const bserial::ByteArray& ba__from__raw__ = VECT.at(N - 1); \
-        BDataStream STREAM {(bserial::ByteArray*)&ba__from__raw__, \
-                            QIODevice::ReadOnly | QIODevice::Unbuffered}; \
+        const QByteArray& ba__from__raw__ = VECT.at(N - 1); \
+        bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
+                                    QIODevice::ReadOnly | QIODevice::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -469,6 +442,4 @@ typedef bserial::DataStream BDataStream;
 // преобразованием ее в QString
 #define B_QSTR_FROM_UTF8(STREAM, QSTR) \
     static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
-    utf8__to__qstr__.clear(); \
-    STREAM >> utf8__to__qstr__; \
-    QSTR = QString::fromUtf8(utf8__to__qstr__);
+    QSTR = QString::fromUtf8(communication::serialize::readByteArray(STREAM));

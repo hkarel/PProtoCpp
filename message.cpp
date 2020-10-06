@@ -24,6 +24,15 @@
 *****************************************************************************/
 
 #include "message.h"
+#include "serialize/byte_array.h"
+
+#ifdef PPROTO_JSON_SERIALIZE
+#include "serialize/json.h"
+#include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#endif
 
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
@@ -36,14 +45,6 @@
 #endif
 #ifdef PPMD_COMPRESSION
 #include "shared/qt/compression/qppmd.h"
-#endif
-
-#ifdef PPROTO_JSON_SERIALIZE
-#include "serialize/json.h"
-#include "rapidjson/document.h"
-#include "rapidjson/error/en.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
 #endif
 
 #define log_error_m   alog::logger().error   (alog_line_location, "Message")
@@ -178,7 +179,7 @@ void Message::compress(int level, Compression compression)
     }
 }
 
-void Message::decompress(BByteArray& content) const
+void Message::decompress(QByteArray& content) const
 {
     switch (compression())
     {
@@ -214,7 +215,7 @@ void Message::decompress()
 {
     if (compression() != Compression::None)
     {
-        BByteArray content;
+        QByteArray content;
         decompress(content);
         _content = content;
         _flag.compression = static_cast<quint32>(Compression::None);
@@ -253,9 +254,9 @@ void Message::initEmptyTraits() const
 }
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-BByteArray Message::toQBinary() const
+QByteArray Message::toQBinary() const
 {
-    BByteArray ba;
+    QByteArray ba;
     ba.reserve(size());
     {
         QDataStream stream {&ba, QIODevice::WriteOnly};
@@ -265,9 +266,9 @@ BByteArray Message::toQBinary() const
     return ba;
 }
 
-Message::Ptr Message::fromQBinary(const BByteArray& ba)
+Message::Ptr Message::fromQBinary(const QByteArray& ba)
 {
-    QDataStream stream {(BByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+    QDataStream stream {(QByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
     STREAM_INIT(stream);
     return fromDataStream(stream);
 }
@@ -327,14 +328,17 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
         stream >> m->_maxTimeLife;
 
     if (!m->_flag.contentIsEmpty)
-        stream >> m->_content;
+    {
+        //stream >> m->_content;
+        serialize::readByteArray(stream, m->_content);
+    }
 
     return m;
 }
 #endif // PPROTO_QBINARY_SERIALIZE
 
 #ifdef PPROTO_JSON_SERIALIZE
-BByteArray Message::toJson() const
+QByteArray Message::toJson() const
 {
     initEmptyTraits();
 
@@ -398,10 +402,10 @@ BByteArray Message::toJson() const
         writer.RawValue(_content.constData(), size_t(_content.length()), kObjectType);
     }
     writer.EndObject();
-    return BByteArray(buff.GetString());
+    return QByteArray(buff.GetString());
 }
 
-Message::Ptr Message::fromJson(const BByteArray& ba)
+Message::Ptr Message::fromJson(const QByteArray& ba)
 {
     Ptr m {new Message};
 

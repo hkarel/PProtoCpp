@@ -29,7 +29,8 @@
 
 #pragma once
 
-#include "serialize/sresult.h"
+#include "serialize/result.h"
+#include "serialize/byte_array.h"
 
 #include "shared/defmac.h"
 #include "shared/list.h"
@@ -99,6 +100,7 @@ public:
     Reader& operator& (double&);
     Reader& operator& (float&);
     Reader& operator& (QByteArray&);
+    Reader& operator& (SByteArray&);
     Reader& operator& (QString&);
     Reader& operator& (QUuid&);
     Reader& operator& (QDate&);
@@ -200,6 +202,7 @@ public:
     Writer& operator& (const double);
     Writer& operator& (const float);
     Writer& operator& (const QByteArray&);
+    Writer& operator& (const SByteArray&);
     Writer& operator& (const QString&);
     Writer& operator& (const QUuid&);
     Writer& operator& (const QDate&);

@@ -27,6 +27,7 @@
 
 #include "commands_pool.h"
 #include "logger_operators.h"
+#include "stream_init.h"
 #include "utils.h"
 
 #include "shared/break_point.h"
@@ -233,6 +234,9 @@ void Socket::setMessageFormat(SerializeFormat val)
     _messageFormat = val;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 void Socket::run()
 {
     { // Block for SpinLocker
@@ -256,7 +260,7 @@ void Socket::run()
     bool loopBreak = false;
     const int delay = 50;
 
-    BByteArray readBuff;
+    QByteArray readBuff;
     qint32 readBuffSize = 0;
     char* readBuffCur = 0;
     char* readBuffEnd = 0;
@@ -649,7 +653,7 @@ void Socket::run()
                                      << ". Command: " << CommandNameLog(message->command());
                     }
 
-                    BByteArray buff;
+                    QByteArray buff;
                     switch (_messageFormat)
                     {
 #ifdef PPROTO_QBINARY_SERIALIZE
@@ -662,8 +666,7 @@ void Socket::run()
                             buff = message->toJson();
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
-                                log_debug2_m << "Message json before sending: "
-                                             << (QByteArray)buff;
+                                log_debug2_m << "Message json before sending: " << buff;
                             }
                             break;
 #endif
@@ -806,8 +809,7 @@ void Socket::run()
                         case SerializeFormat::Json:
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
-                                log_debug2_m << "Message json received: "
-                                             << (QByteArray)readBuff;
+                                log_debug2_m << "Message json received: " << readBuff;
                             }
                             message = Message::fromJson(readBuff);
                             break;
@@ -965,6 +967,8 @@ void Socket::run()
 
     #undef CHECK_SOCKET_ERROR
 }
+
+#pragma GCC diagnostic pop
 
 void Socket::emitMessage(const communication::Message::Ptr& m)
 {
