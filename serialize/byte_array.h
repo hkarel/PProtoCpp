@@ -63,7 +63,10 @@ struct ByteArray : QByteArray
     }
 };
 
+// Выполняет чтение QByteArray из потока QDataStream. С точки зрения скорости
+// работы эта функция более оптимальна, чем потоковый оператор для QByteArray.
 QByteArray readByteArray(QDataStream&);
+
 inline void readByteArray(QDataStream& s, QByteArray& ba)
     {ba = readByteArray(s);}
 
