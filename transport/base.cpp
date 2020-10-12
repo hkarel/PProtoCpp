@@ -1134,6 +1134,7 @@ void send(const base::Socket::List& sockets,
                     s->send(message);
                     messageSended = true;
                 }
+
             if (!messageSended)
             {
                 alog::Line logLine =
@@ -1155,6 +1156,7 @@ void send(const base::Socket::List& sockets,
                     messageSended = true;
                     break;
                 }
+
             if (!messageSended)
                 log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                             << ". Not found socket with descriptor: " << message->socketDescriptor()
