@@ -40,7 +40,6 @@
 #include "shared/defmac.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
-#include "shared/qt/qhashex.h"
 #include "shared/qt/quuidex.h"
 
 #include <QtCore>
@@ -68,7 +67,7 @@ typedef qintptr SocketDescriptor;
 #else
 typedef int SocketDescriptor;
 #endif
-typedef QSetEx<SocketDescriptor> SocketDescriptorSet;
+typedef QSet<SocketDescriptor> SocketDescriptorSet;
 
 enum class SerializeFormat
 {

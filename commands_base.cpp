@@ -234,9 +234,9 @@ void CloseConnection::fromRaw(const bserial::RawVector& vect)
 
 namespace error {
 
-QHashEx<QUuidEx, int>& pool()
+QHash<QUuidEx, int>& pool()
 {
-    static QHashEx<QUuidEx, int> p;
+    static QHash<QUuidEx, int> p;
     return p;
 }
 

@@ -40,7 +40,6 @@
 #include "message.h"
 
 #include "shared/logger/logger.h"
-#include "shared/qt/qhashex.h"
 #include "shared/qt/quuidex.h"
 #include "shared/qt/version_number.h"
 
@@ -358,7 +357,7 @@ namespace error {
 /**
   Пул кодов ошибок, используется для проверки уникальности кодов ошибок
 */
-QHashEx<QUuidEx, int>& pool();
+QHash<QUuidEx, int>& pool();
 
 /**
   Проверяет уникальность кодов ошибок
