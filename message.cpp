@@ -105,14 +105,14 @@ Message::Ptr Message::cloneForAnswer() const
     return m;
 }
 
-SocketDescriptorSet& Message::destinationSocketDescriptors()
+SocketDescriptorSet& Message::destinationSockets()
 {
-    return _destinationSocketDescriptors;
+    return _destinationSockets;
 }
 
 void Message::appendDestinationSocket(SocketDescriptor descriptor)
 {
-    _destinationSocketDescriptors.insert(descriptor);
+    _destinationSockets.insert(descriptor);
 }
 
 #pragma GCC diagnostic push

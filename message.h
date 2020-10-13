@@ -216,7 +216,7 @@ public:
     // держит ни одного идентификатора и при этом параметр  socketDescriptor
     // не равен -1, то в этом случае сообщение  будет  отправлено  на  сокет
     // с идентификатором socketDescriptor
-    SocketDescriptorSet& destinationSocketDescriptors();
+    SocketDescriptorSet& destinationSockets();
 
     // Добавляет идентификатор сокета в коллекцию destinationSocketDescriptors
     void appendDestinationSocket(SocketDescriptor);
@@ -415,7 +415,7 @@ private:
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
     SocketDescriptor _socketDescriptor = {-1};
-    SocketDescriptorSet _destinationSocketDescriptors;
+    SocketDescriptorSet _destinationSockets;
     QString _socketName;
     qint64 _auxiliary = {0};
     mutable std::atomic_bool _processed = {false};

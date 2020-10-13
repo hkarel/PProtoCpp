@@ -1125,11 +1125,11 @@ void send(const base::Socket::List& sockets,
     }
     else
     {
-        if (!message->destinationSocketDescriptors().isEmpty())
+        if (!message->destinationSockets().isEmpty())
         {
             bool messageSended = false;
             for (base::Socket* s : sockets)
-                if (message->destinationSocketDescriptors().contains(s->socketDescriptor()))
+                if (message->destinationSockets().contains(s->socketDescriptor()))
                 {
                     s->send(message);
                     messageSended = true;
@@ -1140,7 +1140,7 @@ void send(const base::Socket::List& sockets,
                 alog::Line logLine =
                     log_error_m << "Impossible send message: " << CommandNameLog(message->command())
                                 << ". Not found sockets with descriptors:";
-                for (SocketDescriptor sd : message->destinationSocketDescriptors())
+                for (SocketDescriptor sd : message->destinationSockets())
                     logLine << " " << sd;
                 logLine << ". Message discarded";
             }
