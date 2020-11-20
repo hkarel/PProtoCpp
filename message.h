@@ -256,8 +256,9 @@ public:
     // Выполняет декомпрессию контента сообщения
     void decompress();
 
-    // Возвращает контент в сыром виде
-    QByteArray content() {return _content;}
+    // Возвращает контент в сыром виде. Если контент сжат, то предварительно
+    // будет выполнена декомпрессия
+    QByteArray content() const;
 
     // Удаляет контент сообщения
     void clearContent() {_content.clear();}

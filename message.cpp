@@ -222,6 +222,13 @@ void Message::decompress()
     }
 }
 
+QByteArray Message::content() const
+{
+    QByteArray content;
+    decompress(content);
+    return content;
+}
+
 int Message::size() const
 {
     int sz = sizeof(_id)
