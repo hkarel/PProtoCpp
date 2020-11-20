@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "stream_init.h"
 #include "serialize/byte_array.h"
 
 #include "shared/list.h"
@@ -41,6 +40,7 @@
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
+#include "shared/qt/stream_init.h"
 
 #include <QByteArray>
 #include <QDataStream>

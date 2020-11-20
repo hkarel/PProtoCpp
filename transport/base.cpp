@@ -27,7 +27,6 @@
 
 #include "commands_pool.h"
 #include "logger_operators.h"
-#include "stream_init.h"
 #include "utils.h"
 
 #include "shared/break_point.h"
@@ -35,6 +34,7 @@
 #include "shared/spin_locker.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/logger_operators.h"
+#include "shared/qt/stream_init.h"
 #include "shared/qt/version_number.h"
 
 #include <utility>
