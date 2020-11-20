@@ -41,10 +41,10 @@
 #include "shared/qt/logger_operators.h"
 
 #ifdef LZMA_COMPRESSION
-#include "shared/qt/compression/qlzma.h"
+#include "compression/qt/qlzma.h"
 #endif
 #ifdef PPMD_COMPRESSION
-#include "shared/qt/compression/qppmd.h"
+#include "compression/qt/qppmd.h"
 #endif
 
 #define log_error_m   alog::logger().error   (alog_line_location, "Message")
