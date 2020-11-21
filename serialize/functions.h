@@ -64,8 +64,8 @@ struct not_error_data : std::enable_if<!std::is_base_of<data::MessageError, T>::
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
-SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
-                           typename is_error_data<CommandDataT>::type = 0)
+SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
+                            typename is_error_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageError, CommandDataT>::value)
         return message->writeContent(data);
@@ -85,8 +85,8 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 }
 
 template<typename CommandDataT>
-SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
-                           typename is_failed_data<CommandDataT>::type = 0)
+SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
+                            typename is_failed_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageFailed, CommandDataT>::value)
         return message->writeContent(data);
@@ -98,14 +98,14 @@ SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
 }
 
 template<typename CommandDataT>
-auto messageWriteBProto(const CommandDataT& data, Message::Ptr& message, int, int)
+auto messageWriteQBinary(const CommandDataT& data, Message::Ptr& message, int, int)
      -> decltype(data.toRaw(), SResult())
 {
     return message->writeContent(data);
 }
 
 template<typename CommandDataT>
-auto messageWriteBProto(const CommandDataT& data, Message::Ptr&, long, long)
+auto messageWriteQBinary(const CommandDataT& data, Message::Ptr&, long, long)
      -> decltype(data.toRawNone(), SResult())
 {
     QString err = "Method %1::toRaw not exists";
@@ -115,10 +115,10 @@ auto messageWriteBProto(const CommandDataT& data, Message::Ptr&, long, long)
 }
 
 template<typename CommandDataT>
-SResult messageWriteBProto(const CommandDataT& data, Message::Ptr& message,
-                           typename not_error_data<CommandDataT>::type = 0)
+SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
+                            typename not_error_data<CommandDataT>::type = 0)
 {
-    return messageWriteBProto(data, message, 0, 0);
+    return messageWriteQBinary(data, message, 0, 0);
 }
 #endif // PPROTO_QBINARY_SERIALIZE
 
@@ -156,7 +156,7 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
     {
 #ifdef PPROTO_QBINARY_SERIALIZE
         case SerializeFormat::QBinary:
-            res = messageWriteBProto(data, message);
+            res = messageWriteQBinary(data, message);
             break;
 #endif
 #ifdef PPROTO_JSON_SERIALIZE
@@ -249,8 +249,8 @@ namespace detail {
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
-SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
-                          typename is_error_data<CommandDataT>::type = 0)
+SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
+                           typename is_error_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageError, CommandDataT>::value)
         return message->readContent(data);
@@ -262,8 +262,8 @@ SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
 }
 
 template<typename CommandDataT>
-SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
-                          typename is_failed_data<CommandDataT>::type = 0)
+SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
+                           typename is_failed_data<CommandDataT>::type = 0)
 {
     if (std::is_same<data::MessageFailed, CommandDataT>::value)
         return message->readContent(data);
@@ -275,14 +275,14 @@ SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
 }
 
 template<typename CommandDataT>
-auto messageReadBProto(const Message::Ptr& message, CommandDataT& data, int, int)
+auto messageReadQBinary(const Message::Ptr& message, CommandDataT& data, int, int)
      -> decltype(data.fromRaw(bserial::RawVector()), SResult())
 {
     return message->readContent(data);
 }
 
 template<typename CommandDataT>
-auto messageReadBProto(const Message::Ptr&, CommandDataT& data, long, long)
+auto messageReadQBinary(const Message::Ptr&, CommandDataT& data, long, long)
      -> decltype(data.fromRawNone(bserial::RawVector()), SResult())
 {
     QString err = "Method %1::fromRaw not exists";
@@ -292,10 +292,10 @@ auto messageReadBProto(const Message::Ptr&, CommandDataT& data, long, long)
 }
 
 template<typename CommandDataT>
-SResult messageReadBProto(const Message::Ptr& message, CommandDataT& data,
-                          typename not_error_data<CommandDataT>::type = 0)
+SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
+                           typename not_error_data<CommandDataT>::type = 0)
 {
-    return messageReadBProto(message, data, 0, 0);
+    return messageReadQBinary(message, data, 0, 0);
 }
 #endif // PPROTO_QBINARY_SERIALIZE
 
@@ -333,7 +333,7 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
     {
 #ifdef PPROTO_QBINARY_SERIALIZE
         case SerializeFormat::QBinary:
-            res = messageReadBProto(message, data);
+            res = messageReadQBinary(message, data);
             break;
 #endif
 #ifdef PPROTO_JSON_SERIALIZE
