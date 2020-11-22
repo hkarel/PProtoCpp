@@ -177,6 +177,14 @@ public:
     SerializeFormat messageFormat() const {return _messageFormat;}
     void setMessageFormat(SerializeFormat val);
 
+    // Определяет  будет  ли  сообщение  зашифровано  перед отправкой в сокет.
+    // Параметр возможно задать  только  для  клиентского  сокета.  На стороне
+    // сервера  признак  шифрования  задается  автоматически  в зависимости от
+    // режима шифрования подключившегося клиента. Параметр должен  быть  задан
+    // до момента установки TCP/Local соединения
+    bool encryption() const {return _encryption;}
+    void setEncryption(bool val);
+
 signals:
     // Сигнал эмитируется при получении сообщения
     void message(const communication::Message::Ptr&);
@@ -241,11 +249,23 @@ private:
     const SocketType _type;
     volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Unknown};
 
-    typedef QPair<SerializeFormat, QUuidEx /*сигнатура формата*/>  ProtocolSign;
+    struct ProtocolSign
+    {
+        // Формат сериализации сообщения (не контента)
+        SerializeFormat messageFormat = {SerializeFormat::QBinary};
+
+        // Признак шифрования
+        bool encryption = {false};
+
+        // Сигнатура формата
+        QUuidEx signature;
+    };
     QVector<ProtocolSign> _protocolMap;
 
     // Формат сериализации сообщения (не контента)
     SerializeFormat _messageFormat = {SerializeFormat::QBinary};
+
+    bool _encryption = {false};
 
     bool _serializeSignatureRead = {false};
     bool _serializeSignatureWrite = {false};

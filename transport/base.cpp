@@ -24,6 +24,7 @@
 *****************************************************************************/
 
 #include "transport/base.h"
+#include "serialize/byte_array.h"
 
 #include "commands_pool.h"
 #include "logger_operators.h"
@@ -39,6 +40,10 @@
 
 #include <utility>
 #include <stdexcept>
+
+#ifdef SODIUM_ENCRYPTION
+#include <sodium.h>
+#endif
 
 #define log_error_m   alog::logger().error   (alog_line_location, "Transport")
 #define log_warn_m    alog::logger().warn    (alog_line_location, "Transport")
@@ -152,11 +157,21 @@ Socket::Socket(SocketType type) : _type(type)
 {
     registrationQtMetatypes();
 
-#ifdef PPROTO_QBINARY_SERIALIZE
-    _protocolMap << qMakePair(SerializeFormat::QBinary, QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"});
+#if defined(PPROTO_QBINARY_SERIALIZE)
+    _protocolMap.append({SerializeFormat::QBinary, false,
+                         QUuidEx{"82c40273-4037-4f1b-a823-38123435b22f"}});
 #endif
-#ifdef PPROTO_JSON_SERIALIZE
-    _protocolMap << qMakePair(SerializeFormat::Json,    QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"});
+#if defined(PPROTO_JSON_SERIALIZE)
+    _protocolMap.append({SerializeFormat::Json, false,
+                         QUuidEx{"fea6b958-dafb-4f5c-b620-fe0aafbd47e2"}});
+#endif
+#if defined(PPROTO_QBINARY_SERIALIZE) && defined(SODIUM_ENCRYPTION)
+    _protocolMap.append({SerializeFormat::QBinary, true,
+                         QUuidEx{"6ae8b2c0-4fac-4ac5-ac87-138e0bc33a39"}});
+#endif
+#if defined(PPROTO_JSON_SERIALIZE) && defined(SODIUM_ENCRYPTION)
+    _protocolMap.append({SerializeFormat::Json, true,
+                         QUuidEx{"5980f24b-d518-4d38-b8dc-84e9f7aadaf3"}});
 #endif
 }
 
@@ -234,11 +249,56 @@ void Socket::setMessageFormat(SerializeFormat val)
     _messageFormat = val;
 }
 
+void Socket::setEncryption(bool val)
+{
+    if (socketIsConnected() || isListenerSide())
+        return;
+
+    _encryption = val;
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
 void Socket::run()
 {
+#ifdef SODIUM_ENCRYPTION
+    if (sodium_init() < 0)
+    {
+        log_error_m  << "Can't init libsodium";
+        return;
+    }
+
+    auto sodiumAllocKey = [](uchar*& key, size_t len, const char* msg) -> bool
+    {
+        key = (uchar*)sodium_malloc(len);
+        if (key == 0)
+        {
+            log_error_m << log_format(
+                "Can't alloc memory for %? key (errno: %?)", msg, errno);
+            return false;
+        }
+        return true;
+    };
+
+    uchar* socketPublicKey = 0;
+    uchar* socketSecretKey = 0;
+    uchar* externPublicKey = 0;
+    uchar* sharedSecretKey = 0;
+
+    if (!sodiumAllocKey(socketPublicKey, crypto_box_PUBLICKEYBYTES, "socket public"))
+        return;
+
+    if (!sodiumAllocKey(socketSecretKey, crypto_box_SECRETKEYBYTES, "socket secret"))
+        return;
+
+    if (!sodiumAllocKey(externPublicKey, crypto_box_PUBLICKEYBYTES, "external public"))
+        return;
+
+    if (!sodiumAllocKey(sharedSecretKey, crypto_box_BEFORENMBYTES,  "shared secret"))
+        return;
+#endif
+
     { // Block for SpinLocker
         SpinLocker locker(_socketLock); (void) locker;
         socketCreate();
@@ -262,15 +322,18 @@ void Socket::run()
 
     QByteArray readBuff;
     qint32 readBuffSize = 0;
-    char* readBuffCur = 0;
-    char* readBuffEnd = 0;
+    char*  readBuffCur  = 0;
+    char*  readBuffEnd  = 0;
 
     // Сигнатура формата сериализации
     QUuidEx serializeSignature;
-    for (const auto& sign : _protocolMap)
-        if (sign.first == _messageFormat)
-        {
-            serializeSignature = sign.second;
+    for (const ProtocolSign& sign : _protocolMap)
+        if (sign.messageFormat == _messageFormat
+#ifdef SODIUM_ENCRYPTION
+            && sign.encryption == _encryption
+#endif
+       ){
+            serializeSignature = sign.signature;
             break;
         }
 
@@ -287,8 +350,8 @@ void Socket::run()
     QUuidEx commandCloseConnectionId;
 
     _protocolCompatible = ProtocolCompatible::Unknown;
-    {
-        // Добавляем самое первое сообщение с информацией о совместимости
+
+    { //Добавляем самое первое сообщение с информацией о совместимости
         Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
         m->setPriority(Message::Priority::High);
         internalMessages.add(m.detach());
@@ -376,6 +439,67 @@ void Socket::run()
         }
     };
 
+#ifdef SODIUM_ENCRYPTION
+    auto readExternalPublicKey = [&](uchar* externalPublicKey, int timeout) -> bool
+    {
+        const qint64 keyBuffSize = crypto_box_PUBLICKEYBYTES + 2 * sizeof(quint16);
+        while (socketBytesAvailable() < keyBuffSize)
+        {
+            msleep(10);
+
+            // Пояснение к вызову функции socketWaitForReadyRead() с нулевым
+            // таймаутом: без этого  вызова  функция  socketBytesAvailable()
+            // всегда будет возвращать нулевое значение
+            socketWaitForReadyRead(0);
+            if (!socketIsConnectedInternal())
+            {
+                printSocketError(alog_line_location, "Transport");
+                return false;
+            }
+            if (timer.hasExpired(timeout))
+            {
+                log_error_m << log_format(
+                    "Encryption public key is not received within %? ms", timeout);
+                return false;
+            }
+        }
+
+        quint16 keySize;
+        if (socketRead((char*)&keySize, sizeof(quint16)) != sizeof(quint16))
+        {
+            log_error_m << "Failed read length of encryption public key";
+            return false;
+        }
+        if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+            keySize = qbswap(keySize);
+
+        quint16 reserved;
+        if (socketRead((char*)&reserved, sizeof(quint16)) != sizeof(quint16))
+        {
+            log_error_m << "Failed read reserved encryption value";
+            return false;
+        }
+        //if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+        //    keySize = qbswap(keySize);
+        (void) reserved;
+
+        const quint16 publicKeySize = crypto_box_PUBLICKEYBYTES;
+        if (keySize != publicKeySize)
+        {
+            log_error_m << log_format(
+                "Length mismatch for encryption public key: %?/%?",
+                keySize, publicKeySize);
+            return false;
+        }
+        if (socketRead((char*)externalPublicKey, publicKeySize) != publicKeySize)
+        {
+            log_error_m << "Failed read the encryption public key";
+            return false;
+        }
+        return true;
+    };
+#endif // SODIUM_ENCRYPTION
+
     #define CHECK_SOCKET_ERROR \
         if (!socketIsConnectedInternal()) \
         { \
@@ -399,11 +523,38 @@ void Socket::run()
             if (!_serializeSignatureWrite && !isListenerSide())
             {
                 QByteArray ba;
-                QDataStream stream {&ba, QIODevice::WriteOnly};
-                STREAM_INIT(stream);
-                stream << serializeSignature;
+                { //Block for QDataStream
+                    QDataStream stream {&ba, QIODevice::WriteOnly};
+                    STREAM_INIT(stream);
+                    stream << serializeSignature;
+                }
                 socketWrite(ba.constData(), 16);
                 CHECK_SOCKET_ERROR
+
+#ifdef SODIUM_ENCRYPTION
+                if (_encryption)
+                {
+                    if (crypto_box_keypair(socketPublicKey, socketSecretKey) != 0)
+                    {
+                        log_error_m << "Failed generate encrypt keys";
+                        loopBreak = true;
+                        break;
+                    }
+
+                    // Отправка публичного ключа шифрования
+                    quint16 publicKeySize = crypto_box_PUBLICKEYBYTES;
+                    if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+                        publicKeySize = qbswap(publicKeySize);
+
+                    quint16 reserved = 0;
+                    (void) reserved;
+
+                    socketWrite((const char*) &publicKeySize, sizeof(quint16));
+                    socketWrite((const char*) &reserved, sizeof(quint16));
+                    socketWrite((const char*) socketPublicKey, crypto_box_PUBLICKEYBYTES);
+                    CHECK_SOCKET_ERROR
+                }
+#endif
                 socketWaitForBytesWritten(delay);
                 CHECK_SOCKET_ERROR
 
@@ -423,7 +574,11 @@ void Socket::run()
 #endif
                     default:
                         logLine << "unknown";
+
                 }
+#ifdef SODIUM_ENCRYPTION
+                logLine << ". Encryption: " << (_encryption ? "yes" : "no");
+#endif
                 _serializeSignatureWrite = true;
             }
 
@@ -467,22 +622,26 @@ void Socket::run()
                 }
 
                 QUuidEx incomingSignature;
-                QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                STREAM_INIT(stream);
-                stream >> incomingSignature;
+                { //Block for QDataStream
+                    QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                    STREAM_INIT(stream);
+                    stream >> incomingSignature;
+                }
 
+                // Проверка сигнатуры на стороне сервера
                 if (isListenerSide())
                 {
-                    bool found = false;
-                    for (const auto& sign : _protocolMap)
-                        if (sign.second == incomingSignature)
+                    bool signatureFound = false;
+                    for (const ProtocolSign& sign : _protocolMap)
+                        if (sign.signature == incomingSignature)
                         {
-                            found = true;
-                            _messageFormat = sign.first;
+                            signatureFound = true;
+                            _messageFormat = sign.messageFormat;
+                            _encryption = sign.encryption;
                             break;
                         }
 
-                    if (found)
+                    if (signatureFound)
                     {
                         alog::Line logLine =
                             log_verbose_m << "Message serialize format: ";
@@ -501,22 +660,68 @@ void Socket::run()
                             default:
                                 logLine << "unknown";
                         }
+#ifdef SODIUM_ENCRYPTION
+                        logLine << ". Encryption: " << (_encryption ? "yes" : "no");
+#endif
                     }
-                    else
-                        incomingSignature = QUuidEx{};
 
-                    // Отправка сигнатуры протокола
+#ifdef SODIUM_ENCRYPTION
+                    if (signatureFound && _encryption)
+                    {
+                        if (!readExternalPublicKey(externPublicKey, timeout))
+                        {
+                            loopBreak = true;
+                            break;
+                        }
+                        if (crypto_box_keypair(socketPublicKey, socketSecretKey) != 0)
+                        {
+                            log_error_m << "Failed generate encrypt keys";
+                            loopBreak = true;
+                            break;
+                        }
+                        if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
+                        {
+                            log_error_m << "Failed generate shared secret key";
+                            loopBreak = true;
+                            break;
+                        }
+                    }
+#endif
+                    // Отправка сигнатуры протокола (ответ)
                     QByteArray ba;
-                    QDataStream stream {&ba, QIODevice::WriteOnly};
-                    STREAM_INIT(stream);
-                    stream << incomingSignature;
+                    { //Block for QDataStream
+                        QDataStream stream {&ba, QIODevice::WriteOnly};
+                        STREAM_INIT(stream);
+                        if (signatureFound)
+                            stream << incomingSignature;
+                        else
+                            stream << QUuidEx();
+                    }
                     socketWrite(ba.constData(), 16);
                     CHECK_SOCKET_ERROR
+
+#ifdef SODIUM_ENCRYPTION
+                    if (signatureFound && _encryption)
+                    {
+                        // Отправка публичного ключа шифрования (ответ)
+                        quint16 publicKeySize = crypto_box_PUBLICKEYBYTES;
+                        if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+                            publicKeySize = qbswap(publicKeySize);
+
+                        quint16 reserved = 0;
+                        (void) reserved;
+
+                        socketWrite((const char*) &publicKeySize, sizeof(quint16));
+                        socketWrite((const char*) &reserved, sizeof(quint16));
+                        socketWrite((const char*) socketPublicKey, crypto_box_PUBLICKEYBYTES);
+                        CHECK_SOCKET_ERROR
+                    }
+#endif
                     socketWaitForBytesWritten(delay);
                     CHECK_SOCKET_ERROR
                     _serializeSignatureWrite = true;
 
-                    if (!found)
+                    if (!signatureFound)
                     {
                         log_error_m << "Incompatible serialize signatures";
                         msleep(200);
@@ -524,7 +729,8 @@ void Socket::run()
                         break;
                     }
                 }
-                else // !isListenerSide()
+                // Проверка сигнатуры на стороне клиента ( !isListenerSide() )
+                else
                 {
                     if (serializeSignature != incomingSignature)
                     {
@@ -532,11 +738,39 @@ void Socket::run()
                         loopBreak = true;
                         break;
                     }
+
+#ifdef SODIUM_ENCRYPTION
+                    if (_encryption)
+                    {
+                        if (!readExternalPublicKey(externPublicKey, timeout))
+                        {
+                            loopBreak = true;
+                            break;
+                        }
+
+                        // Здесь, в отличии от стороны сервера, не генерируем
+                        // публичный и приватный ключи, так как это уже  было
+                        // сделано ранее
+
+                        if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
+                        {
+                            log_error_m << "Failed generate shared secret key";
+                            loopBreak = true;
+                            break;
+                        }
+                    }
+#endif
                 }
                 _serializeSignatureRead = true;
-            }
+
+            } // if (!_serializeSignatureRead)
+
+            // TODO Скорее всего это условие здесь не нужно, проверить
             if (loopBreak)
+            {
+                break_point
                 break;
+            }
 
             socketWaitForReadyRead(0);
             CHECK_SOCKET_ERROR
@@ -674,27 +908,109 @@ void Socket::run()
                             log_error_m << "Unsupported message serialize format";
                             prog_abort();
                     }
+
                     qint32 buffSize = buff.size();
+                    quint8 isCompressed = false;
 
                     if (!isLocal()
                         && message->compression() == Message::Compression::None
                         && buffSize > _compressionSize
                         && _compressionLevel != 0)
                     {
-                        qint32 buffSizePrev = buffSize;
                         buff = qCompress(buff, _compressionLevel);
-                        buffSize = buff.size();
+                        isCompressed = true;
 
                         if (alog::logger().level() == alog::Level::Debug2)
                         {
                             log_debug2_m << "Message compressed"
-                                         << ". Command: " << CommandNameLog(message->command())
-                                         << " (prev size: " << buffSizePrev
-                                         << "; new size: " << buffSize << ")";
+                                         << ". Prev size: " << buffSize
+                                         << ". New size: " << buff.size()
+                                         << ". Command: " << CommandNameLog(message->command());
                         }
+                    }
+
+#ifdef SODIUM_ENCRYPTION
+                    if (_encryption)
+                    {
+                        buffSize = buff.size()
+                                 + sizeof(quint32) // Поле для хранения размера buff в QDataStream
+                                 + sizeof(quint8); // Поле для хранения isCompressed в QDataStream
+
+                        const qint32 paddignBlock = 16;
+                        quint32 paddingCount = buffSize / paddignBlock;
+                        quint32 paddingBuffSize = (paddingCount + 1) * paddignBlock;
+                        quint32 paddingDiffSize = paddingBuffSize - buffSize;
+
+                        // Учитываем поле для хранения размера paddingDiff в QDataStream
+                        if (paddingDiffSize <= sizeof(quint32))
+                        {
+                            paddingBuffSize += paddignBlock;
+                            paddingDiffSize  = paddingBuffSize - buffSize;
+                        }
+                        paddingDiffSize -= sizeof(quint32);
+
+                        QByteArray paddingDiff;
+                        paddingDiff.resize(paddingDiffSize);
+                        randombytes_buf((char*)paddingDiff.constData(), paddingDiffSize);
+
+                        QByteArray paddingBuff;
+                        paddingBuff.reserve(paddingBuffSize);
+
+                        { //Block for QDataStream
+                            QDataStream stream {&paddingBuff, QIODevice::WriteOnly};
+                            STREAM_INIT(stream);
+                            stream << isCompressed;
+                            stream << buff;
+                            stream << paddingDiff;
+                        }
+
+                        QByteArray mac;
+                        mac.resize(crypto_box_MACBYTES);
+
+                        QByteArray nonce;
+                        nonce.resize(crypto_box_NONCEBYTES);
+                        randombytes_buf((char*)nonce.constData(), crypto_box_NONCEBYTES);
+
+                        int res = crypto_box_detached_afternm((uchar*) paddingBuff.constData(), // cript
+                                                              (uchar*) mac.constData(),         // mac
+                                                              (uchar*) paddingBuff.constData(), // message
+                                                                       paddingBuff.size(),      // message size
+                                                              (uchar*) nonce.constData(),       // nonce
+                                                              (uchar*) sharedSecretKey);
+                        if (res != 0)
+                        {
+                            log_error_m << "Failed message encryption";
+                            loopBreak = true;
+                            break;
+                        }
+
+                        buffSize = mac.size() + sizeof(quint32)
+                                 + nonce.size() + sizeof(quint32)
+                                 + paddingBuff.size() + sizeof(quint32);
+                        buff.reserve(buffSize);
+
+                        { //Block for QDataStream
+                            QDataStream stream {&buff, QIODevice::WriteOnly};
+                            STREAM_INIT(stream);
+                            stream << mac;
+                            stream << nonce;
+                            stream << paddingBuff;
+                        }
+
+                        // Уточняем размер буфера
+                        buffSize = buff.size();
+                    }
+                    else
+#endif // SODIUM_ENCRYPTION
+                    //--- Без шифрования ---
+                    {
+                        // Уточняем размер буфера
+                        buffSize = buff.size();
+
                         // Передаем признак сжатия потока через знаковый бит
                         // параметра buffSize
-                        buffSize *= -1;
+                        if (isCompressed)
+                            buffSize *= -1;
                     }
 
                     if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
@@ -788,8 +1104,51 @@ void Socket::run()
                     || timer.hasExpired(3 * delay))
                     break;
 
-                if (readBuffSize < 0)
-                    readBuff = qUncompress(readBuff);
+#ifdef SODIUM_ENCRYPTION
+                if (_encryption)
+                {
+                    QByteArray mac;
+                    QByteArray nonce;
+                    QByteArray paddingBuff;
+
+                    { //Block for QDataStream
+                        QDataStream stream {&readBuff, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                        STREAM_INIT(stream);
+                        mac = serialize::readByteArray(stream);
+                        nonce = serialize::readByteArray(stream);
+                        paddingBuff = serialize::readByteArray(stream);
+                    }
+
+                    int res = crypto_box_open_detached_afternm((uchar*) paddingBuff.constData(), // message
+                                                               (uchar*) paddingBuff.constData(), // cript
+                                                               (uchar*) mac.constData(),         // mac
+                                                                        paddingBuff.size(),      // cript size
+                                                               (uchar*) nonce.constData(),       // nonce
+                                                               (uchar*) sharedSecretKey);
+                    if (res != 0)
+                    {
+                        log_error_m << "Failed message decryption";
+                        loopBreak = true;
+                        break;
+                    }
+
+                    quint8 isCompressed;
+                    { //Block for QDataStream
+                        QDataStream stream {&paddingBuff, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                        STREAM_INIT(stream);
+                        stream >> isCompressed;
+                        readBuff = serialize::readByteArray(stream);
+                    }
+                    if (isCompressed)
+                        readBuff = qUncompress(readBuff);
+                }
+                else
+#endif // SODIUM_ENCRYPTION
+                //--- Без шифрования ---
+                {
+                    if (readBuffSize < 0)
+                        readBuff = qUncompress(readBuff);
+                }
 
                 // Обнуляем размер буфера для того, чтобы можно было начать
                 // считывать новое сообщение.
@@ -877,7 +1236,7 @@ void Socket::run()
 
                 socketWaitForReadyRead(0);
                 CHECK_SOCKET_ERROR
-            } // while (socketBytesAvailable() || readBuffSize)
+            }
             if (loopBreak)
                 break;
 
@@ -964,6 +1323,18 @@ void Socket::run()
         socketClose();
     }
     _initSocketDescriptor = {-1};
+
+#ifdef SODIUM_ENCRYPTION
+    sodium_memzero(socketPublicKey, crypto_box_PUBLICKEYBYTES);
+    sodium_memzero(socketSecretKey, crypto_box_PUBLICKEYBYTES);
+    sodium_memzero(externPublicKey, crypto_box_PUBLICKEYBYTES);
+    sodium_memzero(sharedSecretKey, crypto_box_BEFORENMBYTES );
+
+    sodium_free(socketPublicKey);
+    sodium_free(socketSecretKey);
+    sodium_free(externPublicKey);
+    sodium_free(sharedSecretKey);
+#endif
 
     #undef CHECK_SOCKET_ERROR
 }

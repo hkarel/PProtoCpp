@@ -258,7 +258,7 @@ struct Reserve
     Reserve(QByteArray& ba) : val(ba) {}
     QByteArray& val;
     void size() {}
-    void size(int sz) {val.reserve(sz);}
+    void size(int sz) {val.reserve(sz + sizeof(quint32));}
 };
 
 } // namespace qbinary
