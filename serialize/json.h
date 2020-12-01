@@ -396,12 +396,11 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
 {
     static_assert(std::is_base_of<clife_base, T>::value,
                   "Class T must be derived from clife_base");
-
     if (!error())
     {
         if (_stack.top().value->IsNull())
         {
-            ptr = clife_ptr<T>();
+            ptr.reset();
             next();
         }
         else if (_stack.top().value->IsObject())

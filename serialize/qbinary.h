@@ -133,7 +133,7 @@ QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
     s >> empty;
     if (empty)
     {
-        ptr = clife_ptr<T>();
+        ptr.reset();
         return s;
     }
     if (ptr.empty())
