@@ -85,6 +85,9 @@ private:
     void messageInit(Message::Ptr&) override;
     void fillUnknownMessage(const Message::Ptr&, data::Unknown&) override;
 
+    void printHostInfo(alog::Line&);
+    void printHostError(alog::Line&);
+
 private:
     simple_ptr<QTcpSocket> _socket;
     HostPoint _peerPoint;

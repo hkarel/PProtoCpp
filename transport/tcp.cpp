@@ -53,14 +53,6 @@ namespace tcp {
 
 //---------------------------------- Socket ----------------------------------
 
-void printHostInfo(alog::Line& logLine, const QString& name, const HostPoint& peerPoint)
-{
-    if (!name.isEmpty())
-        logLine << log_format(" '%?'. Host: %?", name, peerPoint);
-    else
-        logLine << log_format(" host: %?", peerPoint);
-}
-
 bool Socket::init(const HostPoint& peerPoint)
 {
     if (isRunning())
@@ -85,7 +77,7 @@ bool Socket::socketInit()
     {
         { //Block for alog::Line
             alog::Line logLine = log_verbose_m << "Try connect to";
-            printHostInfo(logLine, name(), _peerPoint);
+            printHostInfo(logLine);
         }
 
         connectDirection = "Connected to";
@@ -93,7 +85,7 @@ bool Socket::socketInit()
         if (!_socket->waitForConnected(3*1000 /*3 сек*/))
         {
             alog::Line logLine = log_error_m << "Failed connect to";
-            printHostInfo(logLine, name(), _peerPoint);
+            printHostInfo(logLine);
             logLine << ". Error code: " << int(_socket->error())
                     << ". Detail: " << _socket->errorString();
             return false;
@@ -101,11 +93,13 @@ bool Socket::socketInit()
     }
     else
     {
-        connectDirection = "Connection from";
+        connectDirection = (!name().isEmpty())
+                           ? "Connection"
+                           : "Connection from";
         if (!_socket->setSocketDescriptor(initSocketDescriptor()))
         {
             alog::Line logLine = log_error_m << "Failed set socket descriptor";
-            printHostInfo(logLine, name(), _peerPoint);
+            printHostError(logLine);
             logLine << ". Error code: " << int(_socket->error())
                     << ". Detail: " << _socket->errorString();
             return false;
@@ -121,21 +115,21 @@ bool Socket::socketInit()
     catch (std::exception& e)
     {
         alog::Line logLine = log_error_m << "Failed socket init";
-        printHostInfo(logLine, name(), _peerPoint);
+        printHostError(logLine);
         logLine << ". Detail: " << e.what();
         return false;
     }
     catch (...)
     {
         alog::Line logLine = log_error_m << "Failed socket init";
-        printHostInfo(logLine, name(), _peerPoint);
+        printHostError(logLine);
         logLine << ". Unknown error";
         return false;
     }
 
     { //Block for alog::Line
         alog::Line logLine = log_verbose_m << connectDirection;
-        printHostInfo(logLine, name(), _peerPoint);
+        printHostInfo(logLine);
         logLine << ". Socket descriptor: " << _printSocketDescriptor;
     }
     return true;
@@ -222,30 +216,39 @@ bool Socket::socketWaitForBytesWritten(int msecs)
 
 void Socket::socketClose()
 {
+    SocketDescriptor socketDescriptor = -1;
     try
     {
         if (_socket->isValid()
             && _socket->state() != QAbstractSocket::UnconnectedState)
         {
-            alog::Line logLine = log_verbose_m << "Disconnected from";
-            printHostInfo(logLine, name(), _peerPoint);
-            logLine << ". Socket descriptor: " << _socket->socketDescriptor();
+            socketDescriptor = _socket->socketDescriptor();
 
             _socket->disconnectFromHost();
             if (_socket->state() != QAbstractSocket::UnconnectedState)
                 _socket->waitForDisconnected(1000);
+
+            alog::Line logLine = log_verbose_m << "Disconnected";
+            printHostInfo(logLine);
+            logLine << ". Socket descriptor: " << socketDescriptor;
         }
         _socket->close();
     }
     catch (std::exception& e)
     {
-        log_error_m << "Detail: " << e.what();
+        alog::Line logLine = log_error_m << "Failed socket close";
+        printHostError(logLine);
+        logLine << ". Socket descriptor: " << socketDescriptor;
+        logLine << ". Detail: " << e.what();
         alog::logger().flush();
         alog::logger().waitingFlush();
     }
     catch (...)
     {
-        log_error_m << "Unknown error";
+        alog::Line logLine = log_error_m << "Failed socket close";
+        printHostError(logLine);
+        logLine << ". Socket descriptor: " << socketDescriptor;
+        logLine << ". Unknown error";
         alog::logger().flush();
         alog::logger().waitingFlush();
     }
@@ -267,6 +270,22 @@ void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unkn
     unknown.socketName.clear();
     unknown.address = _socket->peerAddress();
     unknown.port = _socket->peerPort();
+}
+
+void Socket::printHostInfo(alog::Line& logLine)
+{
+    if (!name().isEmpty())
+        logLine << log_format(" '%?'. Host: %?", name(), _peerPoint);
+    else
+        logLine << log_format(" host: %?", _peerPoint);
+}
+
+void Socket::printHostError(alog::Line& logLine)
+{
+    if (!name().isEmpty())
+        logLine << log_format(" '%?'", name());
+
+    logLine << log_format(". Host: %?", _peerPoint);
 }
 
 //--------------------------------- Listener ---------------------------------
