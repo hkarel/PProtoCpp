@@ -228,7 +228,10 @@ void Socket::socketClose()
             if (_socket->state() != QAbstractSocket::UnconnectedState)
                 _socket->waitForDisconnected(1000);
 
-            alog::Line logLine = log_verbose_m << "Disconnected";
+            const char* logMsg = (isListenerSide())
+                                 ? "Disconnected"
+                                 : "Disconnected from";
+            alog::Line logLine = log_verbose_m << logMsg;
             printHostInfo(logLine);
             logLine << ". Socket descriptor: " << socketDescriptor;
         }
