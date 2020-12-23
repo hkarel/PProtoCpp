@@ -303,16 +303,29 @@ void Socket::run()
                     || timer.hasExpired(3 * delay))
                     break;
 
-                if (_socket->pendingDatagramSize() < qint64(sizeof(udpSignature)))
-                    continue;
+                // Функция pendingDatagramSize() некорректно работает в windows,
+                // поэтому размер  датаграммы  проверяем  после  чтения  данных
+                // из сокета
+                // if (_socket->pendingDatagramSize() < qint64(sizeof(udpSignature)))
+                //    continue;
 
-                QByteArray datagram;
+                qint64 datagramSize = _socket->pendingDatagramSize();
+                if (datagramSize < 0)
+                    datagramSize = 0;
+
                 QHostAddress addr;
                 quint16 port;
-                qint64 datagramSize = _socket->pendingDatagramSize();
+                QByteArray datagram;
                 datagram.resize(datagramSize);
                 qint64 res = _socket->readDatagram((char*)datagram.constData(),
                                                    datagramSize, &addr, &port);
+
+                if (datagramSize < qint64(sizeof(udpSignature)))
+                {
+                    log_error_m << "Datagram size less sizeof(udpSignature)"
+                                << ". Source: " << addr << ":" << port;
+                    continue;
+                }
                 if (res != datagramSize)
                 {
                     log_error_m << "Failed datagram size"
