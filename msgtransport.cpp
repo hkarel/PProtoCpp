@@ -611,7 +611,7 @@ bool CustomSrvCommunicator::initialize(const QHostAddress& address, quint16 port
 
 void CustomSrvCommunicator::send_(const ProcMessageCPtr& msg)
 {
-    QMutexLocker locker(&m_socketLock);
+    QMutexLocker locker {&m_socketLock};
     if (m_sockets.count() == 0)
         return;
 
@@ -713,13 +713,13 @@ void CustomSrvCommunicator::send(const PacketProcMessage& pmsg) const
 
 void CustomSrvCommunicator::addSocket(MsgTcpSocket* socket)
 {
-    QMutexLocker locker(&m_socketLock);
+    QMutexLocker locker {&m_socketLock};
     m_sockets << MsgTcpSocketCPtr(socket);
 }
 
 void CustomSrvCommunicator::delSocket(MsgTcpSocket* socket)
 {
-    QMutexLocker locker(&m_socketLock);
+    QMutexLocker locker {&m_socketLock};
     for (int i = 0; i < m_sockets.count(); ++i)
         if (m_sockets.at(i).get() == socket)
             m_sockets.removeAt(i--);
@@ -729,7 +729,7 @@ MsgTcpSocket* CustomSrvCommunicator::getAdminMode(QHostAddress& addr/*, quint16&
 {
     //_CrtDbgBreak();
 
-    QMutexLocker locker(&m_socketLock);
+    QMutexLocker locker {&m_socketLock};
     for (int i = 0; i < m_sockets.count(); ++i) {
         MsgTcpSocket* socket_ = m_sockets.at(i).get();
         if (socket_->isAdminMode()) {

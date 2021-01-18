@@ -94,32 +94,32 @@ void Socket::waitBinding(int timeout)
 
 bool Socket::isBound() const
 {
-    SpinLocker locker(_socketLock); (void) locker;
+    SpinLocker locker {_socketLock}; (void) locker;
     return (_socket && (_socket->state() == QAbstractSocket::BoundState));
 }
 
 SocketDescriptor Socket::socketDescriptor() const
 {
-    SpinLocker locker(_socketLock); (void) locker;
+    SpinLocker locker {_socketLock}; (void) locker;
     return (_socket) ? _socket->socketDescriptor() : -1;
 }
 
 QList<QHostAddress> Socket::discardAddresses() const
 {
-    SpinLocker locker(_discardAddressesLock); (void) locker;
+    SpinLocker locker {_discardAddressesLock}; (void) locker;
     return _discardAddresses;
 }
 
 void Socket::setDiscardAddresses(const QList<QHostAddress>& val)
 {
-    SpinLocker locker(_discardAddressesLock); (void) locker;
+    SpinLocker locker {_discardAddressesLock}; (void) locker;
     _discardAddresses = val;
 }
 
 void Socket::run()
 {
     { //Block for SpinLocker
-        SpinLocker locker(_socketLock); (void) locker;
+        SpinLocker locker {_socketLock}; (void) locker;
         _socket = simple_ptr<QUdpSocket>(new QUdpSocket(0));
     }
     if (!_socket->bind(_bindPoint.address(), _bindPoint.port(), _bindMode))
@@ -181,7 +181,7 @@ void Socket::run()
                 else if (sleepCount > 200) condDelay = 3;  // После 200 ms
 
                 { //Block for QMutexLocker
-                    QMutexLocker locker(&_messagesLock); (void) locker;
+                    QMutexLocker locker {&_messagesLock}; (void) locker;
                     _messagesCond.wait(&_messagesLock, condDelay);
                 }
             }
@@ -190,7 +190,7 @@ void Socket::run()
 
             QList<QHostAddress> discardAddresses;
             { //Block for SpinLocker
-                SpinLocker locker(_discardAddressesLock); (void) locker;
+                SpinLocker locker {_discardAddressesLock}; (void) locker;
                 discardAddresses = _discardAddresses;
             }
 
@@ -205,7 +205,7 @@ void Socket::run()
                 if (message.empty()
                     && messagesCount() != 0)
                 {
-                    QMutexLocker locker(&_messagesLock); (void) locker;
+                    QMutexLocker locker {&_messagesLock}; (void) locker;
                     if (!_messagesHigh.empty())
                         message.attach(_messagesHigh.release(0));
 
@@ -405,7 +405,7 @@ void Socket::run()
                                         << ". Remote host:" << unknown.address << ":" << unknown.port
                                         << ". Socket descriptor: " << unknown.socketDescriptor;
 
-                            SpinLocker locker(_unknownCommandsLock); (void) locker;
+                            SpinLocker locker {_unknownCommandsLock}; (void) locker;
                             _unknownCommands.insert(unknown.commandId);
                         }
                         else
