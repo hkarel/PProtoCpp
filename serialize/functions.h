@@ -71,16 +71,13 @@ SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
         return message->writeContent(data);
 
     if (std::is_base_of<error::Trait, CommandDataT>::value)
-    {
-        // Отладить
-        break_point
-
         return message->writeContent(data);
-    }
 
     // Отладить
     break_point
 
+    // Вариант расширенного сообщения об ошибке, когда структура CommandDataT
+    // унаследована от data::MessageError
     return message->writeContent(static_cast<const data::MessageError&>(data), data);
 }
 
@@ -94,6 +91,8 @@ SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
     // Отладить
     break_point
 
+    // Вариант расширенного сообщения о неудаче, когда структура CommandDataT
+    // унаследована от data::MessageFailed
     return message->writeContent(static_cast<const data::MessageFailed&>(data), data);
 }
 
