@@ -52,6 +52,9 @@
 #include <QList>
 #include <QVector>
 #include <QStack>
+
+#include <list>
+#include <vector>
 #include <type_traits>
 
 namespace communication {
@@ -62,7 +65,7 @@ using namespace rapidjson;
 class Reader;
 
 namespace detail {
-template <typename T> Reader& readQArray(Reader&, T&);
+template <typename T> Reader& readArray(Reader&, T&);
 }
 
 class Reader
@@ -112,6 +115,9 @@ public:
     template <typename T> Reader& operator& (QVector<T>&);
     template <typename T> Reader& operator& (clife_ptr<T>&);
     template <int N>      Reader& operator& (QUuidT<N>&);
+
+    template <typename T> Reader& operator& (std::list<T>&);
+    template <typename T> Reader& operator& (std::vector<T>&);
 
     template<typename T, typename Compare, typename Allocator>
     Reader& operator& (lst::List<T, Compare, Allocator>&);
@@ -168,7 +174,7 @@ private:
     quint64 _jsonIndex = {0};
     QByteArray _jsonContent;
 
-    template <typename T> friend Reader& detail::readQArray(Reader&, T&);
+    template <typename T> friend Reader& detail::readArray(Reader&, T&);
 };
 
 class Writer
@@ -214,6 +220,9 @@ public:
     template <typename T> Writer& operator& (const QVector<T>&);
     template <typename T> Writer& operator& (const clife_ptr<T>&);
     template <int N>      Writer& operator& (const QUuidT<N>&);
+
+    template <typename T> Writer& operator& (const std::list<T>&);
+    template <typename T> Writer& operator& (const std::vector<T>&);
 
     template<typename T, typename Compare, typename Allocator>
     Writer& operator& (const lst::List<T, Compare, Allocator>&);
@@ -334,7 +343,7 @@ Writer& Writer::operator& (const T& ct)
  namespace detail {
 
 template <typename T>
-Reader& readQArray(Reader& r, T& arr)
+Reader& readArray(Reader& r, T& arr)
 {
     if (r.error())
         return r;
@@ -346,49 +355,49 @@ Reader& readQArray(Reader& r, T& arr)
     {
         typename T::value_type t;
         r & t;
-        arr.append(t);
+        arr.push_back(t);
     }
     return r.endArray();
 }
 
 template <typename T>
-Writer& writeQArray(Writer& w, const T& arr)
+Writer& writeArray(Writer& w, const T& arr)
 {
     w.startArray();
-    for (int i = 0; i < arr.count(); ++i)
-         w & arr.at(i);
+    for (const auto& val : arr)
+         w & val;
 
     return w.endArray();
 }
 
- } // namespace detail
+} // namespace detail
 
 template <typename T>
 Reader& Reader::operator& (QList<T>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return detail::readQArray(r, l);
+    return detail::readArray(r, l);
 }
 
 template <typename T>
 Writer& Writer::operator& (const QList<T>& l)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return detail::writeQArray(w, l);
+    return detail::writeArray(w, l);
 }
 
 template <typename T>
 Reader& Reader::operator& (QVector<T>& v)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return detail::readQArray(r, v);
+    return detail::readArray(r, v);
 }
 
 template <typename T>
 Writer& Writer::operator& (const QVector<T>& v)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return detail::writeQArray(w, v);
+    return detail::writeArray(w, v);
 }
 
 template <typename T>
@@ -459,6 +468,34 @@ Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& list)
         this->operator& (list[i]);
 
     return endArray();
+}
+
+template <typename T>
+Reader& Reader::operator& (std::list<T>& l)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readArray(r, l);
+}
+
+template <typename T>
+Writer& Writer::operator& (const std::list<T>& l)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writeArray(w, l);
+}
+
+template <typename T>
+Reader& Reader::operator& (std::vector<T>& v)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readArray(r, v);
+}
+
+template <typename T>
+Writer& Writer::operator& (const std::vector<T>& v)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writeArray(w, v);
 }
 
 //-------------------------------- Functions ---------------------------------
