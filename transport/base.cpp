@@ -1377,6 +1377,18 @@ Socket::List Listener::sockets() const
     return sockets;
 }
 
+int Listener::socketsCount() const
+{
+    QMutexLocker locker {&_socketsLock}; (void) locker;
+
+    int count = 0;
+    for (Socket* s : _sockets)
+        if (s->isRunning())
+            ++count;
+
+    return count;
+}
+
 void Listener::send(const Message::Ptr& message,
                     const SocketDescriptorSet& excludeSockets) const
 {
