@@ -61,6 +61,9 @@ public:
     // значение 2
     quint32 commandExists(const QUuidEx& command) const;
 
+    // Возвращает TRUE когда для команды установлен признак singlproc
+    bool commandIsSinglproc(const QUuidEx& command) const;
+
     // Возвращает TRUE когда для команды установлен признак multiproc
     bool commandIsMultiproc(const QUuidEx& command) const;
 
