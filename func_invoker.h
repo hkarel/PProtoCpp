@@ -57,11 +57,11 @@ class FunctionInvoker
 
         struct Compare
         {
-            int operator() (const BaseItem* item1, const BaseItem* item2, void*) const
+            int operator() (const BaseItem* item1, const BaseItem* item2) const
             {
                 return QUuidEx::compare(item1->command, item2->command);
             }
-            int operator() (const QUuidEx* command, const BaseItem* item2, void*) const
+            int operator() (const QUuidEx* command, const BaseItem* item2) const
             {
                 return QUuidEx::compare(*command, item2->command);
             }
