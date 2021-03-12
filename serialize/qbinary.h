@@ -285,10 +285,10 @@ namespace bserial = communication::serialize::qbinary;
     \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                               typename derived_from_clife_base<T>::type); \
+                                               typename bserial::derived_from_clife_base<T>::type); \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                               typename not_derived_from_clife_base<T>::type); \
+                                               typename bserial::not_derived_from_clife_base<T>::type); \
     template<typename T, typename Compare, typename Allocator> \
     friend QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
 
