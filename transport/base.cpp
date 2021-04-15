@@ -353,7 +353,6 @@ void Socket::run()
 
     { //Добавляем самое первое сообщение с информацией о совместимости
         Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
-        m->setPriority(Message::Priority::High);
         internalMessages.add(m.detach());
     }
 
@@ -405,7 +404,6 @@ void Socket::run()
                               << ". Detail: " << closeConnection.description;
 
                 Message::Ptr m = createMessage(closeConnection, {_messageFormat});
-                m->setPriority(Message::Priority::High);
                 internalMessages.add(m.detach());
             }
         }
@@ -429,7 +427,6 @@ void Socket::run()
 
             // Отправляем ответ
             Message::Ptr answer = message->cloneForAnswer();
-            answer->setPriority(Message::Priority::High);
             internalMessages.add(answer.detach());
         }
         else if (message->type() == Message::Type::Answer
@@ -1285,7 +1282,6 @@ void Socket::run()
                             data::Unknown unknown;
                             fillUnknownMessage(m, unknown);
                             Message::Ptr mUnknown = createMessage(unknown, {_messageFormat});
-                            mUnknown->setPriority(Message::Priority::High);
                             internalMessages.add(mUnknown.detach());
 
                             alog::Line logLine = log_error_m
