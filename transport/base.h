@@ -175,7 +175,7 @@ public:
     // клиентского сокета. Формат сериализации должен быть задан до момента
     // установки TCP/Local соединения
     SerializeFormat messageFormat() const {return _messageFormat;}
-    void setMessageFormat(SerializeFormat val);
+    void setMessageFormat(SerializeFormat);
 
     // Определяет  будет  ли  сообщение  зашифровано  перед отправкой в сокет.
     // Параметр возможно задать  только  для  клиентского  сокета.  На стороне
@@ -183,7 +183,14 @@ public:
     // режима шифрования подключившегося клиента. Параметр должен  быть  задан
     // до момента установки TCP/Local соединения
     bool encryption() const {return _encryption;}
-    void setEncryption(bool val);
+    void setEncryption(bool);
+
+    // Определяет значение таймаута (в секундах)  для  команды  EchoConnection.
+    // Если значение таймаута меньше или равно 0 команда EchoConnection отправ-
+    // ляться не будет.  Рекомендуемый интервал значений 5-10 секунд. Параметр
+    // должен быть задан до момента установки TCP соединения
+    int echoTimeout() const;
+    void setEchoTimeout(int);
 
 signals:
     // Сигнал эмитируется при получении сообщения
@@ -266,6 +273,7 @@ private:
     SerializeFormat _messageFormat = {SerializeFormat::QBinary};
 
     bool _encryption = {false};
+    int  _echoTimeout = {0};
 
     bool _serializeSignatureRead = {false};
     bool _serializeSignatureWrite = {false};

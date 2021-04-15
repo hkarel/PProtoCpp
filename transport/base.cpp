@@ -257,6 +257,19 @@ void Socket::setEncryption(bool val)
     _encryption = val;
 }
 
+int Socket::echoTimeout() const
+{
+    return _echoTimeout / 1000; // переводим в секунды
+}
+
+void Socket::setEchoTimeout(int val)
+{
+    if (socketIsConnected() || isListenerSide())
+        return;
+
+    _echoTimeout = val * 1000; // переводим в миллисекунды
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
@@ -297,7 +310,7 @@ void Socket::run()
 
     if (!sodiumAllocKey(sharedSecretKey, crypto_box_BEFORENMBYTES,  "shared secret"))
         return;
-#endif
+#endif // SODIUM_ENCRYPTION
 
     { // Block for SpinLocker
         SpinLocker locker {_socketLock}; (void) locker;
@@ -317,6 +330,8 @@ void Socket::run()
     Message::List acceptMessages;
 
     QElapsedTimer timer;
+    QElapsedTimer echoTimer;
+
     bool loopBreak = false;
     const int delay = 50;
 
@@ -346,14 +361,27 @@ void Socket::run()
     }
 
     // Идентификатор команды CloseConnection, используется для отслеживания
-    // ответа на запрос о разрыве соединения.
+    // ответа на запрос о разрыве соединения
     QUuidEx commandCloseConnectionId;
+
+    // Идентификатор команды EchoConnection, используется для отслеживания
+    // ответа на команду
+    QUuidEx commandEchoConnectionId;
 
     _protocolCompatible = ProtocolCompatible::Unknown;
 
     { //Добавляем самое первое сообщение с информацией о совместимости
         Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
         internalMessages.add(m.detach());
+    }
+
+    if ((_echoTimeout > 0) && !isListenerSide())
+    {
+        Message::Ptr m = Message::create(command::EchoConnection, _messageFormat);
+        m->setTag(_echoTimeout);
+        commandEchoConnectionId = m->id();
+        internalMessages.add(m.detach());
+        echoTimer.start();
     }
 
     auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void
@@ -433,6 +461,28 @@ void Socket::run()
                  && message->id() == commandCloseConnectionId)
         {
             loopBreak = true;
+        }
+    };
+
+    auto processingEchoConnectionCommand = [&](Message::Ptr& message) -> void
+    {
+        if (message->command() != command::EchoConnection)
+            return;
+
+        if (message->type() == Message::Type::Command)
+        {
+            if (message->tag() > 0)
+                _echoTimeout = (int)message->tag();
+
+            // Отправляем ответ
+            Message::Ptr answer = message->cloneForAnswer();
+            internalMessages.add(answer.detach());
+            echoTimer.start();
+        }
+        else if (message->type() == Message::Type::Answer
+                 && message->id() == commandEchoConnectionId)
+        {
+            commandEchoConnectionId = QUuidEx();
         }
     };
 
@@ -762,12 +812,9 @@ void Socket::run()
 
             } // if (!_serializeSignatureRead)
 
-            // TODO Скорее всего это условие здесь не нужно, проверить
+            // Избыточная проверка (перестраховка)
             if (loopBreak)
-            {
-                break_point
                 break;
-            }
 
             socketWaitForReadyRead(0);
             CHECK_SOCKET_ERROR
@@ -807,9 +854,46 @@ void Socket::run()
                 }
                 socketWaitForReadyRead(0);
                 CHECK_SOCKET_ERROR
+
+                if (_echoTimeout > 0)
+                {
+                    int timeout = _echoTimeout;
+                    if (isListenerSide())
+                        timeout *= 2.5;
+                    if (echoTimer.hasExpired(timeout))
+                        break;
+                }
             }
             if (loopBreak)
                 break;
+
+            // Обработка команды EchoConnection
+            if (_echoTimeout > 0)
+            {
+                int timeout = _echoTimeout;
+                if (isListenerSide())
+                    timeout *= 2.5;
+                if (echoTimer.hasExpired(timeout))
+                {
+                    if (!isListenerSide() && commandEchoConnectionId.isNull())
+                    {
+                        Message::Ptr m = Message::create(command::EchoConnection, _messageFormat);
+                        commandEchoConnectionId = m->id();
+                        internalMessages.add(m.detach());
+                        echoTimer.start();
+                    }
+                    else
+                    {
+                        log_error_m << "Command EchoConnection is not received within "
+                                    << timeout << " ms. Connection will be closed";
+
+                        Message::Ptr m = Message::create(command::EchoConnection, _messageFormat);
+                        emitMessage(m);
+                        loopBreak = true;
+                        break;
+                    }
+                }
+            }
 
             if (socketBytesToWrite())
             {
@@ -833,7 +917,7 @@ void Socket::run()
                     {
                         QMutexLocker locker {&_messagesLock}; (void) locker;
 
-                        //--- Приоритезация сообщений ---
+                        //--- Приоритизация сообщений ---
                         if (!_messagesHigh.empty())
                             message.attach(_messagesHigh.release(0));
 
@@ -1199,8 +1283,13 @@ void Socket::run()
                         if (message->type() == Message::Type::Command)
                             emitMessage(message);
 
-                        // Уходим на новый цикл, что бы как можно быстрее
-                        // получить ответ по команде command::CloseConnection.
+                        // Уходим на новый цикл,  что бы  как  можно  быстрее
+                        // получить ответ по команде command::CloseConnection
+                        break;
+                    }
+                    else if (message->command() == command::EchoConnection)
+                    {
+                        processingEchoConnectionCommand(message);
                         break;
                     }
                     else
@@ -1466,7 +1555,7 @@ void Listener::removeClosedSocketsInternal()
             _sockets.remove(i--);
 }
 
-void Listener::incomingConnectionInternal(Socket::Ptr socket,   //NOLINT
+void Listener::incomingConnectionInternal(Socket::Ptr socket, //NOLINT
                                           SocketDescriptor socketDescriptor)
 {
     socket->setListenerSide(true);
