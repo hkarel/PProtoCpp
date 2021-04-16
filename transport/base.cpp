@@ -859,7 +859,7 @@ void Socket::run()
                 {
                     int timeout = _echoTimeout;
                     if (isListenerSide())
-                        timeout *= 2.5;
+                        timeout += 5*1000; // +5 сек
                     if (echoTimer.hasExpired(timeout))
                         break;
                 }
@@ -872,7 +872,7 @@ void Socket::run()
             {
                 int timeout = _echoTimeout;
                 if (isListenerSide())
-                    timeout *= 2.5;
+                    timeout += 5*1000; // +5 сек
                 if (echoTimer.hasExpired(timeout))
                 {
                     if (!isListenerSide() && commandEchoConnectionId.isNull())
