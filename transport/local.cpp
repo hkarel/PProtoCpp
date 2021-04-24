@@ -233,21 +233,21 @@ Listener::Listener()
 bool Listener::init(const QString& serverName)
 {
     _serverName = serverName;
-    int attempt = 0;
+    int attempts = 0;
     while (!QLocalServer::listen(_serverName))
     {
-        if (++attempt > 10)
+        if (++attempts > 10)
             break;
         usleep(200*1000);
     }
-    if (attempt > 10)
+    if (attempts > 10)
         log_error_m << "Start listener of connection to " << _serverName
                     << " is failed. Detail: " << errorString();
     else
         log_verbose_m << "Start listener of connection to " << _serverName;
 
     _removeClosedSockets.start(15*1000);
-    return (attempt <= 10);
+    return (attempts <= 10);
 }
 
 void Listener::close()
@@ -282,7 +282,7 @@ void Listener::connectSignals(base::Socket* socket)
 
 void Listener::disconnectSignals(base::Socket* socket)
 {
-    QObject::disconnect(socket, 0, this, 0);
+    QObject::disconnect(socket, nullptr, this, nullptr);
 }
 
 Listener& listener()
