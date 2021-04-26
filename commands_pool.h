@@ -56,15 +56,16 @@ public:
     const char* commandName(const QUuidEx& command) const;
 
     // Возвращает значение большее нуля если команда существует в пуле команд.
-    // В случае когда признак multiproc для команды равен FALSE, то будет
-    // возвращено значение 1, если же multiproc равен TRUE - будет возвращено
-    // значение 2
+    // Если признак  multiproc  для  команды  равен  FALSE - будет возвращено
+    // значение 1, если multiproc равен TRUE - будет возвращено значение 2
     quint32 commandExists(const QUuidEx& command) const;
 
-    // Возвращает TRUE когда для команды установлен признак singlproc
+    // Возвращает TRUE когда команда есть в пуле команд, и для нее установлен
+    // признак singlproc
     bool commandIsSinglproc(const QUuidEx& command) const;
 
-    // Возвращает TRUE когда для команды установлен признак multiproc
+    // Возвращает TRUE когда команда есть в пуле команд, и для нее установлен
+    // признак multiproc
     bool commandIsMultiproc(const QUuidEx& command) const;
 
     // Используется для регистрации команд в пуле. Параметр multiproc определяет
@@ -104,8 +105,21 @@ private:
 };
 
 Pool& pool();
+
 uint qHash(const Pool::CommandTraits&);
 inline bool checkUnique() {return pool().checkUnique();}
+
+//----------------------------------- Pool -----------------------------------
+
+inline bool Pool::commandIsSinglproc(const QUuidEx& command) const
+{
+    return (commandExists(command) == 1);
+}
+
+inline bool Pool::commandIsMultiproc(const QUuidEx& command) const
+{
+    return (commandExists(command) == 2);
+}
 
 } // namespace command
 } // namespace communication

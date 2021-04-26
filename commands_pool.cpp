@@ -87,16 +87,6 @@ quint32 Pool::commandExists(const QUuidEx& command) const
     return (*set.constBegin()).multiproc ? 2 : 1;
 }
 
-bool Pool::commandIsSinglproc(const QUuidEx& command) const
-{
-    return (commandExists(command) == 1);
-}
-
-bool Pool::commandIsMultiproc(const QUuidEx& command) const
-{
-    return (commandExists(command) == 2);
-}
-
 Pool::Registry::Registry(const char* uuidStr, const char* commandName, bool multiproc)
     : QUuidEx(uuidStr)
 {
