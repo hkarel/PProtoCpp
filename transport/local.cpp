@@ -56,7 +56,8 @@ bool Socket::init(const QString& serverName)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization because Sender thread is running";
+        log_error_m << "Impossible execute a initialization "
+                       "because Sender thread is running";
         return false;
     }
     _serverName = serverName;
@@ -66,7 +67,8 @@ bool Socket::init(const QString& serverName)
 void Socket::socketCreate()
 {
     _socket = simple_ptr<QLocalSocket>(new QLocalSocket(0));
-    chk_connect_d(_socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()))
+    chk_connect_d(_socket.get(), &QLocalSocket::disconnected,
+                  this, &base::Socket::socketDisconnected)
 }
 
 bool Socket::socketInit()
@@ -226,8 +228,8 @@ void Socket::fillUnknownMessage(const Message::Ptr& message, data::Unknown& unkn
 Listener::Listener()
 {
     registrationQtMetatypes();
-    chk_connect_q(&_removeClosedSockets, SIGNAL(timeout()),
-                  this, SLOT(removeClosedSockets()))
+    chk_connect_q(&_removeClosedSockets, &QTimer::timeout,
+                  this, &Listener::removeClosedSockets)
 }
 
 bool Listener::init(const QString& serverName)
@@ -270,14 +272,14 @@ void Listener::incomingConnection(quintptr socketDescriptor)
 
 void Listener::connectSignals(base::Socket* socket)
 {
-    chk_connect_d(socket, SIGNAL(message(communication::Message::Ptr)),
-                  this, SIGNAL(message(communication::Message::Ptr)))
+    chk_connect_d(socket, &base::Socket::message,
+                  this,   &Listener::message)
 
-    chk_connect_d(socket, SIGNAL(connected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketConnected(communication::SocketDescriptor)))
+    chk_connect_d(socket, &base::Socket::connected,
+                  this,   &Listener::socketConnected)
 
-    chk_connect_d(socket, SIGNAL(disconnected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketDisconnected(communication::SocketDescriptor)))
+    chk_connect_d(socket, &base::Socket::disconnected,
+                  this,   &Listener::socketDisconnected)
 }
 
 void Listener::disconnectSignals(base::Socket* socket)

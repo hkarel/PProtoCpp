@@ -57,7 +57,8 @@ bool Socket::init(const HostPoint& peerPoint)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization because Socket thread is running";
+        log_error_m << "Impossible execute a initialization "
+                       "because Socket thread is running";
         return false;
     }
     _peerPoint = peerPoint;
@@ -67,7 +68,8 @@ bool Socket::init(const HostPoint& peerPoint)
 void Socket::socketCreate()
 {
     _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
-    chk_connect_d(_socket.get(), SIGNAL(disconnected()), this, SLOT(socketDisconnected()))
+    chk_connect_d(_socket.get(), &QTcpSocket::disconnected,
+                  this, &base::Socket::socketDisconnected)
 }
 
 bool Socket::socketInit()
@@ -296,8 +298,8 @@ void Socket::printHostError(alog::Line& logLine)
 Listener::Listener()
 {
     registrationQtMetatypes();
-    chk_connect_q(&_removeClosedSockets, SIGNAL(timeout()),
-                  this, SLOT(removeClosedSockets()))
+    chk_connect_q(&_removeClosedSockets, &QTimer::timeout,
+                  this, &Listener::removeClosedSockets)
 }
 
 bool Listener::init(const HostPoint& listenPoint)
@@ -357,14 +359,14 @@ void Listener::incomingConnection(SocketDescriptor socketDescriptor)
 
 void Listener::connectSignals(base::Socket* socket)
 {
-    chk_connect_d(socket, SIGNAL(message(communication::Message::Ptr)),
-                  this, SIGNAL(message(communication::Message::Ptr)))
+    chk_connect_d(socket, &base::Socket::message,
+                  this,   &Listener::message)
 
-    chk_connect_d(socket, SIGNAL(connected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketConnected(communication::SocketDescriptor)))
+    chk_connect_d(socket, &base::Socket::connected,
+                  this,   &Listener::socketConnected)
 
-    chk_connect_d(socket, SIGNAL(disconnected(communication::SocketDescriptor)),
-                  this, SIGNAL(socketDisconnected(communication::SocketDescriptor)))
+    chk_connect_d(socket, &base::Socket::disconnected,
+                  this,   &Listener::socketDisconnected)
 }
 
 void Listener::disconnectSignals(base::Socket* socket)

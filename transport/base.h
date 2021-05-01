@@ -43,6 +43,11 @@
 
 namespace communication {
 namespace transport {
+
+namespace local {class Socket;}
+namespace tcp   {class Socket;}
+namespace udp   {class Socket;}
+
 namespace base {
 
 /**
@@ -285,6 +290,9 @@ private:
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 
     friend class Listener;
+    friend class local::Socket;
+    friend class tcp::Socket;
+    friend class udp::Socket;
 };
 
 /**
