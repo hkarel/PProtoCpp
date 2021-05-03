@@ -57,7 +57,7 @@ void HostPoint::reset()
 
 void HostPoint::setPort(int port)
 {
-    if (port < 1 || port > 65535)
+    if ((port < 1) || (port > 65535))
     {
         QString err = "A port must be in interval 1 - 65535. Assigned value: %1";
         err = err.arg(port);
