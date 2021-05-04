@@ -216,7 +216,7 @@ public:
     // socketDescriptor
     SocketDescriptorSet& destinationSockets();
 
-    // Добавляет идентификатор сокета в коллекцию destinationSocketDescriptors
+    // Добавляет идентификатор сокета в коллекцию destinationSockets
     void appendDestinationSocket(SocketDescriptor);
 
     // Наименование сокета  с которого  было  получено  сообщение.  Поле  имеет
