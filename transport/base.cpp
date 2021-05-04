@@ -129,6 +129,7 @@ bool SocketCommon::send(const Message::Ptr& message)
 void SocketCommon::remove(const QUuidEx& command)
 {
     QMutexLocker locker {&_messagesLock}; (void) locker;
+
     auto funcCond = [&command](Message* m) -> bool
     {
         bool res = (command == m->command());
@@ -146,6 +147,7 @@ void SocketCommon::remove(const QUuidEx& command)
 int SocketCommon::messagesCount() const
 {
     QMutexLocker locker {&_messagesLock}; (void) locker;
+
     return _messagesHigh.count()
            + _messagesNorm.count()
            + _messagesLow.count();
@@ -1451,6 +1453,7 @@ void Socket::emitMessage(const communication::Message::Ptr& m)
 Socket::List Listener::sockets() const
 {
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     Socket::List sockets;
     for (Socket* s : _sockets)
         if (s->isRunning())
@@ -1493,6 +1496,7 @@ void Listener::send(const Message::Ptr& message,
 Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const
 {
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     for (Socket* s : _sockets)
         if (s->socketDescriptor() == descr)
             return Socket::Ptr(s);
@@ -1507,6 +1511,7 @@ void Listener::addSocket(const Socket::Ptr& socket)
         return;
 
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     bool socketExists = false;
     for (int i = 0; i < _sockets.count(); ++i)
         if (_sockets.item(i)->socketDescriptor() == socket->socketDescriptor())
@@ -1526,6 +1531,7 @@ void Listener::addSocket(const Socket::Ptr& socket)
 Socket::Ptr Listener::releaseSocket(SocketDescriptor descr)
 {
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     Socket::Ptr socket;
     for (int i = 0; i < _sockets.count(); ++i)
         if (_sockets.item(i)->socketDescriptor() == descr)
@@ -1550,6 +1556,7 @@ void Listener::closeSockets()
 void Listener::removeClosedSocketsInternal()
 {
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     for (int i = 0; i < _sockets.count(); ++i)
         if (!_sockets.item(i)->isRunning())
             _sockets.remove(i--);
@@ -1574,6 +1581,7 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket, //NOLINT
     socket->start();
 
     QMutexLocker locker {&_socketsLock}; (void) locker;
+
     socket->add_ref();
     _sockets.add(socket.get());
     socket->setInsideListener(true);
