@@ -32,11 +32,6 @@
 namespace communication {
 namespace command {
 
-Pool& pool()
-{
-    return ::safe_singleton<Pool, 0>();
-}
-
 bool Pool::checkUnique() const
 {
     for (auto it = _map.constBegin(); it != _map.constEnd(); ++it)
@@ -100,6 +95,11 @@ Pool::CommandTraits::CommandTraits(const char* commandName, bool multiproc)
 bool Pool::CommandTraits::operator== (const CommandTraits& ct) const
 {
     return (strcmp(commandName, ct.commandName) == 0) && (multiproc == ct.multiproc);
+}
+
+Pool& pool()
+{
+    return ::safe_singleton<Pool, 0>();
 }
 
 uint qHash(const Pool::CommandTraits& ct)
