@@ -426,7 +426,7 @@ void Socket::run()
                     ". Remote protocol version: %3-%4"
                 )
                 // Инвертируем версии протокола, иначе на принимающей стороне
-                // будет путаница с восприятием.
+                // будет путаница с восприятием
                 .arg(protocolVersionLow).arg(protocolVersionHigh)
                 .arg(PPROTO_VERSION_LOW).arg(PPROTO_VERSION_HIGH);
 
@@ -1234,7 +1234,7 @@ void Socket::run()
                 }
 
                 // Обнуляем размер буфера для того, чтобы можно было начать
-                // считывать новое сообщение.
+                // считывать новое сообщение
                 readBuffSize = 0;
 
                 if (!readBuff.isEmpty())
@@ -1367,7 +1367,7 @@ void Socket::run()
                         }
 
                         // Если команда неизвестна - отправляем об этом уведомление
-                        // и переходим к обработке следующей команды.
+                        // и переходим к обработке следующей команды
                         if (!command::pool().commandExists(m->command()))
                         {
                             data::Unknown unknown;
@@ -1577,7 +1577,7 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket, //NOLINT
 
     // Примечание: выход из функции start() происходит только тогда, когда
     // поток гарантированно запустится, поэтому случайное удаление нового
-    // сокета в функции removeClosedSockets() исключено.
+    // сокета в функции removeClosedSockets() исключено
     socket->start();
 
     QMutexLocker locker {&_socketsLock}; (void) locker;
