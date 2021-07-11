@@ -54,6 +54,26 @@
 namespace communication {
 namespace detail {
 
+template <typename CommandDataT>
+struct derived_from_data_t
+{
+    template<
+        const QUuidEx* Command,
+        Message::Type MessageType1,
+        Message::Type MessageType2,
+        Message::Type MessageType3
+    >
+    static constexpr std::true_type test(const data::Data<Command,
+                                                          MessageType1,
+                                                          MessageType2,
+                                                          MessageType3>&);
+    static constexpr std::false_type test(...);
+    using type = decltype(test(std::declval<CommandDataT>()));
+};
+
+template <typename CommandDataT>
+using is_derived_from_data_t = typename derived_from_data_t<CommandDataT>::type;
+
 template<typename T>
 struct is_error_data  : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
 template<typename T>
@@ -197,6 +217,9 @@ template<typename CommandDataT>
 Message::Ptr createMessage(const CommandDataT& data,
                            const CreateMessageParams& params = CreateMessageParams())
 {
+    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                  "CommandDataT must be derived from communication::data::Data");
+
     static_assert(CommandDataT::forCommandMessage()
                   || CommandDataT::forEventMessage(),
                   "In this function is allow 'Message::Type::Command'"
@@ -370,6 +393,9 @@ template<typename CommandDataT>
 SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                         ErrorSenderFunc errorSender = ErrorSenderFunc())
 {
+    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                  "CommandDataT must be derived from communication::data::Data");
+
     data.dataIsValid = false;
 
     if (message->command() != data.command())
@@ -472,6 +498,9 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        SerializeFormat contentFormat = SerializeFormat::QBinary,
                        typename detail::not_error_data<CommandDataT>::type = 0)
 {
+    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                  "CommandDataT must be derived from communication::data::Data");
+
     if (data.command() != message->command())
     {
         log_error_m << "Command of message " << CommandNameLog(message->command())
