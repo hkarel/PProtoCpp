@@ -296,10 +296,10 @@ void Socket::run()
         return true;
     };
 
-    uchar* socketPublicKey = 0;
-    uchar* socketSecretKey = 0;
-    uchar* externPublicKey = 0;
-    uchar* sharedSecretKey = 0;
+    uchar* socketPublicKey = nullptr;
+    uchar* socketSecretKey = nullptr;
+    uchar* externPublicKey = nullptr;
+    uchar* sharedSecretKey = nullptr;
 
     if (!sodiumAllocKey(socketPublicKey, crypto_box_PUBLICKEYBYTES, "socket public"))
         return;
@@ -339,8 +339,8 @@ void Socket::run()
 
     QByteArray readBuff;
     qint32 readBuffSize = 0;
-    char*  readBuffCur  = 0;
-    char*  readBuffEnd  = 0;
+    char*  readBuffCur  = nullptr;
+    char*  readBuffEnd  = nullptr;
 
     // Сигнатура формата сериализации
     QUuidEx serializeSignature;
