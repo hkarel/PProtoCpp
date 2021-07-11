@@ -104,8 +104,8 @@ auto messageWriteQBinary(const CommandDataT& data, Message::Ptr& message, int, i
 }
 
 template<typename CommandDataT>
-auto messageWriteQBinary(const CommandDataT& data, Message::Ptr&, long, long)
-     -> decltype(data.toRawNone(), SResult())
+auto messageWriteQBinary(const CommandDataT&, Message::Ptr&, long, long)
+     -> SResult
 {
     QString err = "Method %1::toRaw not exists";
     err = err.arg(abi_type_name<CommandDataT>());
@@ -130,8 +130,8 @@ auto messageWriteJson(CommandDataT& data, Message::Ptr& message, int)
 }
 
 template<typename CommandDataT>
-auto messageWriteJson(CommandDataT& data, Message::Ptr&, long)
-     -> decltype(data.toJsonNone(), SResult())
+auto messageWriteJson(CommandDataT&, Message::Ptr&, long)
+     -> SResult
 {
     QString err = "Method %1::toJson not exists";
     err = err.arg(abi_type_name<CommandDataT>());
@@ -281,8 +281,8 @@ auto messageReadQBinary(const Message::Ptr& message, CommandDataT& data, int, in
 }
 
 template<typename CommandDataT>
-auto messageReadQBinary(const Message::Ptr&, CommandDataT& data, long, long)
-     -> decltype(data.fromRawNone(bserial::RawVector()), SResult())
+auto messageReadQBinary(const Message::Ptr&, CommandDataT&, long, long)
+     -> SResult
 {
     QString err = "Method %1::fromRaw not exists";
     err = err.arg(abi_type_name<CommandDataT>());
@@ -307,8 +307,8 @@ auto messageReadJson(const Message::Ptr& message, CommandDataT& data, int)
 }
 
 template<typename CommandDataT>
-auto messageReadJson(const Message::Ptr&, CommandDataT& data, long)
-     -> decltype(data.fromJsonNone(QByteArray()), SResult())
+auto messageReadJson(const Message::Ptr&, CommandDataT&, long)
+     -> SResult
 {
     QString err = "Method %1::fromJson not exists";
     err = err.arg(abi_type_name<CommandDataT>());

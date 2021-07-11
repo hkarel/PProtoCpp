@@ -147,20 +147,6 @@ struct Data
                 || MessageType2 == Message::Type::Event
                 || MessageType3 == Message::Type::Event);
     }
-
-#ifdef PPROTO_QBINARY_SERIALIZE
-    // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
-    // в целевой структуре функции сериализации toRaw(), fromRaw()
-    bserial::RawVector toRawNone() const;
-    void fromRawNone(const bserial::RawVector&);
-#endif
-
-#ifdef PPROTO_JSON_SERIALIZE
-    // Фиктивные функции, необходимы для вывода в лог сообщений об отсутствии
-    // в целевой структуре функции сериализации toJson(), fromJson()
-    QByteArray toJsonNone();
-    SResult fromJsonNone(const QByteArray&);
-#endif
 };
 
 /**
@@ -396,8 +382,5 @@ struct Trait {};
 */
 extern const QUuidEx MessageContentParse;
 
-
 } // namespace error
 } // namespace communication
-
-
