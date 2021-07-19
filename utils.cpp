@@ -69,12 +69,8 @@ void registrationQtMetatypes()
     static bool first {true};
     if (first)
     {
-        qRegisterMetaType<Message::Ptr>("Message::Ptr");
-        qRegisterMetaType<Message::Ptr>("communication::Message::Ptr");
-
-        qRegisterMetaType<SocketDescriptor>("SocketDescriptor");
-        qRegisterMetaType<SocketDescriptor>("communication::SocketDescriptor");
-
+        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
+        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
         first = false;
     }
 }
