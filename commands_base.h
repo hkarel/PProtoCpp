@@ -54,7 +54,7 @@
 #include <QtCore>
 #include <QHostAddress>
 
-namespace communication {
+namespace pproto {
 
 //------------------------- Список базовых команд ----------------------------
 namespace command {
@@ -383,4 +383,4 @@ struct Trait {};
 extern const QUuidEx MessageContentParse;
 
 } // namespace error
-} // namespace communication
+} // namespace pproto

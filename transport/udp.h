@@ -41,7 +41,7 @@
 #include <QHostAddress>
 #include <atomic>
 
-namespace communication {
+namespace pproto {
 namespace transport {
 namespace udp {
 
@@ -80,7 +80,7 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(const communication::Message::Ptr&);
+    void message(const pproto::Message::Ptr&);
 
 private:
     Q_OBJECT
@@ -104,4 +104,4 @@ Socket& socket();
 
 } // namespace udp
 } // namespace transport
-} // namespace communication
+} // namespace pproto

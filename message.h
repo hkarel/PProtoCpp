@@ -46,7 +46,7 @@
 #include <atomic>
 #include <utility>
 
-namespace communication {
+namespace pproto {
 
 namespace transport {
 namespace local {class Socket;}
@@ -107,11 +107,11 @@ public:
                      // ответные данные.
         Failed  = 2, // Сообщение  не было  обработано  успешно,  но  результат
                      // не является ошибкой. Cообщение (Message) будет содержать
-                     // данные в формате communication::data::MessageFailed.
+                     // данные в формате pproto::data::MessageFailed.
         Error   = 3  // При обработке сообщения  произошла  ошибка. В качестве
                      // ответа  отправляется  сообщения  с  описанием  причины
                      // ошибки. Сообщение  (Message)  будет  содержать  данные
-                     // в формате communication::data::MessageError
+                     // в формате pproto::data::MessageError
     };
 
     enum class Priority : quint32
@@ -487,4 +487,4 @@ SResult Message::readJsonContent(T& t) const
 }
 #endif
 
-} // namespace communication
+} // namespace pproto

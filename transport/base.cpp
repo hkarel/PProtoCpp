@@ -52,7 +52,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Transport")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Transport")
 
-namespace communication {
+namespace pproto {
 namespace transport {
 namespace base {
 
@@ -405,7 +405,7 @@ void Socket::run()
                             << ". Remote protocol version: "
                             << protocolVersionLow << "-" << protocolVersionHigh;
 
-                if (!communication::protocolCompatible(protocolVersionLow, protocolVersionHigh))
+                if (!pproto::protocolCompatible(protocolVersionLow, protocolVersionHigh))
                     _protocolCompatible = ProtocolCompatible::No;
             }
 
@@ -1428,7 +1428,7 @@ void Socket::run()
 
 #pragma GCC diagnostic pop
 
-void Socket::emitMessage(const communication::Message::Ptr& m)
+void Socket::emitMessage(const pproto::Message::Ptr& m)
 {
     try
     {
@@ -1481,7 +1481,7 @@ void Listener::send(const Message::Ptr& message,
                     const SocketDescriptorSet& excludeSockets) const
 {
     Socket::List sockets = this->sockets();
-    communication::transport::send(sockets, message, excludeSockets);
+    pproto::transport::send(sockets, message, excludeSockets);
 }
 
 void Listener::send(const Message::Ptr& message,
@@ -1490,7 +1490,7 @@ void Listener::send(const Message::Ptr& message,
     Socket::List sockets = this->sockets();
     SocketDescriptorSet excludeSockets;
     excludeSockets << excludeSocket;
-    communication::transport::send(sockets, message, excludeSockets);
+    pproto::transport::send(sockets, message, excludeSockets);
 }
 
 Socket::Ptr Listener::socketByDescriptor(SocketDescriptor descr) const
@@ -1662,7 +1662,7 @@ base::Socket::List concatSockets(const base::Listener& listener)
 }
 
 } // namespace transport
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

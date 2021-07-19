@@ -46,7 +46,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "TransportSoc")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "TransportSoc")
 
-namespace communication {
+namespace pproto {
 namespace transport {
 namespace local {
 
@@ -294,7 +294,7 @@ Listener& listener()
 
 } // namespace local
 } // namespace transport
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

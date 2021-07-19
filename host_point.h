@@ -32,7 +32,7 @@
 #include <QtCore>
 #include <QHostAddress>
 
-namespace communication {
+namespace pproto {
 
 /**
   Структура группирует адрес и порт
@@ -68,4 +68,4 @@ private:
 };
 uint qHash(const HostPoint&);
 
-} // namespace communication
+} // namespace pproto

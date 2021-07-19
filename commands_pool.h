@@ -30,7 +30,7 @@
 #include "shared/qt/quuidex.h"
 #include <QtCore>
 
-namespace communication {
+namespace pproto {
 namespace command {
 
 /**
@@ -122,4 +122,4 @@ inline bool Pool::commandIsMultiproc(const QUuidEx& command) const
 }
 
 } // namespace command
-} // namespace communication
+} // namespace pproto

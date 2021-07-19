@@ -29,7 +29,7 @@
 
 namespace alog {
 
-Line& operator<< (Line& line, const communication::HostPoint& hp)
+Line& operator<< (Line& line, const pproto::HostPoint& hp)
 {
     if (line.toLogger())
         line << hp.address() << ":" << hp.port();
@@ -37,11 +37,11 @@ Line& operator<< (Line& line, const communication::HostPoint& hp)
     return line;
 }
 
-Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
+Line& operator<< (Line& line, const pproto::CommandNameLog& cnl)
 {
     if (line.toLogger())
     {
-        QByteArray commandName = communication::command::pool().commandName(cnl.command);
+        QByteArray commandName = pproto::command::pool().commandName(cnl.command);
         if (!commandName.isEmpty())
         {
             line << commandName;
@@ -57,20 +57,20 @@ Line& operator<< (Line& line, const communication::CommandNameLog& cnl)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
-Line& operator<< (Line& line, communication::Message::Type type)
+Line& operator<< (Line& line, pproto::Message::Type type)
 {
     if (line.toLogger())
         switch (type)
         {
-            case communication::Message::Type::Command:
+            case pproto::Message::Type::Command:
                 line << "Command";
                 break;
 
-            case communication::Message::Type::Answer:
+            case pproto::Message::Type::Answer:
                 line << "Answer";
                 break;
 
-            case communication::Message::Type::Event:
+            case pproto::Message::Type::Event:
                 line << "Event";
                 break;
 
@@ -81,20 +81,20 @@ Line& operator<< (Line& line, communication::Message::Type type)
     return line;
 }
 
-Line& operator<< (Line& line, communication::Message::ExecStatus execStatus)
+Line& operator<< (Line& line, pproto::Message::ExecStatus execStatus)
 {
     if (line.toLogger())
         switch (execStatus)
         {
-            case communication::Message::ExecStatus::Success:
+            case pproto::Message::ExecStatus::Success:
                 line << "Success";
                 break;
 
-            case communication::Message::ExecStatus::Failed:
+            case pproto::Message::ExecStatus::Failed:
                 line << "Failed";
                 break;
 
-            case communication::Message::ExecStatus::Error:
+            case pproto::Message::ExecStatus::Error:
                 line << "Error";
                 break;
 

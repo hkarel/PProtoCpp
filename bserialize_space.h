@@ -26,10 +26,10 @@
 #pragma once
 #include "serialize/qbinary.h"
 
-namespace communication {
+namespace pproto {
 namespace data {
 DEFINE_B_SERIALIZE_STREAM_OPERATORS
 } // namespace data
-} // namespace communication
+} // namespace pproto
 
 

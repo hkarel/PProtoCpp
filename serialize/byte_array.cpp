@@ -25,7 +25,7 @@
 
 #include "serialize/byte_array.h"
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 
 QByteArray readByteArray(QDataStream& s)
@@ -46,4 +46,4 @@ QByteArray readByteArray(QDataStream& s)
 }
 
 } // namespace serialize
-} // namespace communication
+} // namespace pproto

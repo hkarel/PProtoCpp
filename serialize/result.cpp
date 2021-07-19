@@ -25,7 +25,7 @@
 
 #include "serialize/result.h"
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 
 Result::Result(bool val, int code, const QString& description)
@@ -47,4 +47,4 @@ Result& Result::operator= (Result&& r)
 }
 
 } // namespace serialize
-} // namespace communication
+} // namespace pproto

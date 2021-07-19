@@ -53,7 +53,7 @@ const quint32 udpSignature = *((quint32*)PPROTO_UDP_SIGNATURE);
 #endif
 } // namespace
 
-namespace communication {
+namespace pproto {
 namespace transport {
 namespace udp {
 
@@ -480,7 +480,7 @@ Socket& socket()
 
 } // namespace udp
 } // namespace transport
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

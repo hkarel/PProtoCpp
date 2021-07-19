@@ -29,7 +29,7 @@
 #include <QtCore>
 #include <utility>
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 
 /**
@@ -72,4 +72,4 @@ private:
 
 using SResult = serialize::Result;
 
-} // namespace communication
+} // namespace pproto

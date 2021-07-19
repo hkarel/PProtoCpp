@@ -34,7 +34,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "JSerialize")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "JSerialize")
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 namespace json {
 
@@ -895,7 +895,7 @@ Writer& Writer::operator& (const QDateTime& dtime)
 
 } // namespace json
 } // namespace serialize
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

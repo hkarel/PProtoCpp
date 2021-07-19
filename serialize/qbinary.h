@@ -48,7 +48,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 namespace qbinary {
 
@@ -263,9 +263,9 @@ struct Reserve
 
 } // namespace qbinary
 } // namespace serialize
-} // namespace communication
+} // namespace pproto
 
-namespace bserial = communication::serialize::qbinary;
+namespace bserial = pproto::serialize::qbinary;
 
 #define DECLARE_B_SERIALIZE_FRIENDS \
     template<typename T> \
@@ -442,4 +442,4 @@ namespace bserial = communication::serialize::qbinary;
 // преобразованием ее в QString
 #define B_QSTR_FROM_UTF8(STREAM, QSTR) \
     static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
-    QSTR = QString::fromUtf8(communication::serialize::readByteArray(STREAM));
+    QSTR = QString::fromUtf8(pproto::serialize::readByteArray(STREAM));

@@ -26,7 +26,7 @@
 #include "utils.h"
 #include "message.h"
 
-namespace communication {
+namespace pproto {
 
 namespace data {
 QDataStream& operator>> (QDataStream& s, timeval& tv)
@@ -69,10 +69,10 @@ void registrationQtMetatypes()
     static bool first {true};
     if (first)
     {
-        qRegisterMetaType<communication::Message::Ptr>("communication::Message::Ptr");
-        qRegisterMetaType<communication::SocketDescriptor>("communication::SocketDescriptor");
+        qRegisterMetaType<pproto::Message::Ptr>("pproto::Message::Ptr");
+        qRegisterMetaType<pproto::SocketDescriptor>("pproto::SocketDescriptor");
         first = false;
     }
 }
 
-} // namespace communication
+} // namespace pproto

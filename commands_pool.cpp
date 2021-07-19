@@ -29,7 +29,7 @@
 #include "shared/logger/logger.h"
 #include "shared/qt/logger_operators.h"
 
-namespace communication {
+namespace pproto {
 namespace command {
 
 bool Pool::checkUnique() const
@@ -110,4 +110,4 @@ uint qHash(const Pool::CommandTraits& ct)
 }
 
 } // namespace command
-} // namespace communication
+} // namespace pproto

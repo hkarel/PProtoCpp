@@ -39,7 +39,7 @@
 #include <QTcpServer>
 #include <QHostAddress>
 
-namespace communication {
+namespace pproto {
 namespace transport {
 namespace tcp {
 
@@ -117,14 +117,14 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(const communication::Message::Ptr&);
+    void message(const pproto::Message::Ptr&);
 
     // Сигнал эмитируется после установки socket-ом соединения и после
     // проверки совместимости версий бинарного протокола.
-    void socketConnected(communication::SocketDescriptor);
+    void socketConnected(pproto::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва socket-ом соединения
-    void socketDisconnected(communication::SocketDescriptor);
+    void socketDisconnected(pproto::SocketDescriptor);
 
 private slots:
     void removeClosedSockets();
@@ -146,4 +146,4 @@ Listener& listener();
 
 } // namespace tcp
 } // namespace transport
-} // namespace communication
+} // namespace pproto

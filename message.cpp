@@ -54,7 +54,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Message")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Message")
 
-namespace communication {
+namespace pproto {
 
 Message::Message() : _flags(0), _flags2(0)
 {
@@ -576,7 +576,7 @@ void Message::setContentFormat(SerializeFormat val)
     _flag.contentFormat = static_cast<quint32>(val);
 }
 
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

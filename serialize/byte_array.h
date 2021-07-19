@@ -28,7 +28,7 @@
 #include <QByteArray>
 #include <QDataStream>
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 
 /**
@@ -80,4 +80,4 @@ inline QDataStream& operator<< (QDataStream& s, const ByteArray& ba)
 
 using SByteArray = serialize::ByteArray;
 
-} // namespace communication
+} // namespace pproto

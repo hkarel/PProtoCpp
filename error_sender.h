@@ -28,9 +28,9 @@
 #include "message.h"
 #include <functional>
 
-namespace communication {
+namespace pproto {
 
 typedef std::function<void (const Message::Ptr&)> ErrorSenderFunc;
 
 
-} // namespace communication
+} // namespace pproto

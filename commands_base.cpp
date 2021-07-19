@@ -28,7 +28,7 @@
 #include "shared/logger/logger.h"
 #include "shared/qt/logger_operators.h"
 
-namespace communication {
+namespace pproto {
 namespace command {
 
 #define REGISTRY_COMMAND(COMMAND, UUID) \
@@ -263,4 +263,4 @@ REGISTRY_GERROR(MessageContentParse,  "d603db4a-bf1a-4a55-8df7-ab667684bf3e")
 #undef REGISTRY_GERROR
 
 } // namespace error
-} // namespace communication
+} // namespace pproto

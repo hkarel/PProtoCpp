@@ -26,7 +26,7 @@
 #include "host_point.h"
 #include <stdexcept>
 
-namespace communication {
+namespace pproto {
 
 uint qHash(const HostPoint& hp)
 {
@@ -85,4 +85,4 @@ void HostPoint::fromRaw(const bserial::RawVector& vect)
 }
 #endif
 
-} // namespace communication
+} // namespace pproto

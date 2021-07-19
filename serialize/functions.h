@@ -51,7 +51,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Serialize")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Serialize")
 
-namespace communication {
+namespace pproto {
 namespace detail {
 
 template <typename CommandDataT>
@@ -218,7 +218,7 @@ Message::Ptr createMessage(const CommandDataT& data,
                            const CreateMessageParams& params = CreateMessageParams())
 {
     static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from communication::data::Data");
+                  "CommandDataT must be derived from pproto::data::Data");
 
     static_assert(CommandDataT::forCommandMessage()
                   || CommandDataT::forEventMessage(),
@@ -394,7 +394,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                         ErrorSenderFunc errorSender = ErrorSenderFunc())
 {
     static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from communication::data::Data");
+                  "CommandDataT must be derived from pproto::data::Data");
 
     data.dataIsValid = false;
 
@@ -451,7 +451,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                 return res;
             }
             log_error_m << "Message is failed. Type of data must be "
-                        << "derived from communication::data::MessageFailed"
+                        << "derived from pproto::data::MessageFailed"
                         << ". Command: " << CommandNameLog(message->command())
                         << ". Struct: "  << abi_type_name<CommandDataT>();
         }
@@ -465,7 +465,7 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                 return res;
             }
             log_error_m << "Message is error. Type of data must be "
-                        << "derived from communication::data::MessageError"
+                        << "derived from pproto::data::MessageError"
                         << ". Command: " << CommandNameLog(message->command())
                         << ". Struct: "  << abi_type_name<CommandDataT>();
         }
@@ -499,7 +499,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        typename detail::not_error_data<CommandDataT>::type = 0)
 {
     static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from communication::data::Data");
+                  "CommandDataT must be derived from pproto::data::Data");
 
     if (data.command() != message->command())
     {
@@ -582,7 +582,7 @@ SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
 */
 QString errorDescription(const Message::Ptr&);
 
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

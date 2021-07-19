@@ -57,7 +57,7 @@
 #include <vector>
 #include <type_traits>
 
-namespace communication {
+namespace pproto {
 namespace serialize {
 namespace json {
 
@@ -596,4 +596,4 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 
 } // namespace json
 } // namespace serialize
-} // namespace communication
+} // namespace pproto

@@ -30,7 +30,7 @@
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
 
-namespace communication {
+namespace pproto {
 
 /**
   Вспомогательная структура, используется для отправки в лог идентификатора
@@ -45,13 +45,13 @@ struct CommandNameLog
           onlyCommandName(onlyCommandName)
     {}
 };
-} // namespace communication
+} // namespace pproto
 
 namespace alog {
 
-Line& operator<< (Line&, const communication::HostPoint&);
-Line& operator<< (Line&, const communication::CommandNameLog&);
-Line& operator<< (Line&, communication::Message::Type);
-Line& operator<< (Line&, communication::Message::ExecStatus);
+Line& operator<< (Line&, const pproto::HostPoint&);
+Line& operator<< (Line&, const pproto::CommandNameLog&);
+Line& operator<< (Line&, pproto::Message::Type);
+Line& operator<< (Line&, pproto::Message::ExecStatus);
 
 } // namespace alog

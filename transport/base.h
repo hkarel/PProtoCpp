@@ -41,7 +41,7 @@
 #include <QtCore>
 #include <atomic>
 
-namespace communication {
+namespace pproto {
 namespace transport {
 
 namespace local {class Socket;}
@@ -199,15 +199,15 @@ public:
 
 signals:
     // Сигнал эмитируется при получении сообщения
-    void message(const communication::Message::Ptr&);
+    void message(const pproto::Message::Ptr&);
 
     // Сигнал эмитируется после выполнения двух условий:
     // 1) Установлено соединение с TCP/Local сокетом;
     // 2) Проверка совместимости версий протокола выполнена успешно
-    void connected(communication::SocketDescriptor);
+    void connected(pproto::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва TCP/Local соединения
-    void disconnected(communication::SocketDescriptor);
+    void disconnected(pproto::SocketDescriptor);
 
 private slots:
     // Обработчик сигнала QTcpSocket::disconnected()
@@ -217,7 +217,7 @@ protected:
     Socket(SocketType type);
 
     void run() override;
-    void emitMessage(const communication::Message::Ptr&);
+    void emitMessage(const pproto::Message::Ptr&);
 
     virtual void socketCreate() = 0;
     virtual bool socketInit() = 0;
@@ -381,4 +381,4 @@ base::Socket::List concatSockets(const base::Listener& listener, const Args&... 
 }
 
 } // namespace transport
-} // namespace communication
+} // namespace pproto

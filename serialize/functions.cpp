@@ -32,7 +32,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Serialize")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Serialize")
 
-namespace communication {
+namespace pproto {
 
 SResult readFromMessage(const Message::Ptr& message, data::MessageError& data,
                         ErrorSenderFunc errorSender)
@@ -99,7 +99,7 @@ QString errorDescription(const Message::Ptr& message)
     return descr;
 }
 
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

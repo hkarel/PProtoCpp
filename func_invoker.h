@@ -41,7 +41,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "FuncInvok")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "FuncInvok")
 
-namespace communication {
+namespace pproto {
 
 /**
   В классе реализован механизм для связывания команды с функцией-обработчиком
@@ -181,7 +181,7 @@ private:
     BaseItem::List _functions;
 };
 
-} // namespace communication
+} // namespace pproto
 
 #undef log_error_m
 #undef log_warn_m

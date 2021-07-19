@@ -30,7 +30,7 @@
 #pragma once
 #include <QtCore>
 
-namespace communication {
+namespace pproto {
 
 namespace data {
 QDataStream& operator>> (QDataStream&, timeval&);
@@ -48,4 +48,4 @@ bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
 */
 void registrationQtMetatypes();
 
-} // namespace communication
+} // namespace pproto
