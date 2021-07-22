@@ -385,7 +385,7 @@ namespace bserial = pproto::serialize::qbinary;
     to__raw__vect__.reserve(2); \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly);  \
+      { bserial::DataStream STREAM {&to__raw__ba__, QIODevice::WriteOnly}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -395,7 +395,7 @@ namespace bserial = pproto::serialize::qbinary;
     } \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM(&to__raw__ba__, QIODevice::WriteOnly); \
+      { bserial::DataStream STREAM {&to__raw__ba__, QIODevice::WriteOnly}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
