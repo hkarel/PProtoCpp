@@ -27,6 +27,7 @@
 #include "commands_base.h"
 
 #include "shared/logger/logger.h"
+#include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
 namespace pproto {
@@ -41,7 +42,8 @@ bool Pool::checkUnique() const
                 log_error << "Identifier " << it.key()
                           << " was be assigned to several commands:";
             for (const CommandTraits& t : it.value())
-                logLine << " name=" << t.commandName << ", multiproc=" << t.multiproc << ";";
+                logLine << log_format(" name=%?, multiproc=%?;",
+                                      t.commandName, t.multiproc);
             return false;
         }
     return true;
