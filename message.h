@@ -194,14 +194,17 @@ public:
     // Адрес и порт хоста с которого было получено сообщение. Поле имеет
     // валидное значение только если тип сокета соответствует значениям
     // SocketType::Tcp или SocketType::Udp
-    const HostPoint& sourcePoint() const {return _sourcePoint;}
+    HostPoint sourcePoint() const {return _sourcePoint;}
 
     // Адреса и порты хостов  назначения.  Параметр  используется  для отправки
     // сообщения  через UDP сокет.  В случае  если  параметр  destinationPoints
     // не содержит ни одного элемента HostPoint и при этом параметр sourcePoint
     // не пуст (!isNull), то в этом случае  сообщение будет  отправлено  на UDP
     // сокет с точкой назначения sourcePoint
-    HostPoint::Set& destinationPoints() {return _destinationPoints;}
+    HostPoint::Set& destinationPoints();
+
+    // Добавляет HostPoint в коллекцию destinationPoints
+    void appendDestinationPoint(const HostPoint&);
 
     // Вспомогательный параметр, используется на стороне TCP (или Local) сервера
     // для идентификации TCP (или Local) сокета принявшего сообщение.

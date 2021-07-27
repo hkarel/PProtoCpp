@@ -105,6 +105,16 @@ Message::Ptr Message::cloneForAnswer() const
     return m;
 }
 
+HostPoint::Set& Message::destinationPoints()
+{
+    return _destinationPoints;
+}
+
+void Message::appendDestinationPoint(const HostPoint& hostPoint)
+{
+    _destinationPoints.insert(hostPoint);
+}
+
 SocketDescriptorSet& Message::destinationSockets()
 {
     return _destinationSockets;
