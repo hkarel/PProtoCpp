@@ -30,7 +30,6 @@
 
 #include "shared/list.h"
 #include "shared/defmac.h"
-#include "shared/break_point.h"
 #include "shared/logger/logger.h"
 #include <exception>
 
@@ -45,7 +44,7 @@ namespace pproto {
 
 /**
   В классе реализован механизм для связывания команды с функцией-обработчиком
-  сообщения.
+  сообщения
 */
 class FunctionInvoker
 {
@@ -83,13 +82,15 @@ class FunctionInvoker
             }
             catch (std::exception& e)
             {
-                log_error_m << "Handler of command " << CommandNameLog(message->command())
-                            << " throw a exception. Detail: " << e.what();
+                log_error_m
+                    << "Handler of command " << CommandNameLog(message->command())
+                    << " throw a exception. Detail: " << e.what();
             }
             catch (...)
             {
-                log_error_m << "Handler of command " << CommandNameLog(message->command())
-                            << " throw a exception. Unknown error";
+                log_error_m
+                    << "Handler of command " << CommandNameLog(message->command())
+                    << " throw a exception. Unknown error";
             }
         }
     };
@@ -108,16 +109,39 @@ class FunctionInvoker
             }
             catch (std::exception& e)
             {
-                log_error_m << "Handler of command " << CommandNameLog(message->command())
-                            << " throw a exception. Detail: " << e.what();
+                log_error_m
+                    << "Handler of command " << CommandNameLog(message->command())
+                    << " throw a exception. Detail: " << e.what();
             }
             catch (...)
             {
-                log_error_m << "Handler of command " << CommandNameLog(message->command())
-                            << " throw a exception. Unknown error";
+                log_error_m
+                    << "Handler of command " << CommandNameLog(message->command())
+                    << " throw a exception. Unknown error";
             }
         }
     };
+
+    void addItem(BaseItem* item)
+    {
+        if (_functions.empty())
+        {
+            _functions.add(item);
+            _functions.sort();
+        }
+        else
+        {
+            lst::FindResult fr = _functions.find(item);
+            if (fr.success())
+            {
+                log_warn_m << "Redefined handler for command "
+                           << CommandNameLog(item->command);
+                _functions.replace(fr.index(), item, true);
+            }
+            else
+                _functions.addInSort(item, fr);
+        }
+    }
 
 public:
     FunctionInvoker() = default;
@@ -130,12 +154,7 @@ public:
         item->command = command;
         item->instance = instance;
         item->func = func;
-
-        if (lst::FindResult fr = _functions.find(item))
-            _functions.remove(fr.index());
-
-        _functions.add(item);
-        _functions.sort();
+        addItem(item);
     }
 
     template<typename T>
@@ -146,12 +165,7 @@ public:
         item->command = command;
         item->instance = instance;
         item->func = func;
-
-        if (lst::FindResult fr = _functions.find(item))
-            _functions.remove(fr.index());
-
-        _functions.add(item);
-        _functions.sort();
+        addItem(item);
     }
 
     bool containsCommand(const QUuidEx& command)
