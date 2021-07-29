@@ -46,7 +46,7 @@
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "TransportUDP")
 
 namespace {
-#ifdef UDP_LONGSIG
+#ifdef PPROTO_UDP_LONGSIG
 const quint64 udpSignature = *((quint64*)PPROTO_UDP_SIGNATURE);
 #else
 const quint32 udpSignature = *((quint32*)PPROTO_UDP_SIGNATURE);
