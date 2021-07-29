@@ -24,7 +24,7 @@
   ---
 
   В модуле реализованы механизмы доставки сообщений между программными
-  компонентами с использование TCP протокола.
+  компонентами с использование TCP протокола
 *****************************************************************************/
 
 #pragma once
@@ -45,7 +45,7 @@ namespace tcp {
 
 /**
   Используется для создания соединения и отправки сообщений на клиентской
-  стороне.
+  стороне
 */
 class Socket : public base::Socket
 {
@@ -67,7 +67,7 @@ private:
     void socketCreate() override;
     bool socketInit() override;
 
-    // Возвращает TRUE когда TCP-сокет работает по localhost.
+    // Возвращает TRUE когда TCP-сокет работает по localhost
     bool isLocalInternal() const override;
     SocketDescriptor socketDescriptorInternal() const override;
     bool socketIsConnectedInternal() const override;
@@ -92,16 +92,16 @@ private:
     simple_ptr<QTcpSocket> _socket;
     HostPoint _peerPoint;
 
-    // Используется для вывода в лог сообщений об уже закрытом сокете.
+    // Используется для вывода в лог сообщений об уже закрытом сокете
     SocketDescriptor _printSocketDescriptor = {-1};
 
     template<typename T> friend T* allocator_ptr<T>::create();
 };
 
 /**
-  Используется для получения запросов на соединения от клиентских частей
-  с последующей установкой соединения с ними, так же используется для приема
-  и отправки сообщений.
+  Используется для получения запросов  на  соединения  от  клиентских  частей
+  с последующей установкой соединения с ними,  так же используется для приема
+  и отправки сообщений
 */
 class Listener : public QTcpServer, public base::Listener
 {
@@ -112,7 +112,7 @@ public:
     bool init(const HostPoint&);
 
     // Listener останавливает прием внешних подключений. Помимо этого все
-    // активные соединения будут закрыты.
+    // активные соединения будут закрыты
     void close();
 
 signals:
@@ -120,7 +120,7 @@ signals:
     void message(const pproto::Message::Ptr&);
 
     // Сигнал эмитируется после установки socket-ом соединения и после
-    // проверки совместимости версий бинарного протокола.
+    // проверки совместимости версий бинарного протокола
     void socketConnected(pproto::SocketDescriptor);
 
     // Сигнал эмитируется после разрыва socket-ом соединения
