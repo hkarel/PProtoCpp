@@ -319,7 +319,14 @@ void Socket::run()
                 datagram.resize(datagramSize);
                 qint64 res = _socket->readDatagram((char*)datagram.constData(),
                                                    datagramSize, &addr, &port);
-
+                if (res == -1)
+                {
+                    log_error_m << "Failed read datagram"
+                                << ". Source: " << addr << ":" << port
+                                << ". Error code: " << int(_socket->error())
+                                << ". Detail: " << _socket->errorString();
+                    continue;
+                }
                 if (datagramSize < qint64(sizeof(udpSignature)))
                 {
                     log_error_m << "Datagram size less sizeof(udpSignature)"
