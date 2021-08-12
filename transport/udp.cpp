@@ -120,7 +120,7 @@ void Socket::run()
 {
     { //Block for SpinLocker
         SpinLocker locker {_socketLock}; (void) locker;
-        _socket = simple_ptr<QUdpSocket>(new QUdpSocket(0));
+        _socket = simple_ptr<QUdpSocket>(new QUdpSocket(nullptr));
     }
     if (!_socket->bind(_bindPoint.address(), _bindPoint.port(), _bindMode))
     {

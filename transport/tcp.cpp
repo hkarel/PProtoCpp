@@ -67,7 +67,7 @@ bool Socket::init(const HostPoint& peerPoint)
 
 void Socket::socketCreate()
 {
-    _socket = simple_ptr<QTcpSocket>(new QTcpSocket(0));
+    _socket = simple_ptr<QTcpSocket>(new QTcpSocket(nullptr));
     chk_connect_d(_socket.get(), &QTcpSocket::disconnected,
                   this, &base::Socket::socketDisconnected)
 }

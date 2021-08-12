@@ -66,7 +66,7 @@ bool Socket::init(const QString& serverName)
 
 void Socket::socketCreate()
 {
-    _socket = simple_ptr<QLocalSocket>(new QLocalSocket(0));
+    _socket = simple_ptr<QLocalSocket>(new QLocalSocket(nullptr));
     chk_connect_d(_socket.get(), &QLocalSocket::disconnected,
                   this, &base::Socket::socketDisconnected)
 }
