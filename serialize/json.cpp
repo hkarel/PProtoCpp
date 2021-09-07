@@ -187,19 +187,16 @@ Reader& Reader::endObject()
     return *this;
 }
 
-Reader& Reader::startArray(SizeType* size)
+Reader& Reader::startArray(SizeType& size)
 {
-    if (size)
-        *size = 0;
-
+    size = 0;
     if (!error())
     {
         if (_stack.top().value->IsArray()
             && _stack.top().state == StackItem::BeforeStart)
         {
             _stack.top().state = StackItem::Started;
-            if (size)
-                *size = _stack.top().value->Size();
+            size = _stack.top().value->Size();
 
             if (!_stack.top().value->Empty())
             {

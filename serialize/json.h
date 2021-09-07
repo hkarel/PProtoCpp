@@ -83,10 +83,12 @@ public:
     Reader& member(const char* name, bool optional = false);
     quint64 jsonIndex() const {return _jsonIndex;}
 
+    bool stackTopIsNull() const {return _stack.top().value->IsNull();}
+
     Reader& startObject();
     Reader& endObject();
 
-    Reader& startArray(SizeType* size);
+    Reader& startArray(SizeType& size);
     Reader& endArray();
 
     Reader& setNull();
@@ -287,9 +289,16 @@ Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
                     typename derived_from_clife_base<T>::type = 0)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
+
     list.clear();
+    if (r.stackTopIsNull())
+    {
+        r.next();
+        return r;
+    }
+
     SizeType count;
-    r.startArray(&count);
+    r.startArray(count);
     for (SizeType i = 0; i < count; ++i)
     {
         typedef lst::List<T, Compare, Allocator> ListType;
@@ -307,9 +316,16 @@ Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
                     typename not_derived_from_clife_base<T>::type = 0)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
+
     list.clear();
+    if (r.stackTopIsNull())
+    {
+        r.next();
+        return r;
+    }
+
     SizeType count;
-    r.startArray(&count);
+    r.startArray(count);
     for (SizeType i = 0; i < count; ++i)
     {
         typedef lst::List<T, Compare, Allocator> ListType;
@@ -349,8 +365,14 @@ Reader& readArray(Reader& r, T& arr)
         return r;
 
     arr.clear();
+    if (r.stackTopIsNull())
+    {
+        r.next();
+        return r;
+    }
+
     SizeType count;
-    r.startArray(&count);
+    r.startArray(count);
     for (SizeType i = 0; i < count; ++i)
     {
         typename T::value_type t;
