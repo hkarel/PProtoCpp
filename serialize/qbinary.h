@@ -442,3 +442,6 @@ namespace bserial = pproto::serialize::qbinary;
 #define B_QSTR_FROM_UTF8(STREAM, QSTR) \
     static_assert(std::is_same<decltype(QSTR), QString>::value, "QSTR must have type QString"); \
     QSTR = QString::fromUtf8(pproto::serialize::readByteArray(STREAM));
+
+// Макрос для сериализации базового класса
+#define B_BASE_CLASS(CLASS) *((CLASS*)this)
