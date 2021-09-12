@@ -893,10 +893,3 @@ Writer& Writer::operator& (const QDateTime& dtime)
 } // namespace json
 } // namespace serialize
 } // namespace pproto
-
-#undef log_error_m
-#undef log_warn_m
-#undef log_info_m
-#undef log_verbose_m
-#undef log_debug_m
-#undef log_debug2_m
