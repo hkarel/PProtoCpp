@@ -212,9 +212,17 @@ void Error::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
+CloseConnection::CloseConnection(const MessageError& messageError)
+{
+    group       = messageError.group;
+    code        = messageError.code;
+    description = messageError.description;
+}
+
 bserial::RawVector CloseConnection::toRaw() const
 {
     B_SERIALIZE_V1(stream)
+    stream << group;
     stream << code;
     /* stream << description */
     B_QSTR_TO_UTF8(stream, description);
@@ -224,6 +232,7 @@ bserial::RawVector CloseConnection::toRaw() const
 void CloseConnection::fromRaw(const bserial::RawVector& vect)
 {
     B_DESERIALIZE_V1(vect, stream)
+    stream >> group;
     stream >> code;
     /* stream >> description */
     B_QSTR_FROM_UTF8(stream, description);

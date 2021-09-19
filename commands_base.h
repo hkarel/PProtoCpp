@@ -288,10 +288,20 @@ struct Error : Data<&command::Error,
 struct CloseConnection : Data<&command::CloseConnection,
                                Message::Type::Command>
 {
-    qint32  code = {0};   // Код причины. Нулевой код соответствует
-                          // несовместимости версий протоколов.
-    QString description;  // Описание причины закрытия соединения,
+//    qint32  code = {0};   // Код причины. Нулевой код соответствует
+//                          // несовместимости версий протоколов.
+//    QString description;  // Описание причины закрытия соединения,
+//                          // (сериализуется в utf8)
+
+    qint32  group = {0};  // Используется для группировки сообщений по группам
+    QUuidEx code;         // Глобальный код причины
+    QString description;  // Описание причины закрытия соединения
                           // (сериализуется в utf8)
+
+    CloseConnection() = default;
+    CloseConnection(const CloseConnection&) = default;
+
+    CloseConnection(const MessageError&);
 
 #ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
@@ -299,7 +309,8 @@ struct CloseConnection : Data<&command::CloseConnection,
 
 #ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BEGIN
-        J_SERIALIZE_ITEM( code )
+        J_SERIALIZE_ITEM( group )
+        J_SERIALIZE_ITEM( code  )
         J_SERIALIZE_ITEM( description )
     J_SERIALIZE_END
 #endif
@@ -440,6 +451,12 @@ struct Trait {};
   Ошибка парсинга контента сообщения
 */
 extern const QUuidEx MessageContentParse;
+
+/**
+  Ошибки протокола (группа 0)
+*/
+DECL_ERROR_CODE(protocol_incompatible, 0, "afa4209c-bd5a-4791-9713-5c3f4ab3c52b", QObject::tr("Protocol versions incompatible"))
+DECL_ERROR_CODE(json_parse,            0, "db5d018b-592f-4e80-850f-ebfccfe08986", QObject::tr("Json parse error"))
 
 } // namespace error
 } // namespace pproto

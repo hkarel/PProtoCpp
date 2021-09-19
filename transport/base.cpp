@@ -418,9 +418,8 @@ void Socket::run()
             }
             else // ProtocolCompatible::No
             {
-                data::CloseConnection closeConnection;
-                closeConnection.code = 0;
-                closeConnection.description = QString(
+                data::CloseConnection closeConnection {error::protocol_incompatible};
+                closeConnection.description = QObject::tr(
                     "Protocol versions incompatible"
                     ". This protocol version: %1-%2"
                     ". Remote protocol version: %3-%4"
@@ -450,7 +449,8 @@ void Socket::run()
             readFromMessage(message, closeConnection);
             if (closeConnection.dataIsValid)
                 log_verbose_m << "Connection will be closed at request remote side"
-                              << ". Remote detail: " << closeConnection.description;
+                              << ". Remote detail: " << closeConnection.description
+                              << ". Error code: "    << closeConnection.code;
             else
                 log_error_m << "Incorrect data structure for command "
                             << CommandNameLog(message->command());
