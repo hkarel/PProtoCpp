@@ -449,8 +449,8 @@ void Socket::run()
             readFromMessage(message, closeConnection);
             if (closeConnection.dataIsValid)
                 log_verbose_m << "Connection will be closed at request remote side"
-                              << ". Remote detail: " << closeConnection.description
-                              << ". Error code: "    << closeConnection.code;
+                              << ". Reason code: "   << closeConnection.code
+                              << ". Remote detail: " << closeConnection.description;
             else
                 log_error_m << "Incorrect data structure for command "
                             << CommandNameLog(message->command());
