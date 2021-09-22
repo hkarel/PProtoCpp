@@ -113,9 +113,6 @@ bserial::RawVector Unknown::toRaw() const
     /* stream << socketName */
     B_QSTR_TO_UTF8(stream, socketName);
 
-    // Отладить: stream << address
-    break_point
-
     /* stream << address
        Реализация взята с QHostAddress
     */
@@ -129,6 +126,9 @@ bserial::RawVector Unknown::toRaw() const
         }
         case QAbstractSocket::IPv6Protocol:
         {
+            // Отладить
+            break_point
+
             stream << quint8(1); // protocol
             Q_IPV6ADDR ipv6 = address.toIPv6Address();
             for (int i = 0; i < 16; ++i)
@@ -152,9 +152,6 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
     /* stream >> socketName */
     B_QSTR_FROM_UTF8(stream, socketName);
 
-    // Отладить: stream >> address
-    break_point
-
     /* stream >> address
        Реализация взята с QHostAddress
     */
@@ -172,15 +169,18 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
         }
         case 1: /* QAbstractSocket::IPv6Protocol */
         {
+            // Отладить
+            break_point
+
             Q_IPV6ADDR ipv6;
             for (int i = 0; i < 16; ++i)
                 stream >> ipv6[i];
             address.setAddress(ipv6);
 
-            QString scope;
-            /* stream >> scope */
-            B_QSTR_FROM_UTF8(stream, scope);
-            address.setScopeId(scope);
+            QString scopeId;
+            /* stream >> scopeId */
+            B_QSTR_FROM_UTF8(stream, scopeId);
+            address.setScopeId(scopeId);
             break;
         }
     }

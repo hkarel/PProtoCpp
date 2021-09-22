@@ -91,7 +91,7 @@ bool SocketCommon::send(const Message::Ptr& message)
         if (isUnknown)
         {
             log_error_m << "Command " << CommandNameLog(message->command())
-                        << " is unknown for receiving side. Command discarded";
+                        << " is unknown for remote side. Command discarded";
             return false;
         }
     }
