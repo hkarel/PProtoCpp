@@ -58,9 +58,9 @@ namespace pproto {
 
 Message::Message() : _flags(0), _flags2(0)
 {
-    // Флаги _flags, _flags2 должны быть инициализированы обязательно
+    // Флаги  _flags,  _flags2  должны  быть  инициализированы  обязательно
     // в конструкторе, так как невозможно корректно выполнить инициализацию
-    // не именованных union-параметров при их объявлении в классе.
+    // не именованных union-параметров при их объявлении в классе
 }
 
 Message::Ptr Message::create(const QUuidEx& command, SerializeFormat contentFormat)
@@ -74,6 +74,7 @@ Message::Ptr Message::create(const QUuidEx& command, SerializeFormat contentForm
     m->_flag.priority = static_cast<quint32>(Priority::Normal);
     m->_flag.compression = static_cast<quint32>(Compression::None);
     m->_flag.contentFormat = static_cast<quint32>(contentFormat);
+    m->_proxyId = pproto::proxyId();
 
     return m;
 }
@@ -91,6 +92,7 @@ Message::Ptr Message::cloneForAnswer() const
     m->_flags2 = _flags2;
     m->_tags = _tags;
     m->_maxTimeLife = _maxTimeLife;
+    m->_proxyId = _proxyId;
     m->_socketType = _socketType;
     m->_sourcePoint = _sourcePoint;
     m->_socketDescriptor = _socketDescriptor;
@@ -256,6 +258,9 @@ int Message::size() const
     if (_maxTimeLife != quint64(-1))
         sz += sizeof(_maxTimeLife);
 
+    if (_proxyId != 0)
+        sz += sizeof(_proxyId);
+
     if (!_content.isEmpty())
         sz += _content.size() + sizeof(quint32);
 
@@ -268,6 +273,7 @@ void Message::initEmptyTraits() const
     _flag.tagsIsEmpty        = (_tags.isEmpty());
     _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
     _flag.contentIsEmpty     = (_content.isEmpty());
+    _flag.proxyIdIsEmpty     = (_proxyId == 0);
 }
 
 #ifdef PPROTO_QBINARY_SERIALIZE
@@ -312,6 +318,9 @@ void Message::toDataStream(QDataStream& stream) const
     if (!_flag.maxTimeLifeIsEmpty)
         stream << _maxTimeLife;
 
+    if (!_flag.proxyIdIsEmpty)
+        stream << _proxyId;
+
     if (!_flag.contentIsEmpty)
         stream << _content;
 }
@@ -343,6 +352,9 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
     }
     if (!m->_flag.maxTimeLifeIsEmpty)
         stream >> m->_maxTimeLife;
+
+    if (!m->_flag.proxyIdIsEmpty)
+        stream >> m->_proxyId;
 
     if (!m->_flag.contentIsEmpty)
     {
@@ -411,6 +423,12 @@ QByteArray Message::toJson() const
         // stream << _maxTimeLife;
         writer.Key("maxTimeLife");
         writer.Uint64(_maxTimeLife);
+    }
+    if (!_flag.proxyIdIsEmpty)
+    {
+        // stream << _proxyId;
+        writer.Key("proxyId");
+        writer.Uint64(_proxyId);
     }
     if (!_flag.contentIsEmpty)
     {
@@ -491,6 +509,10 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
         {
             m->_maxTimeLife = quint64(member->value.GetUint64());
+        }
+        else if (stringEqual("proxyId", member->name) && member->value.IsUint64())
+        {
+            m->_proxyId = quint64(member->value.GetUint64());
         }
         else if (stringEqual("content", member->name) && member->value.IsObject())
         {
@@ -584,6 +606,23 @@ SerializeFormat Message::contentFormat() const
 void Message::setContentFormat(SerializeFormat val)
 {
     _flag.contentFormat = static_cast<quint32>(val);
+}
+
+quint64 internalProxyId(const quint64* val = nullptr)
+{
+    static quint64 id {0};
+    if (val) id = *val;
+    return id;
+}
+
+quint64 proxyId()
+{
+    return internalProxyId();
+}
+
+void setProxyId(quint64 id)
+{
+    (void) internalProxyId(&id);
 }
 
 } // namespace pproto

@@ -293,6 +293,12 @@ public:
     //   - compression = None
     Ptr cloneForAnswer() const;
 
+    // !!! Экспериментальная функция !!!
+    // Возвращает/устанавливает proxy-идентификатор необходимый для передачи
+    // сообщения через промежуточный proxy-узел
+    quint64 proxyId() const {return _proxyId;}
+    void setProxyId(quint64 val) {_proxyId = val;}
+
 #ifdef PPROTO_QBINARY_SERIALIZE
     // Функция записи данных
     template<typename... Args>
@@ -389,8 +395,9 @@ private:
             mutable quint32 tagsIsEmpty: 1;
             mutable quint32 maxTimeLifeIsEmpty: 1;
             mutable quint32 contentIsEmpty: 1;
+            mutable quint32 proxyIdIsEmpty: 1;
 
-            quint32 reserved2: 2;
+            quint32 reserved2: 1;
 
             //--- Байт 3 ---
             quint32 reserved3: 8;
@@ -412,6 +419,7 @@ private:
 
     QVector<quint64> _tags;
     quint64 _maxTimeLife = {quint64(-1)};
+    quint64 _proxyId = {0};
     QByteArray _content;
     SocketType _socketType = {SocketType::Unknown};
     HostPoint _sourcePoint;
@@ -489,5 +497,12 @@ SResult Message::readJsonContent(T& t) const
     return t.fromJson(_content);
 }
 #endif
+
+/**
+  Глобальная сервисная функция возвращает/устанавливает proxy-идентификатор
+  для сетевого узла
+*/
+quint64 proxyId();
+void setProxyId(quint64);
 
 } // namespace pproto
