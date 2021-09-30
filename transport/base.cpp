@@ -690,6 +690,16 @@ void Socket::run()
                             break;
                         }
 
+                    // Проверка требования использовать только шифрованное
+                    // подключение
+                    if (signatureFound && !_encryption && _onlyEncrypted)
+                    {
+                        log_error_m << "Only encrypted connections allowed"
+                                    << ". Connection will be closed";
+                        loopBreak = true;
+                        break;
+                    }
+
                     if (signatureFound)
                     {
                         alog::Line logLine =
@@ -1544,6 +1554,11 @@ Socket::Ptr Listener::releaseSocket(SocketDescriptor descr)
     return socket;
 }
 
+void Listener::setOnlyEncrypted(bool val)
+{
+    Properties::setOnlyEncrypted(val);
+}
+
 void Listener::closeSockets()
 {
     _removeClosedSockets.stop();
@@ -1570,6 +1585,7 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket, //NOLINT
     socket->setCompressionLevel(_compressionLevel);
     socket->setCompressionSize(_compressionSize);
     socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
+    socket->setOnlyEncrypted(_onlyEncrypted);
     socket->setName(_name);
     socket->setCheckUnknownCommands(_checkUnknownCommands);
 

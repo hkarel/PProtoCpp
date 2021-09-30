@@ -77,14 +77,25 @@ public:
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
 
+    // Определяет требование  использовать  только  зашифрованное  подключение.
+    // Если клиент попытается подключится к листенеру без использования  шифро-
+    // вания, такое соединение будет закрыто. Параметр можно установить только
+    // на стороне листенера
+    bool onlyEncrypted() const {return _onlyEncrypted;}
+
     // Наименование сокета или листенера, используется для вывода лог-сообщений
     QString name() const {return _name;}
     void setName(const QString& val) {_name = val;}
 
 protected:
+    // Для публичного вызова метод доступен в листенере
+    void setOnlyEncrypted(bool val) {_onlyEncrypted = val;}
+
+protected:
     int _compressionLevel = {0};
     int _compressionSize  = {1024};
     bool _checkProtocolCompatibility = {true};
+    bool _onlyEncrypted = {false};
     QString _name;
 };
 
@@ -332,6 +343,12 @@ public:
     // Определяет нужно ли проверять, что входящая команда является неизвестной
     bool checkUnknownCommands() const {return _checkUnknownCommands;}
     void setCheckUnknownCommands(bool val) {_checkUnknownCommands = val;}
+
+    // Определяет требование  для  клиента  использовать  только  зашифрованное
+    // подключение. Если клиент попытается подключится к листенеру  без  исполь-
+    // зования шифрования, соединение будет закрыто.
+    // См. описание Properties::onlyEncrypted
+    void setOnlyEncrypted(bool val);
 
 protected:
     Listener() = default;
