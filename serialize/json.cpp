@@ -520,6 +520,34 @@ Reader& Reader::operator& (QString& s)
     return *this;
 }
 
+Reader& Reader::operator& (QUuid& uuid)
+{
+    if (!error())
+    {
+        if (_stack.top().value->IsString())
+        {
+            const QByteArray& ba = QByteArray::fromRawData(
+                                       _stack.top().value->GetString(),
+                                       _stack.top().value->GetStringLength());
+            uuid = QUuid(ba);
+            next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            uuid = QUuid();
+            next();
+        }
+        else
+        {
+            setError(1);
+            log_error_m << "Stack top is not 'string' type"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
+        }
+    }
+    return *this;
+}
+
 Reader& Reader::operator& (QDate& date)
 {
     if (!error())
@@ -607,34 +635,6 @@ Reader& Reader::operator& (std::string& s)
         else if (_stack.top().value->IsNull())
         {
             s = std::string();
-            next();
-        }
-        else
-        {
-            setError(1);
-            log_error_m << "Stack top is not 'string' type"
-                        << ". Field: " << stackFieldName()
-                        << ". JIndex: " << _jsonIndex;
-        }
-    }
-    return *this;
-}
-
-Reader& Reader::operator& (QUuid& uuid)
-{
-    if (!error())
-    {
-        if (_stack.top().value->IsString())
-        {
-            const QByteArray& ba = QByteArray::fromRawData(
-                                       _stack.top().value->GetString(),
-                                       _stack.top().value->GetStringLength());
-            uuid = QUuid(ba);
-            next();
-        }
-        else if (_stack.top().value->IsNull())
-        {
-            uuid = QUuid();
             next();
         }
         else
