@@ -595,6 +595,31 @@ Reader& Reader::operator& (QDateTime& dtime)
     return *this;
 }
 
+Reader& Reader::operator& (std::string& s)
+{
+    if (!error())
+    {
+        if (_stack.top().value->IsString())
+        {
+            s = _stack.top().value->GetString();
+            next();
+        }
+        else if (_stack.top().value->IsNull())
+        {
+            s = std::string();
+            next();
+        }
+        else
+        {
+            setError(1);
+            log_error_m << "Stack top is not 'string' type"
+                        << ". Field: " << stackFieldName()
+                        << ". JIndex: " << _jsonIndex;
+        }
+    }
+    return *this;
+}
+
 Reader& Reader::operator& (QUuid& uuid)
 {
     if (!error())
@@ -887,6 +912,20 @@ Writer& Writer::operator& (const QDateTime& dtime)
     else
         setNull();
 
+    return *this;
+}
+
+Writer& Writer::operator& (const std::string& s)
+{
+#ifndef PPROTO_JSON_STRING_NOTNULL
+    if (s.empty())
+    {
+        setNull();
+        return *this;
+    }
+#endif
+
+    _writer.String(s.c_str(), SizeType(s.length()));
     return *this;
 }
 

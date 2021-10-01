@@ -111,6 +111,7 @@ public:
     Reader& operator& (QDate&);
     Reader& operator& (QTime&);
     Reader& operator& (QDateTime&);
+    Reader& operator& (std::string&);
 
     template <typename T> Reader& operator& (T& t);
     template <typename T> Reader& operator& (QList<T>&);
@@ -216,6 +217,7 @@ public:
     Writer& operator& (const QDate&);
     Writer& operator& (const QTime&);
     Writer& operator& (const QDateTime&);
+    Writer& operator& (const std::string&);
 
     template <typename T> Writer& operator& (const T& t);
     template <typename T> Writer& operator& (const QList<T>&);
