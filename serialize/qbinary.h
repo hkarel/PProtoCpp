@@ -381,7 +381,6 @@ namespace bserial = pproto::serialize::qbinary;
 */
 #define B_SERIALIZE_V1(STREAM, RESERVE...) \
     bserial::RawVector to__raw__vect__; \
-    to__raw__vect__.reserve(2); \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
       { bserial::DataStream STREAM {&to__raw__ba__, QIODevice::WriteOnly}; \
@@ -390,7 +389,7 @@ namespace bserial = pproto::serialize::qbinary;
 
 #define B_SERIALIZE_N(STREAM, RESERVE...) \
       } \
-      to__raw__vect__.append(to__raw__ba__); \
+      to__raw__vect__.append(std::move(to__raw__ba__)); \
     } \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
@@ -405,7 +404,7 @@ namespace bserial = pproto::serialize::qbinary;
 
 #define B_SERIALIZE_RETURN \
       } \
-      to__raw__vect__.append(to__raw__ba__); \
+      to__raw__vect__.append(std::move(to__raw__ba__)); \
     } \
     return to__raw__vect__;
 
