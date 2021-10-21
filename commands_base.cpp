@@ -26,6 +26,7 @@
 #include "commands_base.h"
 #include "commands_pool.h"
 #include "shared/logger/logger.h"
+#include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
 namespace pproto {
