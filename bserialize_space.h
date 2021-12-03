@@ -24,6 +24,7 @@
 *****************************************************************************/
 
 #pragma once
+
 #include "serialize/qbinary.h"
 
 namespace pproto {

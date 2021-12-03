@@ -36,6 +36,7 @@
 *****************************************************************************/
 
 #pragma once
+
 #include "message.h"
 
 #ifdef PPROTO_QBINARY_SERIALIZE
