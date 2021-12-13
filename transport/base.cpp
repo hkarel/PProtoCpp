@@ -957,14 +957,25 @@ void Socket::run()
 
 #ifdef PPROTO_JSON_SERIALIZE
                     if (_messageFormat == SerializeFormat::Json
-                        && !message->contentIsEmpty()
-                        && message->contentFormat() != SerializeFormat::Json)
+                        && !message->contentIsEmpty())
                     {
-                        log_error_m << "For json packaging a message format"
-                                    << " and message content format must match"
-                                    << ". Message discarded"
-                                    << ". Command: " << CommandNameLog(message->command());
-                        continue;
+                        if (message->contentFormat() != SerializeFormat::Json)
+                        {
+                            log_error_m << "For json-packaging a message format"
+                                        << " and message content format must match"
+                                        << ". Message discarded"
+                                        << ". Command: " << CommandNameLog(message->command());
+                            continue;
+                        }
+                        if (message->compression() != Message::Compression::None
+                            && message->compression() != Message::Compression::Disable)
+                        {
+                            log_error_m << "For json-packaging a message content"
+                                        << " compression is not allowed"
+                                        << ". Message discarded"
+                                        << ". Command: " << CommandNameLog(message->command());
+                            continue;
+                        }
                     }
 #endif
                     if (message->command() == command::CloseConnection
