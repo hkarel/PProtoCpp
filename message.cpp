@@ -367,7 +367,7 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 #endif // PPROTO_QBINARY_SERIALIZE
 
 #ifdef PPROTO_JSON_SERIALIZE
-QByteArray Message::toJson() const
+QByteArray Message::toJson(bool webFlags) const
 {
     initEmptyTraits();
 
@@ -436,6 +436,71 @@ QByteArray Message::toJson() const
         writer.Key("content");
         writer.RawValue(_content.constData(), size_t(_content.length()), kObjectType);
     }
+
+    if (webFlags)
+    {
+        writer.Key("webFlags");
+        writer.StartObject();
+
+        writer.Key("type");
+        switch (type())
+        {
+            case Message::Type::Command: writer.String("command"); break;
+            case Message::Type::Answer:  writer.String("answer" ); break;
+            case Message::Type::Event:   writer.String("event"  ); break;
+            default:                     writer.String("unknown"); break;
+        }
+
+        writer.Key("execStatus");
+        switch (execStatus())
+        {
+            case Message::ExecStatus::Success: writer.String("success"); break;
+            case Message::ExecStatus::Failed:  writer.String("failed" );break;
+            case Message::ExecStatus::Error:   writer.String("error"  ); break;
+            default:                           writer.String("unknown"); break;
+        }
+
+        writer.Key("priority");
+        switch (priority())
+        {
+            case Message::Priority::High: writer.String("high"  ); break;
+            case Message::Priority::Low:  writer.String("low"   ); break;
+            default:                      writer.String("normal"); break;
+        }
+
+        // compression() не используется при json-сериализации
+
+        writer.Key("contentFormat");
+        writer.String("json");
+
+        // Признаки пустых полей
+        writer.Key("emptyAttr");
+        writer.StartArray();
+        if (_flag.tagsIsEmpty       ) writer.String("tags");
+        if (_flag.maxTimeLifeIsEmpty) writer.String("maxTimeLife");
+        if (_flag.contentIsEmpty    ) writer.String("content");
+        if (_flag.proxyIdIsEmpty    ) writer.String("proxyId");
+        if (_flag.flags2IsEmpty     ) writer.String("flags2");
+        writer.EndArray();
+
+//        writer.Key("tagsIsEmpty");
+//        writer.Bool(_flag.tagsIsEmpty);
+
+//        writer.Key("maxTimeLifeIsEmpty");
+//        writer.Bool(_flag.maxTimeLifeIsEmpty);
+
+//        writer.Key("contentIsEmpty");
+//        writer.Bool(_flag.contentIsEmpty);
+
+//        writer.Key("proxyIdIsEmpty");
+//        writer.Bool(_flag.proxyIdIsEmpty);
+
+//        writer.Key("flags2IsEmpty");
+//        writer.Bool(_flag.flags2IsEmpty);
+
+        writer.EndObject();
+    }
+
     writer.EndObject();
     return QByteArray(buff.GetString());
 }
@@ -469,6 +534,9 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         return m;
     }
 
+    quint32 flags = 0, flags2 = 0;
+    bool webFlagsExists = false;
+
     for (auto member = doc.MemberBegin(); member != doc.MemberEnd(); ++member)
     {
         if (stringEqual("id", member->name) && member->value.IsString())
@@ -493,11 +561,13 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         }
         else if (stringEqual("flags", member->name) && member->value.IsUint())
         {
-            m->_flags = quint32(member->value.GetUint());
+            //m->_flags = quint32(member->value.GetUint());
+            flags = quint32(member->value.GetUint());
         }
         else if (stringEqual("flags2", member->name) && member->value.IsUint())
         {
-            m->_flags2 = quint32(member->value.GetUint());
+            //m->_flags2 = quint32(member->value.GetUint());
+            flags2 = quint32(member->value.GetUint());
         }
         else if (stringEqual("tags", member->name) && member->value.IsArray())
         {
@@ -521,7 +591,94 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             member->value.Accept(writer);
             m->_content = QByteArray(buff.GetString());
         }
+        else if (stringEqual("webFlags", member->name) && member->value.IsObject())
+        {
+            webFlagsExists = true;
+            for (auto wflag = member->value.MemberBegin(); wflag != member->value.MemberEnd(); ++wflag)
+            {
+                auto equal = [](const char* s1, const char* s2) -> bool {
+                    return (std::strcmp(s1, s2) == 0);
+                };
+
+                if (stringEqual("type", wflag->name) && wflag->value.IsString())
+                {
+                    const char* s = wflag->value.GetString();
+                    if      (equal(s, "command")) m->setType(Message::Type::Command);
+                    else if (equal(s, "answer" )) m->setType(Message::Type::Answer);
+                    else if (equal(s, "event"  )) m->setType(Message::Type::Event);
+                    else                          m->setType(Message::Type::Unknown);
+                }
+                else if (stringEqual("execStatus", wflag->name) && wflag->value.IsString())
+                {
+                    const char* s = wflag->value.GetString();
+                    if      (equal(s, "success")) m->setExecStatus(Message::ExecStatus::Success);
+                    else if (equal(s, "failed" )) m->setExecStatus(Message::ExecStatus::Failed);
+                    else if (equal(s, "error"  )) m->setExecStatus(Message::ExecStatus::Error);
+                    else                          m->setExecStatus(Message::ExecStatus::Unknown);
+                }
+                else if (stringEqual("priority", wflag->name) && wflag->value.IsString())
+                {
+                    const char* s = wflag->value.GetString();
+                    if      (equal(s, "high")) m->setPriority(Message::Priority::High);
+                    else if (equal(s, "low" )) m->setPriority(Message::Priority::Low);
+                    else                       m->setPriority(Message::Priority::Normal);
+                }
+
+                // compression() не используется при json-сериализации
+
+                else if (stringEqual("contentFormat", wflag->name) && wflag->value.IsString())
+                {
+                    m->setContentFormat(SerializeFormat::Json);
+                }
+
+                // Признаки пустых полей
+                else if (stringEqual("emptyAttr", wflag->name) && wflag->value.IsArray())
+                {
+                    SizeType size = wflag->value.Size();
+                    for (SizeType i = 0; i < size; ++i)
+                    {
+                        const char* s = wflag->value[i].GetString();
+                        if      (equal(s, "tags"       )) m->_flag.tagsIsEmpty = true;
+                        else if (equal(s, "maxTimeLife")) m->_flag.maxTimeLifeIsEmpty = true;
+                        else if (equal(s, "content"    )) m->_flag.contentIsEmpty = true;
+                        else if (equal(s, "proxyId"    )) m->_flag.proxyIdIsEmpty = true;
+                        else if (equal(s, "flags2"     )) m->_flag.flags2IsEmpty = true;
+                    }
+                }
+
+//                else if (stringEqual("tagsIsEmpty", wflag->name) && wflag->value.IsBool())
+//                {
+//                    m->_flag.tagsIsEmpty = wflag->value.GetBool();
+//                }
+//                else if (stringEqual("maxTimeLifeIsEmpty", wflag->name) && wflag->value.IsBool())
+//                {
+//                    m->_flag.maxTimeLifeIsEmpty = wflag->value.GetBool();
+//                }
+//                else if (stringEqual("contentIsEmpty", wflag->name) && wflag->value.IsBool())
+//                {
+//                    m->_flag.contentIsEmpty = wflag->value.GetBool();
+//                }
+//                else if (stringEqual("proxyIdIsEmpty", wflag->name) && wflag->value.IsBool())
+//                {
+//                    m->_flag.proxyIdIsEmpty = wflag->value.GetBool();
+//                }
+//                else if (stringEqual("flags2IsEmpty", wflag->name) && wflag->value.IsBool())
+//                {
+//                    m->_flag.flags2IsEmpty = wflag->value.GetBool();
+//                }
+            }
+        } // webFlags
     }
+
+    if (flags)
+    {
+        if (webFlagsExists && (m->_flags != flags))
+            log_error_m << "Binary-flags and web-flags do not match";
+        m->_flags = flags;
+    }
+    if (flags2)
+        m->_flags2 = flags2;
+
     return m;
 }
 #endif // PPROTO_JSON_SERIALIZE

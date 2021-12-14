@@ -83,6 +83,13 @@ public:
     // на стороне листенера
     bool onlyEncrypted() const {return _onlyEncrypted;}
 
+    // Определяет требование записывать битовыйе флаги сообщения в json-формате,
+    // при этом бинарное  представление  флагов  остается.  При  десериализации
+    // бинарное представление флагов имеет приоритет  над  json-представлением.
+    // Параметр актуален только при json-сериализации сообщения
+    bool messageWebFlags() const {return _messageWebFlags;}
+    void setMessageWebFlags(bool val) {_messageWebFlags = val;}
+
     // Наименование сокета или листенера, используется для вывода лог-сообщений
     QString name() const {return _name;}
     void setName(const QString& val) {_name = val;}
@@ -96,6 +103,7 @@ protected:
     int _compressionSize  = {1024};
     bool _checkProtocolCompatibility = {true};
     bool _onlyEncrypted = {false};
+    bool _messageWebFlags = {false};
     QString _name;
 };
 

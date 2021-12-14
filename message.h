@@ -326,7 +326,7 @@ public:
     template<typename T>
     SResult readJsonContent(T&) const;
 
-    QByteArray toJson() const;
+    QByteArray toJson(bool webFlags = false) const;
     static Ptr fromJson(const QByteArray&);
 #endif
 

@@ -1001,7 +1001,7 @@ void Socket::run()
 #endif
 #ifdef PPROTO_JSON_SERIALIZE
                         case SerializeFormat::Json:
-                            buff = message->toJson();
+                            buff = message->toJson(_messageWebFlags);
                             if (alog::logger().level() == alog::Level::Debug2)
                             {
                                 log_debug2_m << "Message json before sending: " << buff;
@@ -1597,6 +1597,7 @@ void Listener::incomingConnectionInternal(Socket::Ptr socket, //NOLINT
     socket->setCompressionSize(_compressionSize);
     socket->setCheckProtocolCompatibility(_checkProtocolCompatibility);
     socket->setOnlyEncrypted(_onlyEncrypted);
+    socket->setMessageWebFlags(_messageWebFlags);
     socket->setName(_name);
     socket->setCheckUnknownCommands(_checkUnknownCommands);
 
