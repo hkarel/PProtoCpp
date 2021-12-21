@@ -483,22 +483,7 @@ QByteArray Message::toJson(bool webFlags) const
         if (_flag.flags2IsEmpty     ) writer.String("flags2");
         writer.EndArray();
 
-//        writer.Key("tagsIsEmpty");
-//        writer.Bool(_flag.tagsIsEmpty);
-
-//        writer.Key("maxTimeLifeIsEmpty");
-//        writer.Bool(_flag.maxTimeLifeIsEmpty);
-
-//        writer.Key("contentIsEmpty");
-//        writer.Bool(_flag.contentIsEmpty);
-
-//        writer.Key("proxyIdIsEmpty");
-//        writer.Bool(_flag.proxyIdIsEmpty);
-
-//        writer.Key("flags2IsEmpty");
-//        writer.Bool(_flag.flags2IsEmpty);
-
-        writer.EndObject();
+        writer.EndObject(); // Key("webFlags")
     }
 
     writer.EndObject();
@@ -518,11 +503,6 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     {
         ParseErrorCode e = doc.GetParseError();
         int o = int(doc.GetErrorOffset());
-//        log_error_m << "Failed parce json."
-//                    << " Error: " << GetParseError_En(e)
-//                    << " Detail: " << " at offset " << o << " near '"
-//                    << ba.mid(o, 20) << "...'";
-
         log_error_m << log_format(
             "Failed parce json. Error: %? Detail: at offset %? near '%?...'",
             GetParseError_En(e), o, ba.mid(o, 20));
@@ -561,12 +541,10 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         }
         else if (stringEqual("flags", member->name) && member->value.IsUint())
         {
-            //m->_flags = quint32(member->value.GetUint());
             flags = quint32(member->value.GetUint());
         }
         else if (stringEqual("flags2", member->name) && member->value.IsUint())
         {
-            //m->_flags2 = quint32(member->value.GetUint());
             flags2 = quint32(member->value.GetUint());
         }
         else if (stringEqual("tags", member->name) && member->value.IsArray())
@@ -645,27 +623,6 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
                         else if (equal(s, "flags2"     )) m->_flag.flags2IsEmpty = true;
                     }
                 }
-
-//                else if (stringEqual("tagsIsEmpty", wflag->name) && wflag->value.IsBool())
-//                {
-//                    m->_flag.tagsIsEmpty = wflag->value.GetBool();
-//                }
-//                else if (stringEqual("maxTimeLifeIsEmpty", wflag->name) && wflag->value.IsBool())
-//                {
-//                    m->_flag.maxTimeLifeIsEmpty = wflag->value.GetBool();
-//                }
-//                else if (stringEqual("contentIsEmpty", wflag->name) && wflag->value.IsBool())
-//                {
-//                    m->_flag.contentIsEmpty = wflag->value.GetBool();
-//                }
-//                else if (stringEqual("proxyIdIsEmpty", wflag->name) && wflag->value.IsBool())
-//                {
-//                    m->_flag.proxyIdIsEmpty = wflag->value.GetBool();
-//                }
-//                else if (stringEqual("flags2IsEmpty", wflag->name) && wflag->value.IsBool())
-//                {
-//                    m->_flag.flags2IsEmpty = wflag->value.GetBool();
-//                }
             }
         } // webFlags
     }
