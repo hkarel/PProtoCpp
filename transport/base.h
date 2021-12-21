@@ -301,9 +301,6 @@ private:
     bool _encryption = {false};
     int  _echoTimeout = {0};
 
-    bool _serializeSignatureRead = {false};
-    bool _serializeSignatureWrite = {false};
-
     bool _isListenerSide = {false};
     volatile bool _isInsideListener = {false};
 

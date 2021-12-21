@@ -218,9 +218,6 @@ void Socket::disconnect(unsigned long time)
 
 void Socket::socketDisconnected()
 {
-    _serializeSignatureRead = false;
-    _serializeSignatureWrite = false;
-
     emit disconnected(_initSocketDescriptor);
     _initSocketDescriptor = {-1};
 }
@@ -371,20 +368,6 @@ void Socket::run()
     QUuidEx commandEchoConnectionId;
 
     _protocolCompatible = ProtocolCompatible::Unknown;
-
-    { //Добавляем самое первое сообщение с информацией о совместимости
-        Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
-        internalMessages.add(m.detach());
-    }
-
-    if ((_echoTimeout > 0) && !isListenerSide())
-    {
-        Message::Ptr m = Message::create(command::EchoConnection, _messageFormat);
-        m->setTag(_echoTimeout);
-        commandEchoConnectionId = m->id();
-        internalMessages.add(m.detach());
-        echoTimer.start();
-    }
 
     auto processingProtocolCompatibleCommand = [&](Message::Ptr& message) -> void
     {
@@ -550,8 +533,7 @@ void Socket::run()
 #endif // SODIUM_ENCRYPTION
 
     #define CHECK_SOCKET_ERROR \
-        if (!socketIsConnectedInternal()) \
-        { \
+        if (!socketIsConnectedInternal()) { \
             printSocketError(alog_line_location, "Transport"); \
             loopBreak = true; \
             break; \
@@ -559,17 +541,9 @@ void Socket::run()
 
     try
     {
-        while (true)
-        {
-            if (threadStop())
-                break;
-
-            CHECK_SOCKET_ERROR
-            if (loopBreak)
-                break;
-
+        do {
             // Отправка сигнатуры протокола
-            if (!_serializeSignatureWrite && !isListenerSide())
+            if (!isListenerSide())
             {
                 QByteArray ba;
                 { //Block for QDataStream
@@ -628,204 +602,214 @@ void Socket::run()
 #ifdef SODIUM_ENCRYPTION
                 logLine << ". Encryption: " << (_encryption ? "yes" : "no");
 #endif
-                _serializeSignatureWrite = true;
-            }
+            } // if (!isListenerSide())
 
             // Проверка сигнатуры протокола
-            if (!_serializeSignatureRead)
+            timer.start();
+            int timeout = (isListenerSide())
+                          ? 60  * delay  // 3 сек
+                          : 120 * delay; // 6 сек
+
+            while (socketBytesAvailable() < 16)
             {
-                timer.start();
-                int timeout;
-                if (isListenerSide())
-                    timeout = 60  * delay;  // 3 сек
-                else
-                    timeout = 120 * delay;  // 6 сек
+                msleep(10);
 
-                while (socketBytesAvailable() < 16)
+                // Пояснение к вызову функции socketWaitForReadyRead() с нулевым
+                // таймаутом: без этого  вызова  функция  socketBytesAvailable()
+                // всегда будет возвращать нулевое значение
+                socketWaitForReadyRead(0);
+                CHECK_SOCKET_ERROR
+                if (timer.hasExpired(timeout))
                 {
-                    msleep(10);
+                    log_error_m << "Signature of serialize format for protocol"
+                                << " is not received within " << timeout << " ms";
+                    loopBreak = true;
+                    break;
+                }
+            }
+            if (loopBreak)
+                break;
 
-                    // Пояснение к вызову функции socketWaitForReadyRead() с нулевым
-                    // таймаутом: без этого  вызова  функция  socketBytesAvailable()
-                    // всегда будет возвращать нулевое значение
-                    socketWaitForReadyRead(0);
-                    CHECK_SOCKET_ERROR
-                    if (timer.hasExpired(timeout))
+            QByteArray ba;
+            ba.resize(16);
+            if (socketRead((char*)ba.constData(), 16) != 16)
+            {
+                log_error_m << "Failed read signature for serialize format";
+                loopBreak = true;
+                break;
+            }
+
+            QUuidEx incomingSignature;
+            { //Block for QDataStream
+                QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
+                STREAM_INIT(stream);
+                stream >> incomingSignature;
+            }
+
+            // Проверка сигнатуры на стороне сервера
+            if (isListenerSide())
+            {
+                bool signatureFound = false;
+                for (const ProtocolSign& sign : _protocolMap)
+                    if (sign.signature == incomingSignature)
                     {
-                        log_error_m << "Signature of serialize format for protocol"
-                                    << " is not received within " << timeout << " ms";
-                        loopBreak = true;
+                        signatureFound = true;
+                        _messageFormat = sign.messageFormat;
+                        _encryption = sign.encryption;
                         break;
                     }
-                }
-                if (loopBreak)
-                    break;
 
-                QByteArray ba;
-                ba.resize(16);
-                if (socketRead((char*)ba.constData(), 16) != 16)
+                // Проверка требования использовать только шифрованное
+                // подключение
+                if (signatureFound && !_encryption && _onlyEncrypted)
                 {
-                    log_error_m << "Failed read signature for serialize format";
+                    log_error_m << "Only encrypted connections allowed"
+                                << ". Connection will be closed";
                     loopBreak = true;
                     break;
                 }
 
-                QUuidEx incomingSignature;
-                { //Block for QDataStream
-                    QDataStream stream {&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
-                    STREAM_INIT(stream);
-                    stream >> incomingSignature;
-                }
-
-                // Проверка сигнатуры на стороне сервера
-                if (isListenerSide())
+                if (signatureFound)
                 {
-                    bool signatureFound = false;
-                    for (const ProtocolSign& sign : _protocolMap)
-                        if (sign.signature == incomingSignature)
-                        {
-                            signatureFound = true;
-                            _messageFormat = sign.messageFormat;
-                            _encryption = sign.encryption;
-                            break;
-                        }
-
-                    // Проверка требования использовать только шифрованное
-                    // подключение
-                    if (signatureFound && !_encryption && _onlyEncrypted)
+                    alog::Line logLine =
+                        log_verbose_m << "Message serialize format: ";
+                    switch (_messageFormat)
                     {
-                        log_error_m << "Only encrypted connections allowed"
-                                    << ". Connection will be closed";
-                        loopBreak = true;
-                        break;
-                    }
-
-                    if (signatureFound)
-                    {
-                        alog::Line logLine =
-                            log_verbose_m << "Message serialize format: ";
-                        switch (_messageFormat)
-                        {
 #ifdef PPROTO_QBINARY_SERIALIZE
-                            case SerializeFormat::QBinary:
-                                logLine << "qbinary";
-                                break;
+                        case SerializeFormat::QBinary:
+                            logLine << "qbinary";
+                            break;
 #endif
 #ifdef PPROTO_JSON_SERIALIZE
-                            case SerializeFormat::Json:
-                                logLine << "json";
-                                break;
-#endif
-                            default:
-                                logLine << "unknown";
-                        }
-#ifdef SODIUM_ENCRYPTION
-                        logLine << ". Encryption: " << (_encryption ? "yes" : "no");
-#endif
-                    }
-
-#ifdef SODIUM_ENCRYPTION
-                    if (signatureFound && _encryption)
-                    {
-                        if (!readExternalPublicKey(externPublicKey, timeout))
-                        {
-                            loopBreak = true;
+                        case SerializeFormat::Json:
+                            logLine << "json";
                             break;
-                        }
-                        if (crypto_box_keypair(socketPublicKey, socketSecretKey) != 0)
-                        {
-                            log_error_m << "Failed generate encrypt keys";
-                            loopBreak = true;
-                            break;
-                        }
-                        if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
-                        {
-                            log_error_m << "Failed generate shared secret key";
-                            loopBreak = true;
-                            break;
-                        }
-                    }
 #endif
-                    // Отправка сигнатуры протокола (ответ)
-                    QByteArray ba;
-                    { //Block for QDataStream
-                        QDataStream stream {&ba, QIODevice::WriteOnly};
-                        STREAM_INIT(stream);
-                        if (signatureFound)
-                            stream << incomingSignature;
-                        else
-                            stream << QUuidEx();
+                        default:
+                            logLine << "unknown";
                     }
-                    socketWrite(ba.constData(), 16);
-                    CHECK_SOCKET_ERROR
-
 #ifdef SODIUM_ENCRYPTION
-                    if (signatureFound && _encryption)
-                    {
-                        // Отправка публичного ключа шифрования (ответ)
-                        quint16 publicKeySize = crypto_box_PUBLICKEYBYTES;
-                        if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
-                            publicKeySize = qbswap(publicKeySize);
-
-                        quint16 reserved = 0;
-                        (void) reserved;
-
-                        socketWrite((const char*) &publicKeySize, sizeof(quint16));
-                        socketWrite((const char*) &reserved, sizeof(quint16));
-                        socketWrite((const char*) socketPublicKey, crypto_box_PUBLICKEYBYTES);
-                        CHECK_SOCKET_ERROR
-                    }
+                    logLine << ". Encryption: " << (_encryption ? "yes" : "no");
 #endif
-                    socketWaitForBytesWritten(delay);
-                    CHECK_SOCKET_ERROR
-                    _serializeSignatureWrite = true;
-
-                    if (!signatureFound)
-                    {
-                        log_error_m << "Incompatible serialize signatures";
-                        msleep(200);
-                        loopBreak = true;
-                        break;
-                    }
                 }
-                // Проверка сигнатуры на стороне клиента ( !isListenerSide() )
-                else
+
+#ifdef SODIUM_ENCRYPTION
+                if (signatureFound && _encryption)
                 {
-                    if (serializeSignature != incomingSignature)
+                    if (!readExternalPublicKey(externPublicKey, timeout))
                     {
-                        log_error_m << "Incompatible serialize signatures";
+                        loopBreak = true;
+                        break;
+                    }
+                    if (crypto_box_keypair(socketPublicKey, socketSecretKey) != 0)
+                    {
+                        log_error_m << "Failed generate encrypt keys";
+                        loopBreak = true;
+                        break;
+                    }
+                    if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
+                    {
+                        log_error_m << "Failed generate shared secret key";
+                        loopBreak = true;
+                        break;
+                    }
+                }
+#endif
+                // Отправка сигнатуры протокола (ответ)
+                QByteArray ba;
+                { //Block for QDataStream
+                    QDataStream stream {&ba, QIODevice::WriteOnly};
+                    STREAM_INIT(stream);
+                    if (signatureFound)
+                        stream << incomingSignature;
+                    else
+                        stream << QUuidEx();
+                }
+                socketWrite(ba.constData(), 16);
+                CHECK_SOCKET_ERROR
+
+#ifdef SODIUM_ENCRYPTION
+                if (signatureFound && _encryption)
+                {
+                    // Отправка публичного ключа шифрования (ответ)
+                    quint16 publicKeySize = crypto_box_PUBLICKEYBYTES;
+                    if ((QSysInfo::ByteOrder != QSysInfo::BigEndian))
+                        publicKeySize = qbswap(publicKeySize);
+
+                    quint16 reserved = 0;
+                    (void) reserved;
+
+                    socketWrite((const char*) &publicKeySize, sizeof(quint16));
+                    socketWrite((const char*) &reserved, sizeof(quint16));
+                    socketWrite((const char*) socketPublicKey, crypto_box_PUBLICKEYBYTES);
+                    CHECK_SOCKET_ERROR
+                }
+#endif
+                socketWaitForBytesWritten(delay);
+                CHECK_SOCKET_ERROR
+
+                if (!signatureFound)
+                {
+                    log_error_m << "Incompatible serialize signatures";
+                    msleep(200);
+                    loopBreak = true;
+                    break;
+                }
+            }
+            // Проверка сигнатуры на стороне клиента ( !isListenerSide() )
+            else
+            {
+                if (serializeSignature != incomingSignature)
+                {
+                    log_error_m << "Incompatible serialize signatures";
+                    loopBreak = true;
+                    break;
+                }
+
+#ifdef SODIUM_ENCRYPTION
+                if (_encryption)
+                {
+                    if (!readExternalPublicKey(externPublicKey, timeout))
+                    {
                         loopBreak = true;
                         break;
                     }
 
-#ifdef SODIUM_ENCRYPTION
-                    if (_encryption)
+                    // Здесь, в отличии от стороны сервера, не генерируем
+                    // публичный и приватный ключи, так как это уже  было
+                    // сделано ранее
+
+                    if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
                     {
-                        if (!readExternalPublicKey(externPublicKey, timeout))
-                        {
-                            loopBreak = true;
-                            break;
-                        }
-
-                        // Здесь, в отличии от стороны сервера, не генерируем
-                        // публичный и приватный ключи, так как это уже  было
-                        // сделано ранее
-
-                        if (crypto_box_beforenm(sharedSecretKey, externPublicKey, socketSecretKey) != 0)
-                        {
-                            log_error_m << "Failed generate shared secret key";
-                            loopBreak = true;
-                            break;
-                        }
+                        log_error_m << "Failed generate shared secret key";
+                        loopBreak = true;
+                        break;
                     }
-#endif
                 }
-                _serializeSignatureRead = true;
+#endif
+            }
+        } while (false);
 
-            } // if (!_serializeSignatureRead)
+        // Сообщения можно отправлять только после того, как будет определен
+        // формат передачи сообщения (параметр _messageFormat)
 
-            // Избыточная проверка (перестраховка)
-            if (loopBreak)
+        { //Добавляем самое первое сообщение с информацией о совместимости
+            Message::Ptr m = Message::create(command::ProtocolCompatible, _messageFormat);
+            internalMessages.add(m.detach());
+        }
+
+        if ((_echoTimeout > 0) && !isListenerSide())
+        {
+            Message::Ptr m = Message::create(command::EchoConnection, _messageFormat);
+            m->setTag(_echoTimeout);
+            commandEchoConnectionId = m->id();
+            internalMessages.add(m.detach());
+            echoTimer.start();
+        }
+
+        while (!loopBreak)
+        {
+            if (threadStop())
                 break;
 
             socketWaitForReadyRead(0);

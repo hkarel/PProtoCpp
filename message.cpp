@@ -673,7 +673,8 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     if (flags)
     {
         if (webFlagsExists && (m->_flags != flags))
-            log_error_m << "Binary-flags and web-flags do not match";
+            log_error_m << "Binary-flags and web-flags do not match"
+                        << ". Will be used binary-flags";
         m->_flags = flags;
     }
     if (flags2)
