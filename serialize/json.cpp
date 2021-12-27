@@ -793,44 +793,56 @@ Writer& Writer::operator& (const QByteArray& ba)
     }
 
     QByteArray br = QByteArray::fromRawData(begin, length);
-    if (br == "true"
-        || br == "True"
-        || br == "TRUE")
+    if (br.length() == 4 /*sizeof 'TRUE'*/
+        || br.length() == 5 /*sizeof 'FALSE'*/)
     {
-        _writer.Bool(true);
-        return *this;
+        // Отладить
+        break_point
+
+        if (br == "true"
+            || br == "True"
+            || br == "TRUE")
+        {
+            _writer.Bool(true);
+            return *this;
+        }
+        if (br == "false"
+            || br == "False"
+            || br == "FALSE")
+        {
+            _writer.Bool(false);
+            return *this;
+        }
     }
-    if (br == "false"
-        || br == "False"
-        || br == "FALSE")
+    if (br.length() <= 32 /*sizeof double in string representation*/)
     {
-        _writer.Bool(false);
-        return *this;
+        // Отладить
+        break_point
+
+        bool ok;
+        qlonglong i64 = br.toLongLong(&ok);
+        if (ok)
+        {
+            _writer.Int64(i64);
+            return *this;
+        }
+
+        qulonglong ui64 = br.toULongLong(&ok);
+        if (ok)
+        {
+            _writer.Uint64(ui64);
+            return *this;
+        }
+
+        double d = br.toDouble(&ok);
+        if (ok)
+        {
+            _writer.Double(d);
+            return *this;
+        }
     }
 
-    bool ok;
-    qlonglong i64 = br.toLongLong(&ok);
-    if (ok)
-    {
-        _writer.Int64(i64);
-        return *this;
-    }
-
-    qulonglong ui64 = br.toULongLong(&ok);
-    if (ok)
-    {
-        _writer.Uint64(ui64);
-        return *this;
-    }
-
-    double d = br.toDouble(&ok);
-    if (ok)
-    {
-        _writer.Double(d);
-        return *this;
-    }
-
-    QByteArray ba2 = "\"";
+    QByteArray ba2 {"\""};
     ba2.append(br);
     ba2.append("\"");
     _writer.RawValue(ba2.constData(), size_t(ba2.length()), kStringType);
