@@ -453,6 +453,9 @@ SResult Message::writeContent(const Args&... args)
 template<typename... Args>
 SResult Message::readContent(Args&... args) const
 {
+    if (contentIsEmpty())
+        return SResult(false, 1, "Message content is empty");
+
     QByteArray content;
     decompress(content);
     QDataStream stream {content};
