@@ -473,16 +473,6 @@ QByteArray Message::toJson(bool webFlags) const
         writer.Key("contentFormat");
         writer.String("json");
 
-        // Признаки пустых полей
-        writer.Key("emptyAttr");
-        writer.StartArray();
-        if (_flag.tagsIsEmpty       ) writer.String("tags");
-        if (_flag.maxTimeLifeIsEmpty) writer.String("maxTimeLife");
-        if (_flag.contentIsEmpty    ) writer.String("content");
-        if (_flag.proxyIdIsEmpty    ) writer.String("proxyId");
-        if (_flag.flags2IsEmpty     ) writer.String("flags2");
-        writer.EndArray();
-
         writer.EndObject(); // Key("webFlags")
     }
 
@@ -513,6 +503,12 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         log_error_m << "Failed json format";
         return m;
     }
+
+    bool tagsIsEmpty = true;
+    bool maxTimeLifeIsEmpty = true;
+    bool contentIsEmpty = true;
+    bool proxyIdIsEmpty = true;
+    bool flags2IsEmpty = true;
 
     quint32 flags = 0, flags2 = 0;
     bool webFlagsExists = false;
@@ -545,10 +541,12 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         }
         else if (stringEqual("flags2", member->name) && member->value.IsUint())
         {
+            flags2IsEmpty = false;
             flags2 = quint32(member->value.GetUint());
         }
         else if (stringEqual("tags", member->name) && member->value.IsArray())
         {
+            tagsIsEmpty = false;
             int size = int(member->value.Size());
             m->_tags.resize(size);
             for (int i = 0; i < size; ++i)
@@ -556,14 +554,17 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         }
         else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
         {
+            maxTimeLifeIsEmpty = false;
             m->_maxTimeLife = quint64(member->value.GetUint64());
         }
         else if (stringEqual("proxyId", member->name) && member->value.IsUint64())
         {
+            proxyIdIsEmpty = false;
             m->_proxyId = quint64(member->value.GetUint64());
         }
         else if (stringEqual("content", member->name) && member->value.IsObject())
         {
+            contentIsEmpty = false;
             StringBuffer buff;
             rapidjson::Writer<StringBuffer> writer {buff};
             member->value.Accept(writer);
@@ -608,24 +609,15 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
                 {
                     m->setContentFormat(SerializeFormat::Json);
                 }
-
-                // Признаки пустых полей
-                else if (stringEqual("emptyAttr", wflag->name) && wflag->value.IsArray())
-                {
-                    SizeType size = wflag->value.Size();
-                    for (SizeType i = 0; i < size; ++i)
-                    {
-                        const char* s = wflag->value[i].GetString();
-                        if      (equal(s, "tags"       )) m->_flag.tagsIsEmpty = true;
-                        else if (equal(s, "maxTimeLife")) m->_flag.maxTimeLifeIsEmpty = true;
-                        else if (equal(s, "content"    )) m->_flag.contentIsEmpty = true;
-                        else if (equal(s, "proxyId"    )) m->_flag.proxyIdIsEmpty = true;
-                        else if (equal(s, "flags2"     )) m->_flag.flags2IsEmpty = true;
-                    }
-                }
             }
-        } // webFlags
+        }
     }
+
+     m->_flag.tagsIsEmpty        = tagsIsEmpty;
+     m->_flag.maxTimeLifeIsEmpty = maxTimeLifeIsEmpty;
+     m->_flag.contentIsEmpty     = contentIsEmpty;
+     m->_flag.proxyIdIsEmpty     = proxyIdIsEmpty;
+     m->_flag.flags2IsEmpty      = flags2IsEmpty;
 
     if (flags)
     {
