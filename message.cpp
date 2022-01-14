@@ -65,46 +65,46 @@ Message::Message() : _flags(0), _flags2(0)
 
 Message::Ptr Message::create(const QUuidEx& command, SerializeFormat contentFormat)
 {
-    Ptr m {new Message};
+    Ptr message {new Message};
 
-    m->_id = QUuid::createUuid();
-    m->_command = command;
-    m->_flag.type = static_cast<quint32>(Type::Command);
-    m->_flag.execStatus = static_cast<quint32>(ExecStatus::Unknown);
-    m->_flag.priority = static_cast<quint32>(Priority::Normal);
-    m->_flag.compression = static_cast<quint32>(Compression::None);
-    m->_flag.contentFormat = static_cast<quint32>(contentFormat);
-    m->_proxyId = pproto::proxyId();
+    message->_id = QUuid::createUuid();
+    message->_command = command;
+    message->_flag.type = static_cast<quint32>(Type::Command);
+    message->_flag.execStatus = static_cast<quint32>(ExecStatus::Unknown);
+    message->_flag.priority = static_cast<quint32>(Priority::Normal);
+    message->_flag.compression = static_cast<quint32>(Compression::None);
+    message->_flag.contentFormat = static_cast<quint32>(contentFormat);
+    message->_proxyId = pproto::proxyId();
 
-    return m;
+    return message;
 }
 
 Message::Ptr Message::cloneForAnswer() const
 {
-    Ptr m {new Message};
+    Ptr message {new Message};
 
     // Клонируемые параметры
-    m->_id = _id;
-    m->_command = _command;
-    m->_protocolVersionLow = _protocolVersionLow;
-    m->_protocolVersionHigh = _protocolVersionHigh;
-    m->_flags = _flags;
-    m->_flags2 = _flags2;
-    m->_tags = _tags;
-    m->_maxTimeLife = _maxTimeLife;
-    m->_proxyId = _proxyId;
-    m->_socketType = _socketType;
-    m->_sourcePoint = _sourcePoint;
-    m->_socketDescriptor = _socketDescriptor;
-    m->_socketName = _socketName;
-    m->_auxiliary = _auxiliary;
+    message->_id = _id;
+    message->_command = _command;
+    message->_protocolVersionLow = _protocolVersionLow;
+    message->_protocolVersionHigh = _protocolVersionHigh;
+    message->_flags = _flags;
+    message->_flags2 = _flags2;
+    message->_tags = _tags;
+    message->_maxTimeLife = _maxTimeLife;
+    message->_proxyId = _proxyId;
+    message->_socketType = _socketType;
+    message->_sourcePoint = _sourcePoint;
+    message->_socketDescriptor = _socketDescriptor;
+    message->_socketName = _socketName;
+    message->_auxiliary = _auxiliary;
 
     // Инициализируемые параметры
-    m->_flag.type = static_cast<quint32>(Type::Answer);
-    m->_flag.execStatus = static_cast<quint32>(ExecStatus::Success);
-    m->_flag.compression = static_cast<quint32>(Compression::None);
+    message->_flag.type = static_cast<quint32>(Type::Answer);
+    message->_flag.execStatus = static_cast<quint32>(ExecStatus::Success);
+    message->_flag.compression = static_cast<quint32>(Compression::None);
 
-    return m;
+    return message;
 }
 
 HostPoint::Set& Message::destinationPoints()
@@ -327,42 +327,42 @@ void Message::toDataStream(QDataStream& stream) const
 
 Message::Ptr Message::fromDataStream(QDataStream& stream)
 {
-    Ptr m {new Message};
+    Ptr message {new Message};
 
-    stream >> m->_id;
-    stream >> m->_command;
-    stream >> m->_protocolVersionLow;
-    stream >> m->_protocolVersionHigh;
-    stream >> m->_flags;
+    stream >> message->_id;
+    stream >> message->_command;
+    stream >> message->_protocolVersionLow;
+    stream >> message->_protocolVersionHigh;
+    stream >> message->_flags;
 
-    if (!m->_flag.flags2IsEmpty)
-        stream >> m->_flags2;
+    if (!message->_flag.flags2IsEmpty)
+        stream >> message->_flags2;
 
-    if (!m->_flag.tagsIsEmpty)
+    if (!message->_flag.tagsIsEmpty)
     {
         quint8 size;
         stream >> size;
-        m->_tags.resize(size);
+        message->_tags.resize(size);
         for (quint8 i = 0; i < size; ++i)
         {
             quint64 t;
             stream >> t;
-            m->_tags[i] = t;
+            message->_tags[i] = t;
         }
     }
-    if (!m->_flag.maxTimeLifeIsEmpty)
-        stream >> m->_maxTimeLife;
+    if (!message->_flag.maxTimeLifeIsEmpty)
+        stream >> message->_maxTimeLife;
 
-    if (!m->_flag.proxyIdIsEmpty)
-        stream >> m->_proxyId;
+    if (!message->_flag.proxyIdIsEmpty)
+        stream >> message->_proxyId;
 
-    if (!m->_flag.contentIsEmpty)
+    if (!message->_flag.contentIsEmpty)
     {
-        //stream >> m->_content;
-        serialize::readByteArray(stream, m->_content);
+        //stream >> message->_content;
+        serialize::readByteArray(stream, message->_content);
     }
 
-    return m;
+    return message;
 }
 #endif // PPROTO_QBINARY_SERIALIZE
 
@@ -482,7 +482,7 @@ QByteArray Message::toJson(bool webFlags) const
 
 Message::Ptr Message::fromJson(const QByteArray& ba)
 {
-    Ptr m {new Message};
+    Ptr message {new Message};
 
     using namespace rapidjson;
     using namespace serialize::json;
@@ -496,12 +496,12 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         log_error_m << log_format(
             "Failed parce json. Error: %? Detail: at offset %? near '%?...'",
             GetParseError_En(e), o, ba.mid(o, 20));
-        return m;
+        return message;
     }
     if (!doc.IsObject())
     {
         log_error_m << "Failed json format";
-        return m;
+        return message;
     }
 
     bool tagsIsEmpty = true;
@@ -519,21 +519,21 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         {
             const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
                                                            member->value.GetStringLength());
-            m->_id = QUuidEx(ba);
+            message->_id = QUuidEx(ba);
         }
         else if (stringEqual("command", member->name) && member->value.IsString())
         {
             const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
                                                            member->value.GetStringLength());
-            m->_command = QUuidEx(ba);
+            message->_command = QUuidEx(ba);
         }
         else if (stringEqual("protocolVersionLow", member->name) && member->value.IsUint())
         {
-            m->_protocolVersionLow = quint16(member->value.GetUint());
+            message->_protocolVersionLow = quint16(member->value.GetUint());
         }
         else if (stringEqual("protocolVersionHigh", member->name) && member->value.IsUint())
         {
-            m->_protocolVersionHigh = quint16(member->value.GetUint());
+            message->_protocolVersionHigh = quint16(member->value.GetUint());
         }
         else if (stringEqual("flags", member->name) && member->value.IsUint())
         {
@@ -548,19 +548,19 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         {
             tagsIsEmpty = false;
             int size = int(member->value.Size());
-            m->_tags.resize(size);
+            message->_tags.resize(size);
             for (int i = 0; i < size; ++i)
-                m->_tags[i] = member->value[SizeType(i)].GetUint64();
+                message->_tags[i] = member->value[SizeType(i)].GetUint64();
         }
         else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
         {
             maxTimeLifeIsEmpty = false;
-            m->_maxTimeLife = quint64(member->value.GetUint64());
+            message->_maxTimeLife = quint64(member->value.GetUint64());
         }
         else if (stringEqual("proxyId", member->name) && member->value.IsUint64())
         {
             proxyIdIsEmpty = false;
-            m->_proxyId = quint64(member->value.GetUint64());
+            message->_proxyId = quint64(member->value.GetUint64());
         }
         else if (stringEqual("content", member->name) && member->value.IsObject())
         {
@@ -568,7 +568,7 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             StringBuffer buff;
             rapidjson::Writer<StringBuffer> writer {buff};
             member->value.Accept(writer);
-            m->_content = QByteArray(buff.GetString());
+            message->_content = QByteArray(buff.GetString());
         }
         else if (stringEqual("webFlags", member->name) && member->value.IsObject())
         {
@@ -582,54 +582,54 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
                 if (stringEqual("type", wflag->name) && wflag->value.IsString())
                 {
                     const char* s = wflag->value.GetString();
-                    if      (equal(s, "command")) m->setType(Message::Type::Command);
-                    else if (equal(s, "answer" )) m->setType(Message::Type::Answer);
-                    else if (equal(s, "event"  )) m->setType(Message::Type::Event);
-                    else                          m->setType(Message::Type::Unknown);
+                    if      (equal(s, "command")) message->setType(Message::Type::Command);
+                    else if (equal(s, "answer" )) message->setType(Message::Type::Answer);
+                    else if (equal(s, "event"  )) message->setType(Message::Type::Event);
+                    else                          message->setType(Message::Type::Unknown);
                 }
                 else if (stringEqual("execStatus", wflag->name) && wflag->value.IsString())
                 {
                     const char* s = wflag->value.GetString();
-                    if      (equal(s, "success")) m->setExecStatus(Message::ExecStatus::Success);
-                    else if (equal(s, "failed" )) m->setExecStatus(Message::ExecStatus::Failed);
-                    else if (equal(s, "error"  )) m->setExecStatus(Message::ExecStatus::Error);
-                    else                          m->setExecStatus(Message::ExecStatus::Unknown);
+                    if      (equal(s, "success")) message->setExecStatus(Message::ExecStatus::Success);
+                    else if (equal(s, "failed" )) message->setExecStatus(Message::ExecStatus::Failed);
+                    else if (equal(s, "error"  )) message->setExecStatus(Message::ExecStatus::Error);
+                    else                          message->setExecStatus(Message::ExecStatus::Unknown);
                 }
                 else if (stringEqual("priority", wflag->name) && wflag->value.IsString())
                 {
                     const char* s = wflag->value.GetString();
-                    if      (equal(s, "high")) m->setPriority(Message::Priority::High);
-                    else if (equal(s, "low" )) m->setPriority(Message::Priority::Low);
-                    else                       m->setPriority(Message::Priority::Normal);
+                    if      (equal(s, "high")) message->setPriority(Message::Priority::High);
+                    else if (equal(s, "low" )) message->setPriority(Message::Priority::Low);
+                    else                       message->setPriority(Message::Priority::Normal);
                 }
 
                 // compression() не используется при json-сериализации
 
                 else if (stringEqual("contentFormat", wflag->name) && wflag->value.IsString())
                 {
-                    m->setContentFormat(SerializeFormat::Json);
+                    message->setContentFormat(SerializeFormat::Json);
                 }
             }
         }
     }
 
-     m->_flag.tagsIsEmpty        = tagsIsEmpty;
-     m->_flag.maxTimeLifeIsEmpty = maxTimeLifeIsEmpty;
-     m->_flag.contentIsEmpty     = contentIsEmpty;
-     m->_flag.proxyIdIsEmpty     = proxyIdIsEmpty;
-     m->_flag.flags2IsEmpty      = flags2IsEmpty;
+    message->_flag.tagsIsEmpty        = tagsIsEmpty;
+    message->_flag.maxTimeLifeIsEmpty = maxTimeLifeIsEmpty;
+    message->_flag.contentIsEmpty     = contentIsEmpty;
+    message->_flag.proxyIdIsEmpty     = proxyIdIsEmpty;
+    message->_flag.flags2IsEmpty      = flags2IsEmpty;
 
     if (flags)
     {
-        if (webFlagsExists && (m->_flags != flags))
+        if (webFlagsExists && (message->_flags != flags))
             log_error_m << "Binary-flags and web-flags do not match"
                         << ". Will be used binary-flags";
-        m->_flags = flags;
+        message->_flags = flags;
     }
     if (flags2)
-        m->_flags2 = flags2;
+        message->_flags2 = flags2;
 
-    return m;
+    return message;
 }
 #endif // PPROTO_JSON_SERIALIZE
 
