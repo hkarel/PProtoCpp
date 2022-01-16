@@ -29,7 +29,6 @@
 
 #pragma once
 
-#include "host_point.h"
 #include "transport/base.h"
 
 #include "shared/simple_ptr.h"

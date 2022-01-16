@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "commands_base.h"
+#include "commands/base.h"
 #include "serialize/functions.h"
 
 #include "shared/list.h"

@@ -24,9 +24,10 @@
 *****************************************************************************/
 
 #include "transport/base.h"
+
+#include "commands/pool.h"
 #include "serialize/byte_array.h"
 
-#include "commands_pool.h"
 #include "logger_operators.h"
 #include "utils.h"
 

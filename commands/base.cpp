@@ -23,8 +23,9 @@
   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *****************************************************************************/
 
-#include "commands_base.h"
-#include "commands_pool.h"
+#include "commands/base.h"
+#include "commands/pool.h"
+
 #include "shared/logger/logger.h"
 #include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"

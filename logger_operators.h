@@ -26,7 +26,6 @@
 #pragma once
 
 #include "message.h"
-#include "host_point.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
 

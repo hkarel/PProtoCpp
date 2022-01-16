@@ -29,10 +29,10 @@
 
 #pragma once
 
-#include "commands_base.h"
+#include "commands/base.h"
+#include "serialize/result.h"
 #include "error_sender.h"
 #include "logger_operators.h"
-#include "serialize/result.h"
 
 #include "shared/type_name.h"
 #include "shared/prog_abort.h"
