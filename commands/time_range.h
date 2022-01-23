@@ -30,6 +30,10 @@
 namespace pproto {
 namespace data {
 
+/**
+  Структура общего назначения, используется для представления временного
+  диапазона
+*/
 struct TimeRange
 {
     QDateTime begin;
