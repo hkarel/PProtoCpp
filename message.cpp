@@ -437,6 +437,9 @@ QByteArray Message::toJson(bool webFlags) const
         writer.RawValue(_content.constData(), size_t(_content.length()), kObjectType);
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
     if (webFlags)
     {
         writer.Key("webFlags");
@@ -475,6 +478,8 @@ QByteArray Message::toJson(bool webFlags) const
 
         writer.EndObject(); // Key("webFlags")
     }
+
+#pragma GCC diagnostic pop
 
     writer.EndObject();
     return QByteArray(buff.GetString());
