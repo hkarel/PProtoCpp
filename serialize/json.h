@@ -72,12 +72,12 @@ template<typename T>
 struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
 
 template<typename T, typename Compare, typename Allocator>
-Reader& operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
-                    typename derived_from_clife_base<T>::type = 0);
+Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
+                  typename derived_from_clife_base<T>::type = 0);
 
 template<typename T, typename Compare, typename Allocator>
-Reader& operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
-                    typename not_derived_from_clife_base<T>::type = 0);
+Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
+                  typename not_derived_from_clife_base<T>::type = 0);
 
 template <typename T> Reader& readArray(Reader&, T&);
 } // namespace detail
@@ -192,12 +192,12 @@ private:
     QByteArray _jsonContent;
 
     template<typename T, typename Compare, typename Allocator>
-    friend Reader& detail::operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
-                                       typename derived_from_clife_base<T>::type);
+    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
+                                     typename derived_from_clife_base<T>::type);
 
     template<typename T, typename Compare, typename Allocator>
-    friend Reader& detail::operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
-                                       typename not_derived_from_clife_base<T>::type);
+    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
+                                     typename not_derived_from_clife_base<T>::type);
 
     template <typename T> friend Reader& detail::readArray(Reader&, T&);
 };
@@ -304,10 +304,13 @@ Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
-                    typename derived_from_clife_base<T>::type)
+Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
+                  typename derived_from_clife_base<T>::type)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
+
+    if (r.error())
+        return r;
 
     list.clear();
     if (r.stackTopIsNull())
@@ -331,10 +334,13 @@ Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
-                    typename not_derived_from_clife_base<T>::type)
+Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
+                  typename not_derived_from_clife_base<T>::type)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
+
+    if (r.error())
+        return r;
 
     list.clear();
     if (r.stackTopIsNull())
@@ -375,7 +381,7 @@ Writer& Writer::operator& (const T& ct)
     return detail::operatorAmp(w, t);
 }
 
- namespace detail {
+namespace detail {
 
 template <typename T>
 Reader& readArray(Reader& r, T& arr)
@@ -523,10 +529,10 @@ Writer& Writer::operator& (const std::vector<T>& v)
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& Reader::operator& (lst::List<T, Compare, Allocator>& list)
+Reader& Reader::operator& (lst::List<T, Compare, Allocator>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return detail::operatorAmp(r, list);
+    return detail::readArray(r, l);
 }
 
 template<typename T, typename Compare, typename Allocator>
