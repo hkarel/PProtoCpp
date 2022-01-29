@@ -405,8 +405,8 @@ template <typename T>
 Writer& writeArray(Writer& w, const T& arr)
 {
     w.startArray();
-    for (const auto& val : arr)
-         w & val;
+    for (decltype(arr.size()) i = 0; i < arr.size(); ++i)
+        w & arr[i];
 
     return w.endArray();
 }
@@ -502,13 +502,10 @@ Reader& Reader::operator& (lst::List<T, Compare, Allocator>& list)
 }
 
 template<typename T, typename Compare, typename Allocator>
-Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& list)
+Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
 {
-    startArray();
-    for (int i = 0; i < list.count(); ++i)
-        this->operator& (list[i]);
-
-    return endArray();
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writeArray(w, l);
 }
 
 template <typename T>
