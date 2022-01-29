@@ -494,20 +494,6 @@ Writer& Writer::operator& (const QUuidT<N>& uuid)
     return this->operator& (static_cast<const QUuid&>(uuid));
 }
 
-template<typename T, typename Compare, typename Allocator>
-Reader& Reader::operator& (lst::List<T, Compare, Allocator>& list)
-{
-    Reader& r = const_cast<Reader&>(*this);
-    return detail::operatorAmp(r, list);
-}
-
-template<typename T, typename Compare, typename Allocator>
-Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
-{
-    Writer& w = const_cast<Writer&>(*this);
-    return detail::writeArray(w, l);
-}
-
 template <typename T>
 Reader& Reader::operator& (std::list<T>& l)
 {
@@ -534,6 +520,20 @@ Writer& Writer::operator& (const std::vector<T>& v)
 {
     Writer& w = const_cast<Writer&>(*this);
     return detail::writeArray(w, v);
+}
+
+template<typename T, typename Compare, typename Allocator>
+Reader& Reader::operator& (lst::List<T, Compare, Allocator>& list)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::operatorAmp(r, list);
+}
+
+template<typename T, typename Compare, typename Allocator>
+Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writeArray(w, l);
 }
 
 //-------------------------------- Functions ---------------------------------
