@@ -361,28 +361,6 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
     return r.endArray();
 }
 
-} // namespace detail
-
-template <typename T>
-Reader& Reader::operator& (T& t)
-{
-    if (error())
-        return *this;
-
-    Reader& r = const_cast<Reader&>(*this);
-    return detail::operatorAmp(r, t);
-}
-
-template <typename T>
-Writer& Writer::operator& (const T& ct)
-{
-    Writer& w = const_cast<Writer&>(*this);
-    T& t = const_cast<T&>(ct);
-    return detail::operatorAmp(w, t);
-}
-
-namespace detail {
-
 template <typename T>
 Reader& readArray(Reader& r, T& arr)
 {
@@ -418,6 +396,24 @@ Writer& writeArray(Writer& w, const T& arr)
 }
 
 } // namespace detail
+
+template <typename T>
+Reader& Reader::operator& (T& t)
+{
+    if (error())
+        return *this;
+
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::operatorAmp(r, t);
+}
+
+template <typename T>
+Writer& Writer::operator& (const T& ct)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    T& t = const_cast<T&>(ct);
+    return detail::operatorAmp(w, t);
+}
 
 template <typename T>
 Reader& Reader::operator& (QList<T>& l)
