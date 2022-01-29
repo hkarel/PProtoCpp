@@ -65,8 +65,22 @@ using namespace rapidjson;
 class Reader;
 
 namespace detail {
+
+template<typename T>
+struct derived_from_clife_base : std::enable_if<std::is_base_of<clife_base, T>::value, int> {};
+template<typename T>
+struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
+
+template<typename T, typename Compare, typename Allocator>
+Reader& operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
+                    typename derived_from_clife_base<T>::type = 0);
+
+template<typename T, typename Compare, typename Allocator>
+Reader& operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
+                    typename not_derived_from_clife_base<T>::type = 0);
+
 template <typename T> Reader& readArray(Reader&, T&);
-}
+} // namespace detail
 
 class Reader
 {
@@ -177,6 +191,14 @@ private:
     quint64 _jsonIndex = {0};
     QByteArray _jsonContent;
 
+    template<typename T, typename Compare, typename Allocator>
+    friend Reader& detail::operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
+                                       typename derived_from_clife_base<T>::type);
+
+    template<typename T, typename Compare, typename Allocator>
+    friend Reader& detail::operatorAmp(Reader&, lst::List<T, Compare, Allocator>&,
+                                       typename not_derived_from_clife_base<T>::type);
+
     template <typename T> friend Reader& detail::readArray(Reader&, T&);
 };
 
@@ -251,11 +273,6 @@ struct not_enum_type : std::enable_if<!std::is_enum<T>::value, int> {};
 template<typename T>
 struct is_enum_type : std::enable_if<std::is_enum<T>::value, int> {};
 
-template<typename T>
-struct derived_from_clife_base : std::enable_if<std::is_base_of<clife_base, T>::value, int> {};
-template<typename T>
-struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
-
 template <typename Packer, typename T>
 Packer& operatorAmp(Packer& p, T& t, typename not_enum_type<T>::type = 0)
 {
@@ -288,7 +305,7 @@ Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
 
 template<typename T, typename Compare, typename Allocator>
 Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
-                    typename derived_from_clife_base<T>::type = 0)
+                    typename derived_from_clife_base<T>::type)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
 
@@ -315,7 +332,7 @@ Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
 
 template<typename T, typename Compare, typename Allocator>
 Reader& operatorAmp(Reader& r, lst::List<T, Compare, Allocator>& list,
-                    typename not_derived_from_clife_base<T>::type = 0)
+                    typename not_derived_from_clife_base<T>::type)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
 
