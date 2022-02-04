@@ -47,7 +47,7 @@ public:
     bool checkUnique() const;
 
     // Добавляет команду в пул
-    void add(QUuidEx* command, const char* commandName, bool multiproc);
+    void add(const QUuidEx* command, const char* commandName, bool multiproc);
 
     // Возвращает список идентификаторов команд
     QVector<QUuidEx> commands() const;

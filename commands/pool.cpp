@@ -49,7 +49,7 @@ bool Pool::checkUnique() const
     return true;
 }
 
-void Pool::add(QUuidEx* command, const char* commandName, bool multiproc)
+void Pool::add(const QUuidEx* command, const char* commandName, bool multiproc)
 {
     QSet<CommandTraits>& set = _map[*command];
     set.insert({commandName, multiproc});
