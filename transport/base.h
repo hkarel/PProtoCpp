@@ -326,6 +326,10 @@ public:
     // Возвращает список подключенных сокетов
     Socket::List sockets() const;
 
+    // Возвращает список подключенных сокетов с учетом формата сериализации
+    // сообщения
+    Socket::List sockets(SerializeFormat messageFormat) const;
+
     // Возвращает количество подключенных сокетов
     int socketsCount() const;
 

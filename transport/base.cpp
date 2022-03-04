@@ -1476,6 +1476,21 @@ Socket::List Listener::sockets() const
     return sockets;
 }
 
+Socket::List Listener::sockets(SerializeFormat messageFormat) const
+{
+    QMutexLocker locker {&_socketsLock}; (void) locker;
+
+    Socket::List sockets;
+    for (Socket* s : _sockets)
+        if (s->isRunning() && (s->messageFormat() == messageFormat))
+        {
+            s->add_ref();
+            sockets.add(s);
+        }
+
+    return sockets;
+}
+
 int Listener::socketsCount() const
 {
     QMutexLocker locker {&_socketsLock}; (void) locker;
