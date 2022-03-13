@@ -85,7 +85,7 @@ public:
 
         // Вспомогательный параметр, используется чтобы отразить тот факт,
         // что команда ориентирована на обработку несколькими обработчиками
-        bool multiproc = {false};
+        const bool multiproc = {false};
 
         CommandTraits(const char* commandName, bool multiproc);
         bool operator== (const CommandTraits&) const;
