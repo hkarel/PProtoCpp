@@ -47,7 +47,7 @@
 #include "serialize/json.h"
 #endif
 
-#include <QtCore>
+#include "shared/qt/expand_string.h"
 #include <QHostAddress>
 
 namespace pproto {
@@ -355,56 +355,6 @@ Packer& Unknown::jserialize(const This* ct, Packer& p)
 
 } // namespace data
 
-namespace detail {
-
-inline void expandDescription(QString&) {}
-
-template<typename T, typename... Args>
-void expandDescription(QString& descript, const T t, const Args&... args)
-{
-    static_assert(std::is_integral<T>::value || std::is_floating_point<T>::value,
-                  "The T must be integral type");
-
-    descript = descript.arg(t);
-    expandDescription(descript, args...);
-}
-
-template<typename... Args>
-void expandDescription(QString& descript, const char* t, const Args&... args)
-{
-    descript = descript.arg(QString::fromUtf8(t));
-    expandDescription(descript, args...);
-}
-
-template<typename... Args>
-void expandDescription(QString& descript, const QString& s, const Args&... args)
-{
-    descript = descript.arg(s);
-    expandDescription(descript, args...);
-}
-
-template<typename... Args>
-void expandDescription(QString& descript, const QUuidEx& u, const Args&... args)
-{
-    descript = descript.arg(u.toString(QUuid::StringFormat::WithoutBraces));
-    expandDescription(descript, args...);
-}
-
-template<typename... Args>
-void expandDescription(QString& descript, const QDateTime& dt, const Args&... args)
-{
-    descript = descript.arg(dt.toString("dd.MM.yyyy hh:mm:ss.zzz"));
-    expandDescription(descript, args...);
-}
-
-template<typename... Args>
-void expandDescription(QString& descript, const QDate& d, const Args&... args)
-{
-    descript = descript.arg(d.toString("dd.MM.yyyy"));
-    expandDescription(descript, args...);
-}
-} // namespace detail
-
 //----------------------- Механизм для описания ошибок -----------------------
 
 namespace error {
@@ -435,7 +385,7 @@ struct Trait {};
         template<typename... Args> \
         data::MessageError expandDescription(const Args&... args) const { \
             data::MessageError err = *this; \
-            detail::expandDescription(err.description, args...); \
+            expandString(err.description, args...); \
             return err; \
         } \
     } static const VAR;
