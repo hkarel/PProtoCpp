@@ -406,6 +406,7 @@ extern const QUuidEx MessageContentParse;
   Ошибки протокола (группа 0)
 */
 DECL_ERROR_CODE(protocol_incompatible, 0, "afa4209c-bd5a-4791-9713-5c3f4ab3c52b", QObject::tr("Protocol versions incompatible"))
+DECL_ERROR_CODE(qbinary_parse,         0, "ed291487-d373-4aa1-93f5-c4d953e5d974", QObject::tr("QBinary parse error"))
 DECL_ERROR_CODE(json_parse,            0, "db5d018b-592f-4e80-850f-ebfccfe08986", QObject::tr("Json parse error"))
 
 } // namespace error
