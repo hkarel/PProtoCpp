@@ -239,7 +239,11 @@ struct DataStream : QDataStream
 {
     DataStream() : QDataStream() {}
     explicit DataStream(QIODevice* d) : QDataStream(d) {}
+#if QT_VERSION < 0x060000
     DataStream(QByteArray* ba, QIODevice::OpenMode flags) : QDataStream(ba, flags) {}
+#else
+    DataStream(QByteArray* ba, QIODeviceBase::OpenMode flags) : QDataStream(ba, flags) {}
+#endif
     DataStream(const QByteArray& ba) : QDataStream(ba) {}
 };
 
