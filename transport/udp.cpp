@@ -34,6 +34,7 @@
 #include "shared/safe_singleton.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/logger_operators.h"
+#include "shared/qt/stream_init.h"
 #include "shared/qt/version_number.h"
 
 #include <stdexcept>

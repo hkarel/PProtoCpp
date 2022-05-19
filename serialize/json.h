@@ -129,7 +129,9 @@ public:
 
     template <typename T> Reader& operator& (T& t);
     template <typename T> Reader& operator& (QList<T>&);
+#if QT_VERSION < 0x060000
     template <typename T> Reader& operator& (QVector<T>&);
+#endif
     template <typename T> Reader& operator& (clife_ptr<T>&);
     template <int N>      Reader& operator& (QUuidT<N>&);
 
@@ -243,7 +245,9 @@ public:
 
     template <typename T> Writer& operator& (const T& t);
     template <typename T> Writer& operator& (const QList<T>&);
+#if QT_VERSION < 0x060000
     template <typename T> Writer& operator& (const QVector<T>&);
+#endif
     template <typename T> Writer& operator& (const clife_ptr<T>&);
     template <int N>      Writer& operator& (const QUuidT<N>&);
 
@@ -429,6 +433,7 @@ Writer& Writer::operator& (const QList<T>& l)
     return detail::writeArray(w, l);
 }
 
+#if QT_VERSION < 0x060000
 template <typename T>
 Reader& Reader::operator& (QVector<T>& v)
 {
@@ -442,6 +447,7 @@ Writer& Writer::operator& (const QVector<T>& v)
     Writer& w = const_cast<Writer&>(*this);
     return detail::writeArray(w, v);
 }
+#endif
 
 template <typename T>
 Reader& Reader::operator& (clife_ptr<T>& ptr)
