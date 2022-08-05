@@ -179,6 +179,7 @@ private:
 
     void setError(int val, bool optional = false);
     QByteArray stackFieldName() const;
+    QByteArray stackPath() const;
     void next();
 
 private:
@@ -473,6 +474,7 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
             alog::logger().error(alog_line_location, "JSerialize")
                 << "Stack top is not object"
                 << ". Field: " << stackFieldName()
+                << ". Stack path: " << stackPath()
                 << ". JIndex: " << _jsonIndex;
         }
     }
