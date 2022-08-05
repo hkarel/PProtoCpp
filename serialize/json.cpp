@@ -125,7 +125,9 @@ Reader& Reader::member(const char* name, bool optional)
         else
         {
             setError(1);
-            log_error_m << "Stack top is not object. JIndex: " << _jsonIndex;
+            log_error_m << "Stack top is not object"
+                        << ". Field: " << name
+                        << ". JIndex: " << _jsonIndex;
         }
     }
     return *this;
