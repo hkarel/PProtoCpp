@@ -840,9 +840,6 @@ Writer& Writer::operator& (const QByteArray& ba)
     if (br.length() == 4 /*sizeof 'TRUE'*/
         || br.length() == 5 /*sizeof 'FALSE'*/)
     {
-        // Отладить
-        break_point
-
         if (br == "true"
             || br == "True"
             || br == "TRUE")
@@ -860,9 +857,6 @@ Writer& Writer::operator& (const QByteArray& ba)
     }
     if (br.length() <= 32 /*sizeof double in string representation*/)
     {
-        // Отладить
-        break_point
-
         bool ok;
         qlonglong i64 = br.toLongLong(&ok);
         if (ok)
