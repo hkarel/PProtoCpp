@@ -119,7 +119,7 @@ Reader& Reader::member(const char* name, bool optional)
                 if (!optional)
                 {
                     setError(1);
-                    log_error_m << "Field '" << name << "' not found"
+                    log_error_m << "Mandatory field '" << name << "' not found"
                                 << ". Stack path: " << stackPath()
                                 << ". JIndex: " << _jsonIndex;
                 }
