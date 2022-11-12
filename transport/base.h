@@ -73,7 +73,8 @@ public:
     void setCompressionSize(int val) {_compressionSize = val;}
 
     // Определяет нужно ли проверять совместимость версий протокола после
-    // создания соединения
+    // создания соединения.
+    // Значение параметра по умолчанию равно TRUE
     bool checkProtocolCompatibility() const {return _checkProtocolCompatibility;}
     void setCheckProtocolCompatibility(bool val) {_checkProtocolCompatibility = val;}
 
