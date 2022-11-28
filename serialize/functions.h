@@ -37,6 +37,7 @@
 #include "shared/type_name.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
+#include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
 #include <sys/time.h>
@@ -220,22 +221,37 @@ Message::Ptr createMessage(const CommandDataT& data,
                   " or 'Message::Type::Event' type of struct only");
 
     Message::Ptr message = Message::create(data.command(), params.format);
-    if (CommandDataT::forCommandMessage()
-        && CommandDataT::forEventMessage())
+
+    if (params.type == Message::Type::Command)
     {
-        if (params.type != Message::Type::Command
-            && params.type != Message::Type::Event)
+        if (!CommandDataT::forCommandMessage())
         {
-            log_error_m << "Parameter 'type' must be of type 'Message::Type::Command'"
-                           " or 'Message::Type::Event' only";
+            log_error_m << log_format(
+                "Cannot create message %? with type 'Command' and data %?"
+                ". Mismatched types",
+                CommandNameLog(message->command()), abi_type_name<CommandDataT>());
             prog_abort();
         }
-        message->setType(params.type);
-    }
-    else if (CommandDataT::forCommandMessage())
         message->setType(Message::Type::Command);
-    else
+    }
+    else if (params.type == Message::Type::Event)
+    {
+        if (!CommandDataT::forEventMessage())
+        {
+            log_error_m << log_format(
+                "Cannot create message %? with type 'Event' and data %?"
+                ". Mismatched types",
+                CommandNameLog(message->command()), abi_type_name<CommandDataT>());
+            prog_abort();
+        }
         message->setType(Message::Type::Event);
+    }
+    else
+    {
+        log_error_m << log_format("Cannot create message %? with type '%?'",
+                                  CommandNameLog(message->command()), params.type);
+        prog_abort();
+    }
 
     message->setExecStatus(Message::ExecStatus::Unknown);
     detail::messageWriteContent(data, message, params.format);
@@ -388,8 +404,9 @@ SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
 
     if (message->command() != data.command())
     {
-        log_error_m << "Command of message " << CommandNameLog(message->command())
-                    << " is not equivalent command for data " << CommandNameLog(data.command());
+        log_error_m << log_format(
+            "Command of message %? is not equivalent command for data %?",
+            CommandNameLog(message->command()), CommandNameLog(data.command()));
     }
     else if (message->type() == Message::Type::Command)
     {
