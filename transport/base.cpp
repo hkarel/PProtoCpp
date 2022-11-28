@@ -1626,6 +1626,13 @@ void send(const base::Socket::List& sockets,
           const Message::Ptr& message,
           const SocketDescriptorSet& excludeSockets)
 {
+    if (message->type() == Message::Type::Unknown)
+    {
+        log_error_m << "Impossible send message: " << CommandNameLog(message->command())
+                    << ". Message type is 'Unknown'";
+        return;
+    }
+
     if (message->type() == Message::Type::Event)
     {
         for (base::Socket* s : sockets)
@@ -1646,9 +1653,9 @@ void send(const base::Socket::List& sockets,
 
             if (!messageSended)
             {
-                alog::Line logLine =
-                    log_error_m << "Impossible send message: " << CommandNameLog(message->command())
-                                << ". Not found sockets with descriptors:";
+                alog::Line logLine = log_error_m
+                    << "Impossible send message: " << CommandNameLog(message->command())
+                    << ". Not found sockets with descriptors:";
                 for (SocketDescriptor sd : message->destinationSockets())
                     logLine << " " << sd;
                 logLine << ". Message discarded";
@@ -1667,9 +1674,10 @@ void send(const base::Socket::List& sockets,
                 }
 
             if (!messageSended)
-                log_error_m << "Impossible send message: " << CommandNameLog(message->command())
-                            << ". Not found socket with descriptor: " << message->socketDescriptor()
-                            << ". Message discarded";
+                log_error_m
+                    << "Impossible send message: " << CommandNameLog(message->command())
+                    << ". Not found socket with descriptor: " << message->socketDescriptor()
+                    << ". Message discarded";
         }
         else
         {
