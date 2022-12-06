@@ -288,10 +288,12 @@ Packer& operatorAmp(Packer& p, T& t, typename not_enum_type<T>::type = 0)
 template <typename T>
 Reader& operatorAmp(Reader& r, T& t, typename is_enum_type<T>::type = 0)
 {
-    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
-                  "Base type of enum must be 'unsigned int'");
+    typedef typename std::underlying_type<T>::type underlying_enum_type;
+    static_assert(std::is_same<underlying_enum_type, qint32>::value
+               || std::is_same<underlying_enum_type, quint32>::value,
+                  "Base type of enum must be 'int' or 'unsigned int'");
 
-    quint32 val;
+    underlying_enum_type val;
     r & val;
     t = static_cast<T>(val);
     return r;
@@ -300,10 +302,12 @@ Reader& operatorAmp(Reader& r, T& t, typename is_enum_type<T>::type = 0)
 template <typename T>
 Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
 {
-    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
-                  "Base type of enum must be 'unsigned int'");
+    typedef typename std::underlying_type<T>::type underlying_enum_type;
+    static_assert(std::is_same<underlying_enum_type, qint32>::value
+               || std::is_same<underlying_enum_type, quint32>::value,
+                  "Base type of enum must be 'int' or 'unsigned int'");
 
-    quint32 val = static_cast<quint32>(t);
+    underlying_enum_type val = static_cast<underlying_enum_type>(t);
     w & val;
     return w;
 }

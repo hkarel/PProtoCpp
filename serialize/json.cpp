@@ -163,7 +163,7 @@ QByteArray Reader::stackPath() const
         path += _stack[i].name;
         path += (_stack[i].value->IsArray()) ? "[]" : "/";
     }
-    if ((path.count() > 1) && (path[path.count() - 1] == '/'))
+    if ((path.size() > 1) && (path[path.size() - 1] == '/'))
         path.chop(1);
 
     return path;

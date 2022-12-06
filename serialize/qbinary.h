@@ -96,12 +96,15 @@ QDataStream& putToStream(QDataStream& s, const T& t)
 template<typename T>
 QDataStream& getFromStreamEnum(QDataStream& s, T& t)
 {
-    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
-                  "Base type of enum must be 'unsigned int'");
+    typedef typename std::underlying_type<T>::type underlying_enum_type;
+    static_assert(std::is_same<underlying_enum_type, qint32>::value
+               || std::is_same<underlying_enum_type, quint32>::value,
+                  "Base type of enum must be 'int' or 'unsigned int'");
+
     if (s.atEnd())
         return s;
 
-    quint32 val;
+    underlying_enum_type val;
     s >> val;
     t = static_cast<T>(val);
     return s;
@@ -110,10 +113,12 @@ QDataStream& getFromStreamEnum(QDataStream& s, T& t)
 template<typename T>
 QDataStream& putToStreamEnum(QDataStream& s, T t)
 {
-    static_assert(std::is_same<typename std::underlying_type<T>::type, quint32>::value,
-                  "Base type of enum must be 'unsigned int'");
+    typedef typename std::underlying_type<T>::type underlying_enum_type;
+    static_assert(std::is_same<underlying_enum_type, qint32>::value
+               || std::is_same<underlying_enum_type, quint32>::value,
+                  "Base type of enum must be 'int' or 'unsigned int'");
 
-    s << static_cast<quint32>(t);
+    s << static_cast<underlying_enum_type>(t);
     return s;
 }
 
@@ -126,6 +131,7 @@ QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
 {
     static_assert(std::is_base_of<clife_base, T>::value,
                   "Class T must be derived from clife_base");
+
     if (s.atEnd())
         return s;
 
@@ -228,6 +234,12 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
+#if QT_VERSION >= 0x060000
+#  define QIODEVICE QIODeviceBase
+#else
+#  define QIODEVICE QIODevice
+#endif
+
 /**
   Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
   для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
@@ -239,11 +251,7 @@ struct DataStream : QDataStream
 {
     DataStream() : QDataStream() {}
     explicit DataStream(QIODevice* d) : QDataStream(d) {}
-#if QT_VERSION < 0x060000
-    DataStream(QByteArray* ba, QIODevice::OpenMode flags) : QDataStream(ba, flags) {}
-#else
-    DataStream(QByteArray* ba, QIODeviceBase::OpenMode flags) : QDataStream(ba, flags) {}
-#endif
+    DataStream(QByteArray* ba, QIODEVICE::OpenMode om) : QDataStream(ba, om) {}
     DataStream(const QByteArray& ba) : QDataStream(ba) {}
 };
 
@@ -387,7 +395,7 @@ namespace bserial = pproto::serialize::qbinary;
     bserial::RawVector to__raw__vect__; \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM {&to__raw__ba__, QIODevice::WriteOnly}; \
+      { bserial::DataStream STREAM {&to__raw__ba__, QIODEVICE::WriteOnly}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -397,7 +405,7 @@ namespace bserial = pproto::serialize::qbinary;
     } \
     { QByteArray to__raw__ba__; \
       bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM {&to__raw__ba__, QIODevice::WriteOnly}; \
+      { bserial::DataStream STREAM {&to__raw__ba__, QIODEVICE::WriteOnly}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -416,7 +424,7 @@ namespace bserial = pproto::serialize::qbinary;
     if (VECT.count() >= 1) { \
         const QByteArray& ba__from__raw__ = VECT.at(0); \
         bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
-                                    QIODevice::ReadOnly | QIODevice::Unbuffered}; \
+                                    QIODEVICE::ReadOnly | QIODEVICE::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
@@ -424,7 +432,7 @@ namespace bserial = pproto::serialize::qbinary;
     } if (VECT.count() >= N) { \
         const QByteArray& ba__from__raw__ = VECT.at(N - 1); \
         bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
-                                    QIODevice::ReadOnly | QIODevice::Unbuffered}; \
+                                    QIODEVICE::ReadOnly | QIODEVICE::Unbuffered}; \
         STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
         STREAM.setVersion(QDATASTREAM_VERSION);
 
