@@ -599,7 +599,7 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 
 #define J_SERIALIZE_EXTERN_BEGIN(CLASS) \
     template <typename This, typename Packer> \
-    static Packer& CLASS::jserialize(const This* ct, Packer& p) { \
+    Packer& CLASS::jserialize(const This* ct, Packer& p) { \
         This* t = const_cast<This*>(ct); \
         p.startObject();
 
