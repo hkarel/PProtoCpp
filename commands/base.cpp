@@ -213,6 +213,7 @@ void Error::fromRaw(const bserial::RawVector& vect)
     B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
+#endif // PPROTO_QBINARY_SERIALIZE
 
 CloseConnection::CloseConnection(const MessageError& messageError)
 {
@@ -221,6 +222,7 @@ CloseConnection::CloseConnection(const MessageError& messageError)
     description = messageError.description;
 }
 
+#ifdef PPROTO_QBINARY_SERIALIZE
 bserial::RawVector CloseConnection::toRaw() const
 {
     B_SERIALIZE_V1(stream)
