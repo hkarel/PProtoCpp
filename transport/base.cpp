@@ -53,8 +53,8 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Transport")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Transport")
 
-namespace pproto {
-namespace transport {
+namespace pproto::transport {
+
 namespace base {
 
 //--------------------------------- Base -------------------------------------
@@ -1702,5 +1702,4 @@ base::Socket::List concatSockets(const base::Listener& listener)
     return listener.sockets();
 }
 
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport

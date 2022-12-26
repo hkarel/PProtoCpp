@@ -25,8 +25,7 @@
 
 #include "commands/paging.h"
 
-namespace pproto {
-namespace data {
+namespace pproto::data {
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 bserial::RawVector PagingInfo::toRaw() const
@@ -48,5 +47,4 @@ void PagingInfo::fromRaw(const bserial::RawVector& vect)
 }
 #endif
 
-} // namespace data
-} // namespace pproto
+} // namespace pproto::data

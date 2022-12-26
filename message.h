@@ -52,7 +52,7 @@ namespace transport {
 namespace local {class Socket;}
 namespace tcp   {class Socket;}
 namespace udp   {class Socket;}
-}
+} // namespace transport
 
 enum class SocketType : quint32
 {

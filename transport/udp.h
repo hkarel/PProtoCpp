@@ -39,9 +39,7 @@
 #include <QHostAddress>
 #include <atomic>
 
-namespace pproto {
-namespace transport {
-namespace udp {
+namespace pproto::transport::udp {
 
 /**
   Класс для отправки сообщений с использованием UDP-протокола
@@ -100,6 +98,4 @@ private:
 
 Socket& socket();
 
-} // namespace udp
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport::udp

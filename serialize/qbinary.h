@@ -48,9 +48,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace pproto {
-namespace serialize {
-namespace qbinary {
+namespace pproto::serialize::qbinary {
 
 typedef QVector<QByteArray> RawVector;
 
@@ -314,9 +312,7 @@ struct Reserve
     void size(int sz) {val.reserve(sz + sizeof(quint32));}
 };
 
-} // namespace qbinary
-} // namespace serialize
-} // namespace pproto
+} // namespace pproto::serialize::qbinary
 
 namespace bserial = pproto::serialize::qbinary;
 

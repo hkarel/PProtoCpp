@@ -30,15 +30,14 @@
 #pragma once
 
 #include "transport/base.h"
+
 #include "shared/simple_ptr.h"
 #include "shared/safe_singleton.h"
 
 #include <QLocalSocket>
 #include <QLocalServer>
 
-namespace pproto {
-namespace transport {
-namespace local {
+namespace pproto::transport::local {
 
 /**
   Используется для создания соединения и отправки сообщений на клиентской
@@ -139,7 +138,5 @@ private:
 
 Listener& listener();
 
-} // namespace local
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport::local
 

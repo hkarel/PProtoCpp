@@ -38,9 +38,7 @@
 #include <QTcpServer>
 #include <QHostAddress>
 
-namespace pproto {
-namespace transport {
-namespace tcp {
+namespace pproto::transport::tcp {
 
 /**
   Используется для создания соединения и отправки сообщений на клиентской
@@ -143,6 +141,4 @@ private:
 
 Listener& listener();
 
-} // namespace tcp
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport::tcp

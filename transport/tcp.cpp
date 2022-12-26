@@ -47,9 +47,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "TransportTCP")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "TransportTCP")
 
-namespace pproto {
-namespace transport {
-namespace tcp {
+namespace pproto::transport::tcp {
 
 //---------------------------------- Socket ----------------------------------
 
@@ -379,6 +377,4 @@ Listener& listener()
     return ::safe_singleton<Listener>();
 }
 
-} // namespace tcp
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport::tcp

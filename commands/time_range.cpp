@@ -25,8 +25,7 @@
 
 #include "commands/time_range.h"
 
-namespace pproto {
-namespace data {
+namespace pproto::data {
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 bserial::RawVector TimeRange::toRaw() const
@@ -46,5 +45,4 @@ void TimeRange::fromRaw(const bserial::RawVector& vect)
 }
 #endif
 
-} // namespace data
-} // namespace pproto
+} // namespace pproto::data

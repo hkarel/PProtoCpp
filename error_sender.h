@@ -32,5 +32,4 @@ namespace pproto {
 
 typedef std::function<void (const Message::Ptr&)> ErrorSenderFunc;
 
-
 } // namespace pproto

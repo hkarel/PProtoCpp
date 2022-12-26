@@ -34,9 +34,7 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "JSerialize")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "JSerialize")
 
-namespace pproto {
-namespace serialize {
-namespace json {
+namespace pproto::serialize::json {
 
 #include <cassert>
 #include <cctype>
@@ -979,6 +977,4 @@ Writer& Writer::operator& (const std::string& s)
     return *this;
 }
 
-} // namespace json
-} // namespace serialize
-} // namespace pproto
+} // namespace pproto::serialize::json

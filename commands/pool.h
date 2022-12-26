@@ -30,8 +30,7 @@
 #include "shared/qt/quuidex.h"
 #include <QtCore>
 
-namespace pproto {
-namespace command {
+namespace pproto::command {
 
 /**
   Пул идентификаторов команд. Все функции в пуле НЕ потокозащищенные, несмотря
@@ -120,5 +119,4 @@ inline bool Pool::commandIsMultiproc(const QUuidEx& command) const
     return (commandExists(command) == 2);
 }
 
-} // namespace command
-} // namespace pproto
+} // namespace pproto::command

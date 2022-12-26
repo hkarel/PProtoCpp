@@ -32,8 +32,8 @@
 #include "serialize/result.h"
 #include "serialize/byte_array.h"
 
-#include "shared/defmac.h"
 #include "shared/list.h"
+#include "shared/defmac.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
 #include "shared/break_point.h"
@@ -57,9 +57,7 @@
 #include <vector>
 #include <type_traits>
 
-namespace pproto {
-namespace serialize {
-namespace json {
+namespace pproto::serialize::json {
 
 using namespace rapidjson;
 class Reader;
@@ -646,6 +644,4 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     t->jserializeBase(p); \
     J_SERIALIZE_END
 
-} // namespace json
-} // namespace serialize
-} // namespace pproto
+} // namespace pproto::serialize::json

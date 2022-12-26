@@ -54,9 +54,7 @@ const quint32 udpSignature = *((quint32*)PPROTO_UDP_SIGNATURE);
 #endif
 } // namespace
 
-namespace pproto {
-namespace transport {
-namespace udp {
+namespace pproto::transport::udp {
 
 Socket::Socket()
 {
@@ -486,6 +484,4 @@ Socket& socket()
     return ::safe_singleton<Socket>();
 }
 
-} // namespace udp
-} // namespace transport
-} // namespace pproto
+} // namespace pproto::transport::udp

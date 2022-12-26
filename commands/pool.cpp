@@ -30,8 +30,7 @@
 #include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
-namespace pproto {
-namespace command {
+namespace pproto::command {
 
 bool Pool::checkUnique() const
 {
@@ -111,5 +110,4 @@ uint qHash(const Pool::CommandTraits& ct)
     return qHash(commandName) + uint(ct.multiproc);
 }
 
-} // namespace command
-} // namespace pproto
+} // namespace pproto::command

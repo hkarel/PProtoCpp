@@ -27,8 +27,7 @@
 
 #include "commands/base.h"
 
-namespace pproto {
-namespace data {
+namespace pproto::data {
 
 /**
   Структура общего назначения, используется для порционного получения данных
@@ -59,5 +58,4 @@ struct PagingInfo
 #endif
 };
 
-} // namespace data
-} // namespace pproto
+} // namespace pproto::data

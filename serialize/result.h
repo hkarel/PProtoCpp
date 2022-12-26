@@ -26,6 +26,7 @@
 #pragma once
 
 #include "shared/container_ptr.h"
+
 #include <QtCore>
 #include <utility>
 
