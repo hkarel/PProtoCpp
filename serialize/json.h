@@ -65,18 +65,19 @@ class Reader;
 
 namespace detail {
 
-template<typename T>
-struct derived_from_clife_base : std::enable_if<std::is_base_of<clife_base, T>::value, int> {};
-template<typename T>
-struct not_derived_from_clife_base : std::enable_if<!std::is_base_of<clife_base, T>::value, int> {};
+template<typename T> using derived_from_clife_base =
+typename std::enable_if<std::is_base_of<clife_base, T>::value, int>::type;
+
+template<typename T> using not_derived_from_clife_base =
+typename std::enable_if<!std::is_base_of<clife_base, T>::value, int>::type;
 
 template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                  typename derived_from_clife_base<T>::type = 0);
+                  derived_from_clife_base<T> = 0);
 
 template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                  typename not_derived_from_clife_base<T>::type = 0);
+                  not_derived_from_clife_base<T> = 0);
 
 template <typename T> Reader& readArray(Reader&, T&);
 template <typename T> Reader& readPtr  (Reader&, T&);
@@ -199,11 +200,11 @@ private:
 
     template<typename T, typename Compare, typename Allocator>
     friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     typename derived_from_clife_base<T>::type);
+                                     derived_from_clife_base<T>);
 
     template<typename T, typename Compare, typename Allocator>
     friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     typename not_derived_from_clife_base<T>::type);
+                                     not_derived_from_clife_base<T>);
 
     template <typename T> friend Reader& detail::readArray(Reader&, T&);
     template <typename T> friend Reader& detail::readPtr  (Reader&, T&);
@@ -278,20 +279,21 @@ private:
 
 namespace detail {
 
-template<typename T>
-struct not_enum_type : std::enable_if<!std::is_enum<T>::value, int> {};
-template<typename T>
-struct is_enum_type : std::enable_if<std::is_enum<T>::value, int> {};
+template<typename T> using not_enum_type =
+typename std::enable_if<!std::is_enum<T>::value, int>::type;
+
+template<typename T> using is_enum_type =
+typename std::enable_if<std::is_enum<T>::value, int>::type;
 
 template <typename Packer, typename T>
-Packer& operatorAmp(Packer& p, T& t, typename not_enum_type<T>::type = 0)
+Packer& operatorAmp(Packer& p, T& t, not_enum_type<T> = 0)
 {
     T::jserialize(&t, p);
     return p;
 }
 
 template <typename T>
-Reader& operatorAmp(Reader& r, T& t, typename is_enum_type<T>::type = 0)
+Reader& operatorAmp(Reader& r, T& t, is_enum_type<T> = 0)
 {
     typedef typename std::underlying_type<T>::type underlying_enum_type;
     static_assert(std::is_same<underlying_enum_type, qint32>::value
@@ -305,7 +307,7 @@ Reader& operatorAmp(Reader& r, T& t, typename is_enum_type<T>::type = 0)
 }
 
 template <typename T>
-Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
+Writer& operatorAmp(Writer& w, const T t, is_enum_type<T> = 0)
 {
     typedef typename std::underlying_type<T>::type underlying_enum_type;
     static_assert(std::is_same<underlying_enum_type, qint32>::value
@@ -319,7 +321,7 @@ Writer& operatorAmp(Writer& w, const T t, typename is_enum_type<T>::type = 0)
 
 template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
-                  typename derived_from_clife_base<T>::type)
+                  derived_from_clife_base<T>)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
 
@@ -349,7 +351,7 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
 
 template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
-                  typename not_derived_from_clife_base<T>::type)
+                  not_derived_from_clife_base<T>)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
 
