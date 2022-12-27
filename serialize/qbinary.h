@@ -37,6 +37,7 @@
 #include "shared/list.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
+#include "shared/container_ptr.h"
 #include "shared/break_point.h"
 #include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
@@ -122,6 +123,47 @@ QDataStream& putToStreamEnum(QDataStream& s, T t)
     return s;
 }
 
+template<typename T>
+QDataStream& getFromStreamPtr(QDataStream& s, T& ptr)
+{
+    // Отладить
+    break_point
+
+    if (s.atEnd())
+        return s;
+
+    bool empty;
+    s >> empty;
+    if (empty)
+    {
+        ptr.reset();
+        return s;
+    }
+    if (ptr.empty())
+    {
+        typedef T Ptr;
+        typedef typename Ptr::element_t element_t;
+        ptr = Ptr(new element_t());
+    }
+
+    detail::getFromStream(s, *ptr);
+    return s;
+}
+
+template<typename T>
+QDataStream& putToStreamPtr(QDataStream& s, const T& ptr)
+{
+    // Отладить
+    break_point
+
+    s << bool(ptr.empty());
+    if (ptr.empty())
+        return s;
+
+    detail::putToStream(s, *ptr);
+    return s;
+}
+
 } // namespace detail
 
 template<typename T> using not_enum_type =
@@ -170,32 +212,25 @@ QDataStream& getFromStream(QDataStream& s, clife_ptr<T>& ptr)
     static_assert(std::is_base_of<clife_base, T>::value,
                   "Class T must be derived from clife_base");
 
-    if (s.atEnd())
-        return s;
-
-    bool empty;
-    s >> empty;
-    if (empty)
-    {
-        ptr.reset();
-        return s;
-    }
-    if (ptr.empty())
-        ptr = clife_ptr<T>(new T());
-
-    detail::getFromStream(s, *ptr);
-    return s;
+    return detail::getFromStreamPtr(s, ptr);
 }
 
 template<typename T>
 QDataStream& putToStream(QDataStream& s, const clife_ptr<T>& ptr)
 {
-    s << bool(ptr.empty());
-    if (ptr.empty())
-        return s;
+    return detail::putToStreamPtr(s, ptr);
+}
 
-    detail::putToStream(s, *ptr);
-    return s;
+template<typename T>
+QDataStream& getFromStream(QDataStream& s, container_ptr<T>& ptr)
+{
+    return detail::getFromStreamPtr(s, ptr);
+}
+
+template<typename T>
+QDataStream& putToStream(QDataStream& s, const container_ptr<T>& ptr)
+{
+    return detail::putToStreamPtr(s, ptr);
 }
 
 template<typename T> using derived_from_clife_base =

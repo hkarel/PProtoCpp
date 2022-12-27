@@ -36,6 +36,7 @@
 #include "shared/defmac.h"
 #include "shared/clife_base.h"
 #include "shared/clife_ptr.h"
+#include "shared/container_ptr.h"
 #include "shared/break_point.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
@@ -78,6 +79,8 @@ Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
                   typename not_derived_from_clife_base<T>::type = 0);
 
 template <typename T> Reader& readArray(Reader&, T&);
+template <typename T> Reader& readPtr  (Reader&, T&);
+
 } // namespace detail
 
 class Reader
@@ -95,7 +98,8 @@ public:
     Reader& member(const char* name, bool optional = false);
     quint64 jsonIndex() const {return _jsonIndex;}
 
-    bool stackTopIsNull() const {return _stack.top().value->IsNull();}
+    bool stackTopIsNull()   const {return _stack.top().value->IsNull();}
+    bool stackTopIsObject() const {return _stack.top().value->IsObject();}
 
     Reader& startObject();
     Reader& endObject();
@@ -131,6 +135,7 @@ public:
     template <typename T> Reader& operator& (QVector<T>&);
 #endif
     template <typename T> Reader& operator& (clife_ptr<T>&);
+    template <typename T> Reader& operator& (container_ptr<T>&);
     template <int N>      Reader& operator& (QUuidT<N>&);
 
     template <typename T> Reader& operator& (std::list<T>&);
@@ -201,6 +206,7 @@ private:
                                      typename not_derived_from_clife_base<T>::type);
 
     template <typename T> friend Reader& detail::readArray(Reader&, T&);
+    template <typename T> friend Reader& detail::readPtr  (Reader&, T&);
 };
 
 class Writer
@@ -248,6 +254,7 @@ public:
     template <typename T> Writer& operator& (const QVector<T>&);
 #endif
     template <typename T> Writer& operator& (const clife_ptr<T>&);
+    template <typename T> Writer& operator& (const container_ptr<T>&);
     template <int N>      Writer& operator& (const QUuidT<N>&);
 
     template <typename T> Writer& operator& (const std::list<T>&);
@@ -402,6 +409,48 @@ Writer& writeArray(Writer& w, const T& arr)
     return w.endArray();
 }
 
+template <typename T>
+Reader& readPtr(Reader& r, T& ptr)
+{
+    if (r.error())
+        return r;
+
+    if (r.stackTopIsNull())
+    {
+        ptr.reset();
+        r.next();
+    }
+    else if (r.stackTopIsObject())
+    {
+        typedef T Ptr;
+        typedef typename Ptr::element_t element_t;
+        if (ptr.empty())
+            ptr = Ptr(new element_t());
+        r & (*ptr);
+    }
+    else
+    {
+        r.setError(1);
+        alog::logger().error(alog_line_location, "JSerialize")
+            << "Stack top is not object"
+            << ". Field: " << r.stackFieldName()
+            << ". Stack path: " << r.stackPath()
+            << ". JIndex: " << r.jsonIndex();
+    }
+    return r;
+}
+
+template <typename T>
+Writer& writePtr(Writer& w, const T& ptr)
+{
+    if (ptr)
+        w & (*ptr);
+    else
+        w.setNull();
+
+    return w;
+}
+
 } // namespace detail
 
 template <typename T>
@@ -457,41 +506,30 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
 {
     static_assert(std::is_base_of<clife_base, T>::value,
                   "Class T must be derived from clife_base");
-    if (!error())
-    {
-        if (_stack.top().value->IsNull())
-        {
-            ptr.reset();
-            next();
-        }
-        else if (_stack.top().value->IsObject())
-        {
-            if (ptr.empty())
-                ptr = clife_ptr<T>(new T());
-            this->operator& (*ptr);
-        }
-        else
-        {
-            setError(1);
-            alog::logger().error(alog_line_location, "JSerialize")
-                << "Stack top is not object"
-                << ". Field: " << stackFieldName()
-                << ". Stack path: " << stackPath()
-                << ". JIndex: " << _jsonIndex;
-        }
-    }
-    return *this;
+
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readPtr(r, ptr);
 }
 
 template <typename T>
 Writer& Writer::operator& (const clife_ptr<T>& ptr)
 {
-    if (ptr.empty())
-    {
-        setNull();
-        return *this;
-    }
-    return this->operator& (*ptr);
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writePtr(w, ptr);
+}
+
+template <typename T>
+Reader& Reader::operator& (container_ptr<T>& ptr)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readPtr(r, ptr);
+}
+
+template <typename T>
+Writer& Writer::operator& (const container_ptr<T>& ptr)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writePtr(w, ptr);
 }
 
 template <int N>
