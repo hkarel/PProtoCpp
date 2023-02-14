@@ -75,18 +75,20 @@ struct derived_from_data_t
 template <typename CommandDataT>
 using is_derived_from_data_t = typename derived_from_data_t<CommandDataT>::type;
 
-template<typename T>
-struct is_error_data  : std::enable_if<std::is_base_of<data::MessageError, T>::value, int> {};
-template<typename T>
-struct is_failed_data : std::enable_if<std::is_base_of<data::MessageFailed, T>::value, int> {};
-template<typename T>
-struct not_error_data : std::enable_if<!std::is_base_of<data::MessageError, T>::value
-                                    && !std::is_base_of<data::MessageFailed, T>::value, int> {};
+template<typename T> using is_error_data =
+typename std::enable_if<std::is_base_of<data::MessageError, T>::value, int>::type;
+
+template<typename T> using is_failed_data =
+typename std::enable_if<std::is_base_of<data::MessageFailed, T>::value, int>::type;
+
+template<typename T> using not_error_data =
+typename std::enable_if<!std::is_base_of<data::MessageError, T>::value
+                     && !std::is_base_of<data::MessageFailed, T>::value, int>::type;
 
 #ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
 SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
-                            typename is_error_data<CommandDataT>::type = 0)
+                            is_error_data<CommandDataT> = 0)
 {
     if (std::is_same<data::MessageError, CommandDataT>::value)
         return message->writeContent(data);
@@ -101,7 +103,7 @@ SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT>
 SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
-                            typename is_failed_data<CommandDataT>::type = 0)
+                            is_failed_data<CommandDataT> = 0)
 {
     if (std::is_same<data::MessageFailed, CommandDataT>::value)
         return message->writeContent(data);
@@ -130,7 +132,7 @@ auto messageWriteQBinary(const CommandDataT&, Message::Ptr&, long, long)
 
 template<typename CommandDataT>
 SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
-                            typename not_error_data<CommandDataT>::type = 0)
+                            not_error_data<CommandDataT> = 0)
 {
     return messageWriteQBinary(data, message, 0, 0);
 }
@@ -282,7 +284,7 @@ namespace detail {
 #ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
 SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
-                           typename is_error_data<CommandDataT>::type = 0)
+                           is_error_data<CommandDataT> = 0)
 {
     if (std::is_same<data::MessageError, CommandDataT>::value)
         return message->readContent(data);
@@ -292,7 +294,7 @@ SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
 
 template<typename CommandDataT>
 SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
-                           typename is_failed_data<CommandDataT>::type = 0)
+                           is_failed_data<CommandDataT> = 0)
 {
     if (std::is_same<data::MessageFailed, CommandDataT>::value)
         return message->readContent(data);
@@ -319,7 +321,7 @@ auto messageReadQBinary(const Message::Ptr&, CommandDataT&, long, long)
 
 template<typename CommandDataT>
 SResult messageReadQBinary(const Message::Ptr& message, CommandDataT& data,
-                           typename not_error_data<CommandDataT>::type = 0)
+                           not_error_data<CommandDataT> = 0)
 {
     return messageReadQBinary(message, data, 0, 0);
 }
@@ -501,7 +503,7 @@ SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
 template<typename CommandDataT>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        SerializeFormat contentFormat = SerializeFormat::QBinary,
-                       typename detail::not_error_data<CommandDataT>::type = 0)
+                       detail::not_error_data<CommandDataT> = 0)
 {
     static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
                   "CommandDataT must be derived from pproto::data::Data");
@@ -555,7 +557,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 template<typename CommandDataT /*MessageError*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        SerializeFormat contentFormat = SerializeFormat::QBinary,
-                       typename detail::is_error_data<CommandDataT>::type = 0)
+                       detail::is_error_data<CommandDataT> = 0)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Error);
@@ -565,7 +567,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 template<typename CommandDataT /*MessageFailed*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        SerializeFormat contentFormat = SerializeFormat::QBinary,
-                       typename detail::is_failed_data<CommandDataT>::type = 0)
+                       detail::is_failed_data<CommandDataT> = 0)
 {
     message->setType(Message::Type::Answer);
     message->setExecStatus(Message::ExecStatus::Failed);
