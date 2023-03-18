@@ -79,8 +79,8 @@ template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
                   not_derived_from_clife_base<T> = 0);
 
-template <typename T> Reader& readArray(Reader&, T&);
-template <typename T> Reader& readPtr  (Reader&, T&);
+template<typename T> Reader& readArray(Reader&, T&);
+template<typename T> Reader& readPtr  (Reader&, T&);
 
 } // namespace detail
 
@@ -130,17 +130,17 @@ public:
     Reader& operator& (QDateTime&);
     Reader& operator& (std::string&);
 
-    template <typename T> Reader& operator& (T& t);
-    template <typename T> Reader& operator& (QList<T>&);
+    template<typename T> Reader& operator& (T& t);
+    template<typename T> Reader& operator& (QList<T>&);
 #if QT_VERSION < 0x060000
-    template <typename T> Reader& operator& (QVector<T>&);
+    template<typename T> Reader& operator& (QVector<T>&);
 #endif
-    template <typename T> Reader& operator& (clife_ptr<T>&);
-    template <typename T> Reader& operator& (container_ptr<T>&);
-    template <int N>      Reader& operator& (QUuidT<N>&);
+    template<typename T> Reader& operator& (clife_ptr<T>&);
+    template<typename T> Reader& operator& (container_ptr<T>&);
+    template<int N>      Reader& operator& (QUuidT<N>&);
 
-    template <typename T> Reader& operator& (std::list<T>&);
-    template <typename T> Reader& operator& (std::vector<T>&);
+    template<typename T> Reader& operator& (std::list<T>&);
+    template<typename T> Reader& operator& (std::vector<T>&);
 
     template<typename T, typename Compare, typename Allocator>
     Reader& operator& (lst::List<T, Compare, Allocator>&);
@@ -206,8 +206,8 @@ private:
     friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
                                      not_derived_from_clife_base<T>);
 
-    template <typename T> friend Reader& detail::readArray(Reader&, T&);
-    template <typename T> friend Reader& detail::readPtr  (Reader&, T&);
+    template<typename T> friend Reader& detail::readArray(Reader&, T&);
+    template<typename T> friend Reader& detail::readPtr  (Reader&, T&);
 };
 
 class Writer
@@ -249,17 +249,17 @@ public:
     Writer& operator& (const QDateTime&);
     Writer& operator& (const std::string&);
 
-    template <typename T> Writer& operator& (const T& t);
-    template <typename T> Writer& operator& (const QList<T>&);
+    template<typename T> Writer& operator& (const T& t);
+    template<typename T> Writer& operator& (const QList<T>&);
 #if QT_VERSION < 0x060000
-    template <typename T> Writer& operator& (const QVector<T>&);
+    template<typename T> Writer& operator& (const QVector<T>&);
 #endif
-    template <typename T> Writer& operator& (const clife_ptr<T>&);
-    template <typename T> Writer& operator& (const container_ptr<T>&);
-    template <int N>      Writer& operator& (const QUuidT<N>&);
+    template<typename T> Writer& operator& (const clife_ptr<T>&);
+    template<typename T> Writer& operator& (const container_ptr<T>&);
+    template<int N>      Writer& operator& (const QUuidT<N>&);
 
-    template <typename T> Writer& operator& (const std::list<T>&);
-    template <typename T> Writer& operator& (const std::vector<T>&);
+    template<typename T> Writer& operator& (const std::list<T>&);
+    template<typename T> Writer& operator& (const std::vector<T>&);
 
     template<typename T, typename Compare, typename Allocator>
     Writer& operator& (const lst::List<T, Compare, Allocator>&);
@@ -285,14 +285,14 @@ typename std::enable_if<!std::is_enum<T>::value, int>::type;
 template<typename T> using is_enum_type =
 typename std::enable_if<std::is_enum<T>::value, int>::type;
 
-template <typename Packer, typename T>
+template<typename Packer, typename T>
 Packer& operatorAmp(Packer& p, T& t, not_enum_type<T> = 0)
 {
     T::jserialize(&t, p);
     return p;
 }
 
-template <typename T>
+template<typename T>
 Reader& operatorAmp(Reader& r, T& t, is_enum_type<T> = 0)
 {
     typedef typename std::underlying_type<T>::type underlying_enum_type;
@@ -306,7 +306,7 @@ Reader& operatorAmp(Reader& r, T& t, is_enum_type<T> = 0)
     return r;
 }
 
-template <typename T>
+template<typename T>
 Writer& operatorAmp(Writer& w, const T t, is_enum_type<T> = 0)
 {
     typedef typename std::underlying_type<T>::type underlying_enum_type;
@@ -377,7 +377,7 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
     return r.endArray();
 }
 
-template <typename T>
+template<typename T>
 Reader& readArray(Reader& r, T& arr)
 {
     if (r.error())
@@ -401,7 +401,7 @@ Reader& readArray(Reader& r, T& arr)
     return r.endArray();
 }
 
-template <typename T>
+template<typename T>
 Writer& writeArray(Writer& w, const T& arr)
 {
     w.startArray();
@@ -411,7 +411,7 @@ Writer& writeArray(Writer& w, const T& arr)
     return w.endArray();
 }
 
-template <typename T>
+template<typename T>
 Reader& readPtr(Reader& r, T& ptr)
 {
     if (r.error())
@@ -442,7 +442,7 @@ Reader& readPtr(Reader& r, T& ptr)
     return r;
 }
 
-template <typename T>
+template<typename T>
 Writer& writePtr(Writer& w, const T& ptr)
 {
     if (ptr)
@@ -455,7 +455,7 @@ Writer& writePtr(Writer& w, const T& ptr)
 
 } // namespace detail
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (T& t)
 {
     if (error())
@@ -465,7 +465,7 @@ Reader& Reader::operator& (T& t)
     return detail::operatorAmp(r, t);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const T& ct)
 {
     Writer& w = const_cast<Writer&>(*this);
@@ -473,14 +473,14 @@ Writer& Writer::operator& (const T& ct)
     return detail::operatorAmp(w, t);
 }
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (QList<T>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readArray(r, l);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const QList<T>& l)
 {
     Writer& w = const_cast<Writer&>(*this);
@@ -488,14 +488,14 @@ Writer& Writer::operator& (const QList<T>& l)
 }
 
 #if QT_VERSION < 0x060000
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (QVector<T>& v)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readArray(r, v);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const QVector<T>& v)
 {
     Writer& w = const_cast<Writer&>(*this);
@@ -503,7 +503,7 @@ Writer& Writer::operator& (const QVector<T>& v)
 }
 #endif
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (clife_ptr<T>& ptr)
 {
     static_assert(std::is_base_of<clife_base, T>::value,
@@ -513,61 +513,61 @@ Reader& Reader::operator& (clife_ptr<T>& ptr)
     return detail::readPtr(r, ptr);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const clife_ptr<T>& ptr)
 {
     Writer& w = const_cast<Writer&>(*this);
     return detail::writePtr(w, ptr);
 }
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (container_ptr<T>& ptr)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readPtr(r, ptr);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const container_ptr<T>& ptr)
 {
     Writer& w = const_cast<Writer&>(*this);
     return detail::writePtr(w, ptr);
 }
 
-template <int N>
+template<int N>
 Reader& Reader::operator& (QUuidT<N>& uuid)
 {
     return this->operator& (static_cast<QUuid&>(uuid));
 }
 
-template <int N>
+template<int N>
 Writer& Writer::operator& (const QUuidT<N>& uuid)
 {
     return this->operator& (static_cast<const QUuid&>(uuid));
 }
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (std::list<T>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readArray(r, l);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const std::list<T>& l)
 {
     Writer& w = const_cast<Writer&>(*this);
     return detail::writeArray(w, l);
 }
 
-template <typename T>
+template<typename T>
 Reader& Reader::operator& (std::vector<T>& v)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readArray(r, v);
 }
 
-template <typename T>
+template<typename T>
 Writer& Writer::operator& (const std::vector<T>& v)
 {
     Writer& w = const_cast<Writer&>(*this);
@@ -590,7 +590,7 @@ Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
 
 //-------------------------------- Functions ---------------------------------
 
-template <typename GenericValueT>
+template<typename GenericValueT>
 bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 {
     RAPIDJSON_ASSERT(b.IsString());
@@ -625,18 +625,18 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
 */
 #define DECLARE_J_SERIALIZE_FUNC \
     J_SERIALIZE_FUNC \
-    template <typename This, typename Packer> \
+    template<typename This, typename Packer> \
     static Packer& jserialize(const This*, Packer&);
 
 #define J_SERIALIZE_BEGIN \
     J_SERIALIZE_FUNC \
-    template <typename This, typename Packer> \
+    template<typename This, typename Packer> \
     static Packer& jserialize(const This* ct, Packer& p) { \
         This* t = const_cast<This*>(ct); \
         p.startObject();
 
 #define J_SERIALIZE_EXTERN_BEGIN(CLASS) \
-    template <typename This, typename Packer> \
+    template<typename This, typename Packer> \
     Packer& CLASS::jserialize(const This* ct, Packer& p) { \
         This* t = const_cast<This*>(ct); \
         p.startObject();
@@ -658,7 +658,7 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     }
 
 #define J_SERIALIZE_BASE_BEGIN \
-    template <typename Packer> \
+    template<typename Packer> \
     void jserializeBase(Packer& p) { \
         decltype(this) t = this;
         //std::remove_const_t<decltype(this)> t = const_cast<std::remove_const_t<decltype(this)>>(this);

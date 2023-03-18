@@ -319,7 +319,7 @@ struct CloseConnection : Data<&command::CloseConnection,
 //------------------------ Функции json-сериализации -------------------------
 
 #ifdef PPROTO_JSON_SERIALIZE
-template <typename This, typename Packer>
+template<typename This, typename Packer>
 Packer& Unknown::jserialize(const This* ct, Packer& p)
 {
     This* t = const_cast<This*>(ct);

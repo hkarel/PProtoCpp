@@ -55,7 +55,7 @@
 namespace pproto {
 namespace detail {
 
-template <typename CommandDataT>
+template<typename CommandDataT>
 struct derived_from_data_t
 {
     template<
@@ -72,7 +72,7 @@ struct derived_from_data_t
     using type = decltype(test(std::declval<CommandDataT>()));
 };
 
-template <typename CommandDataT>
+template<typename CommandDataT>
 using is_derived_from_data_t = typename derived_from_data_t<CommandDataT>::type;
 
 template<typename T> using is_error_data =
