@@ -65,11 +65,20 @@ class Reader;
 
 namespace detail {
 
+template<typename T> using not_enum_type =
+typename std::enable_if<!std::is_enum<T>::value, int>::type;
+
+template<typename T> using is_enum_type =
+typename std::enable_if<std::is_enum<T>::value, int>::type;
+
 template<typename T> using derived_from_clife_base =
 typename std::enable_if<std::is_base_of<clife_base, T>::value, int>::type;
 
 template<typename T> using not_derived_from_clife_base =
 typename std::enable_if<!std::is_base_of<clife_base, T>::value, int>::type;
+
+template<typename T>
+Reader& operatorAmp(Reader&, T&, not_enum_type<T> = 0);
 
 template<typename T, typename Compare, typename Allocator>
 Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
@@ -99,8 +108,9 @@ public:
     Reader& member(const char* name, bool optional = false);
     quint64 jsonIndex() const {return _jsonIndex;}
 
-    bool stackTopIsNull()   const {return _stack.top().value->IsNull();}
-    bool stackTopIsObject() const {return _stack.top().value->IsObject();}
+    bool stackTopIsNull()     const {return _stack.top().value->IsNull();}
+    bool stackTopIsObject()   const {return _stack.top().value->IsObject();}
+    bool stackTopIsOptional() const {return (_stack.top().optional == 1);}
 
     Reader& startObject();
     Reader& endObject();
@@ -170,14 +180,22 @@ private:
         };
 
         StackItem() = default;
-        StackItem(const Value* value, State state, const char* name = 0)
-            : name(name), value(value), state(state)
+        StackItem(const Value* value, State state, const char* name = 0,
+                  int optional = -1)
+            : name(name), value(value), state(state), optional(optional)
         {}
 
         QByteArray name;
         const Value* value;
         State state;
         SizeType index = {0}; // For array iteration
+
+        // Вспомогательное поле, признак опционального параметра.
+        // Поле может принимать три значения: 1, 0, -1
+        //   1 - Поле опциональное;
+        //   0 - Поле обязательное (не опциональное);
+        //  -1 - Нет данных о статусе поля.
+        int optional = {-1};
     };
     typedef QStack<StackItem> Stack;
 
@@ -198,13 +216,16 @@ private:
     quint64 _jsonIndex = {0};
     QByteArray _jsonContent;
 
-    template<typename T, typename Compare, typename Allocator>
-    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     derived_from_clife_base<T>);
+    template<typename T>
+    friend Reader& detail::operatorAmp(Reader&, T&, detail::not_enum_type<T>);
 
     template<typename T, typename Compare, typename Allocator>
     friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     not_derived_from_clife_base<T>);
+                                     detail::derived_from_clife_base<T>);
+
+    template<typename T, typename Compare, typename Allocator>
+    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
+                                     detail::not_derived_from_clife_base<T>);
 
     template<typename T> friend Reader& detail::readArray(Reader&, T&);
     template<typename T> friend Reader& detail::readPtr  (Reader&, T&);
@@ -279,17 +300,25 @@ private:
 
 namespace detail {
 
-template<typename T> using not_enum_type =
-typename std::enable_if<!std::is_enum<T>::value, int>::type;
-
-template<typename T> using is_enum_type =
-typename std::enable_if<std::is_enum<T>::value, int>::type;
-
-template<typename Packer, typename T>
-Packer& operatorAmp(Packer& p, T& t, not_enum_type<T> = 0)
+template<typename T>
+Reader& operatorAmp(Reader& r, T& t, not_enum_type<T>)
 {
-    T::jserialize(&t, p);
-    return p;
+    if (r.stackTopIsOptional() && r.stackTopIsNull())
+    {
+        t = T{};
+        r.next();
+    }
+    else
+        T::jserialize(&t, r);
+
+    return r;
+}
+
+template<typename T>
+Writer& operatorAmp(Writer& w, T& t, not_enum_type<T> = 0)
+{
+    T::jserialize(&t, w);
+    return w;
 }
 
 template<typename T>

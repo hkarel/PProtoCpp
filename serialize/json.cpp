@@ -110,7 +110,8 @@ Reader& Reader::member(const char* name, bool optional)
             if (memberItr != _stack.top().value->MemberEnd())
             {
                 setError(0);
-                _stack.push(StackItem{&memberItr->value, StackItem::BeforeStart, name});
+                _stack.push({&memberItr->value, StackItem::BeforeStart, name,
+                            (optional ? 1 : 0)});
             }
             else
             {
@@ -223,7 +224,7 @@ Reader& Reader::startArray(SizeType& size)
             if (!_stack.top().value->Empty())
             {
                 const Value& value = (*_stack.top().value)[_stack.top().index];
-                _stack.push(StackItem(&value, StackItem::BeforeStart));
+                _stack.push({&value, StackItem::BeforeStart});
             }
             else
                 _stack.top().state = StackItem::Closed;
@@ -281,7 +282,7 @@ void Reader::next()
                     setError(0);
 
                 const Value& value = (*_stack.top().value)[++_stack.top().index];
-                _stack.push(StackItem(&value, StackItem::BeforeStart));
+                _stack.push({&value, StackItem::BeforeStart});
             }
             else
                 _stack.top().state = StackItem::Closed;
