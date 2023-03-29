@@ -112,7 +112,7 @@ QDataStream& getFromStreamEnum(QDataStream& s, T& t)
 }
 
 template<typename T>
-QDataStream& putToStreamEnum(QDataStream& s, T t)
+QDataStream& putToStreamEnum(QDataStream& s, const T t)
 {
     typedef typename std::underlying_type<T>::type underlying_enum_type;
     static_assert(std::is_same<underlying_enum_type, qint32>::value
@@ -126,9 +126,6 @@ QDataStream& putToStreamEnum(QDataStream& s, T t)
 template<typename T>
 QDataStream& getFromStreamPtr(QDataStream& s, T& ptr)
 {
-    // Отладить
-    break_point
-
     if (s.atEnd())
         return s;
 
@@ -153,9 +150,6 @@ QDataStream& getFromStreamPtr(QDataStream& s, T& ptr)
 template<typename T>
 QDataStream& putToStreamPtr(QDataStream& s, const T& ptr)
 {
-    // Отладить
-    break_point
-
     s << bool(ptr.empty());
     if (ptr.empty())
         return s;
@@ -197,7 +191,7 @@ inline QDataStream& getFromStream(QDataStream& s, T& t, is_enum_type<T> = 0)
 }
 
 template<typename T>
-QDataStream& putToStream(QDataStream& s, T t, is_enum_type<T> = 0)
+QDataStream& putToStream(QDataStream& s, const T t, is_enum_type<T> = 0)
 {
     return detail::putToStreamEnum(s, t);
 }
@@ -221,6 +215,10 @@ QDataStream& putToStream(QDataStream& s, const clife_ptr<T>& ptr)
     return detail::putToStreamPtr(s, ptr);
 }
 
+/**
+  Публичные вспомогательные функции для потоковых операторов, используются
+  для чтения/записи структур container_ptr<T> из потока данных
+*/
 template<typename T>
 QDataStream& getFromStream(QDataStream& s, container_ptr<T>& ptr)
 {
@@ -355,26 +353,7 @@ namespace bserial = pproto::serialize::qbinary;
     template<typename T> \
     friend QDataStream& bserial::detail::getFromStream(QDataStream&, T&); \
     template<typename T> \
-    friend QDataStream& bserial::detail::putToStream(QDataStream&, const T&); \
-    \
-    template<typename T> \
-    friend QDataStream& bserial::detail::getFromStreamEnum(QDataStream&, T&); \
-    template<typename T> \
-    friend QDataStream& bserial::detail::putToStreamEnum(QDataStream&, T); \
-    \
-    template<typename T> \
-    friend QDataStream& bserial::getFromStream(QDataStream& s, clife_ptr<T>&); \
-    template<typename T> \
-    friend QDataStream& bserial::putToStream(QDataStream& s, const clife_ptr<T>&); \
-    \
-    template<typename T, typename Compare, typename Allocator> \
-    friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                               typename bserial::derived_from_clife_base<T>::type); \
-    template<typename T, typename Compare, typename Allocator> \
-    friend QDataStream& bserial::getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>&, \
-                                               typename bserial::not_derived_from_clife_base<T>::type); \
-    template<typename T, typename Compare, typename Allocator> \
-    friend QDataStream& bserial::putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&);
+    friend QDataStream& bserial::detail::putToStream(QDataStream&, const T&);
 
 #define DECLARE_B_SERIALIZE_FUNC \
     bserial::RawVector toRaw() const; \
@@ -393,24 +372,31 @@ namespace bserial = pproto::serialize::qbinary;
     /* Операторы для НЕ enum-типов */ \
     template<typename T> \
     inline bserial::not_enum_type_operator<T>& operator>> (QDataStream& s, T& p) \
-        {return bserial::detail::getFromStream<T>(s, p);} \
+        {return bserial::detail::getFromStream(s, p);} \
     template<typename T> \
     inline bserial::not_enum_type_operator<T>& operator<< (QDataStream& s, const T& p) \
-        {return bserial::detail::putToStream<T>(s, p);} \
+        {return bserial::detail::putToStream(s, p);} \
     /* Операторы для enum-типов */ \
     template<typename T> \
     inline bserial::enum_type_operator<T>& operator>> (bserial::DataStream& s, T& p) \
-        {return bserial::detail::getFromStreamEnum<T>(s, p);} \
+        {return bserial::detail::getFromStreamEnum(s, p);} \
     template<typename T> \
-    inline bserial::enum_type_operator<T>& operator<< (bserial::DataStream& s, const T& p) \
-        {return bserial::detail::putToStreamEnum<T>(s, p);} \
+    inline bserial::enum_type_operator<T>& operator<< (bserial::DataStream& s, const T p) \
+        {return bserial::detail::putToStreamEnum(s, p);} \
     \
     template<typename T> \
     inline QDataStream& operator>> (QDataStream& s, clife_ptr<T>& p) \
-        {return bserial::getFromStream<T>(s, p);} \
+        {return bserial::detail::getFromStreamPtr(s, p);} \
     template<typename T> \
     inline QDataStream& operator<< (QDataStream& s, const clife_ptr<T>& p) \
-        {return bserial::putToStream<T>(s, p);} \
+        {return bserial::detail::putToStreamPtr(s, p);} \
+    \
+    template<typename T> \
+    inline QDataStream& operator>> (QDataStream& s, container_ptr<T>& p) \
+        {return bserial::detail::getFromStreamPtr(s, p);} \
+    template<typename T> \
+    inline QDataStream& operator<< (QDataStream& s, const container_ptr<T>& p) \
+        {return bserial::detail::putToStreamPtr(s, p);} \
     \
     template<typename T, typename Compare, typename Allocator> \
     inline QDataStream& operator>> (QDataStream& s, lst::List<T, Compare, Allocator>& p) \
