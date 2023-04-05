@@ -282,34 +282,23 @@ void Socket::run()
         return;
     }
 
-    auto sodiumAllocKey = [](uchar*& key, size_t len, const char* msg) -> bool
+    const size_t cryptoKeysLen = crypto_box_PUBLICKEYBYTES
+                                 + crypto_box_SECRETKEYBYTES
+                                 + crypto_box_PUBLICKEYBYTES
+                                 + crypto_box_BEFORENMBYTES;
+
+    uchar* cryptoKeysBuff = (uchar*)sodium_malloc(cryptoKeysLen);
+    if (cryptoKeysBuff == nullptr)
     {
-        key = (uchar*)sodium_malloc(len);
-        if (key == 0)
-        {
-            log_error_m << log_format(
-                "Can't alloc memory for %? key (errno: %?)", msg, errno);
-            return false;
-        }
-        return true;
-    };
-
-    uchar* socketPublicKey = nullptr;
-    uchar* socketSecretKey = nullptr;
-    uchar* externPublicKey = nullptr;
-    uchar* sharedSecretKey = nullptr;
-
-    if (!sodiumAllocKey(socketPublicKey, crypto_box_PUBLICKEYBYTES, "socket public"))
+        log_error_m << log_format(
+            "Can't alloc memory for crypto keys (errno: %?)", errno);
         return;
+    }
 
-    if (!sodiumAllocKey(socketSecretKey, crypto_box_SECRETKEYBYTES, "socket secret"))
-        return;
-
-    if (!sodiumAllocKey(externPublicKey, crypto_box_PUBLICKEYBYTES, "external public"))
-        return;
-
-    if (!sodiumAllocKey(sharedSecretKey, crypto_box_BEFORENMBYTES,  "shared secret"))
-        return;
+    uchar* socketPublicKey = cryptoKeysBuff;
+    uchar* socketSecretKey = socketPublicKey + crypto_box_PUBLICKEYBYTES;
+    uchar* externPublicKey = socketSecretKey + crypto_box_SECRETKEYBYTES;
+    uchar* sharedSecretKey = externPublicKey + crypto_box_PUBLICKEYBYTES;
 #endif // SODIUM_ENCRYPTION
 
     { // Block for SpinLocker
@@ -1423,15 +1412,8 @@ void Socket::run()
     _initSocketDescriptor = {-1};
 
 #ifdef SODIUM_ENCRYPTION
-    sodium_memzero(socketPublicKey, crypto_box_PUBLICKEYBYTES);
-    sodium_memzero(socketSecretKey, crypto_box_PUBLICKEYBYTES);
-    sodium_memzero(externPublicKey, crypto_box_PUBLICKEYBYTES);
-    sodium_memzero(sharedSecretKey, crypto_box_BEFORENMBYTES );
-
-    sodium_free(socketPublicKey);
-    sodium_free(socketSecretKey);
-    sodium_free(externPublicKey);
-    sodium_free(sharedSecretKey);
+    sodium_memzero(cryptoKeysBuff, cryptoKeysLen);
+    sodium_free(cryptoKeysBuff);
 #endif
 
     #undef CHECK_SOCKET_ERROR
