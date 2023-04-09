@@ -66,7 +66,7 @@ private:
         qint32  code  = {0};
         QString description;
     };
-    Data::Ptr _d = {Data::Ptr::create_join_ptr()};
+    Data::Ptr _d = {Data::Ptr::create_join()};
 };
 
 } // namespace serialize
