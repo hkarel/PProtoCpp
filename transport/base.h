@@ -309,6 +309,11 @@ private:
     SocketDescriptor _initSocketDescriptor = {-1};
     mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
 
+#ifdef SODIUM_ENCRYPTION
+    QList<uchar*> _cryptoKeys;
+    mutable std::atomic_flag _cryptoLock = ATOMIC_FLAG_INIT;
+#endif
+
     friend class Listener;
     friend class local::Socket;
     friend class tcp::Socket;

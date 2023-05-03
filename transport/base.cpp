@@ -287,7 +287,17 @@ void Socket::run()
                                  + crypto_box_PUBLICKEYBYTES
                                  + crypto_box_BEFORENMBYTES;
 
-    uchar* cryptoKeysBuff = (uchar*)sodium_malloc(cryptoKeysLen);
+    uchar* cryptoKeysBuff = nullptr;
+
+    { //Block for SpinLocker
+        SpinLocker locker {_cryptoLock}; (void) locker;
+        if (!_cryptoKeys.isEmpty())
+            cryptoKeysBuff = _cryptoKeys.takeFirst();
+    }
+
+    if (cryptoKeysBuff == nullptr)
+        cryptoKeysBuff = (uchar*)sodium_malloc(cryptoKeysLen);
+
     if (cryptoKeysBuff == nullptr)
     {
         log_error_m << log_format(
@@ -1413,7 +1423,11 @@ void Socket::run()
 
 #ifdef SODIUM_ENCRYPTION
     sodium_memzero(cryptoKeysBuff, cryptoKeysLen);
-    sodium_free(cryptoKeysBuff);
+    { //Block for SpinLocker
+        SpinLocker locker {_cryptoLock}; (void) locker;
+        _cryptoKeys.append(cryptoKeysBuff);
+    }
+    //sodium_free(cryptoKeysBuff);
 #endif
 
     #undef CHECK_SOCKET_ERROR
