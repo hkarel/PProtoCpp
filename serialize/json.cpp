@@ -39,11 +39,6 @@ namespace pproto::serialize::json {
 #include <cassert>
 #include <cctype>
 
-//#define DOCUMENT reinterpret_cast<Document*>(mDocument)
-//#define STACK (reinterpret_cast<ReaderStack*>(mStack))
-//#define TOP (STACK->top())
-//#define CURRENT (*TOP.value)
-
 //---------------------------------- Reader ----------------------------------
 
 static std::atomic<std::uint64_t> jsonIndexReader = {0};
@@ -79,17 +74,12 @@ bool Reader::parse(const QByteArray& json)
     if (_document.HasParseError())
     {
         setError(1);
-        ParseErrorCode e = _document.GetParseError();
-        int o = int(_document.GetErrorOffset());
-//        log_error_m << "Failed parse json"
-//                    << ". JIndex: " << _jsonIndex
-//                    << ". Error: " << GetParseError_En(e)
-//                    << " Detail: " << " at offset " << o << " near '"
-//                    << _jsonContent.mid(o, 20) << "...'";
+        ParseErrorCode err = _document.GetParseError();
+        int offset = int(_document.GetErrorOffset());
 
         log_error_m << log_format(
             "Failed parse json. JIndex: %?. Error: %? Detail: at offset %? near '%?...'",
-            _jsonIndex, GetParseError_En(e), o, _jsonContent.mid(o, 20));
+            _jsonIndex, GetParseError_En(err), offset, _jsonContent.mid(offset, 30));
     }
     else
     {
