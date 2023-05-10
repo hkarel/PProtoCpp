@@ -311,6 +311,10 @@ void Socket::run()
         SpinLocker locker {_socketLock}; (void) locker;
         socketClose();
         _initSocketDescriptor = {-1};
+
+#ifdef SODIUM_ENCRYPTION
+        sodium_free(cryptoKeysBuff);
+#endif
         return;
     }
     _initSocketDescriptor = socketDescriptorInternal();
