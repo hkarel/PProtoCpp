@@ -93,6 +93,7 @@ Message::Ptr Message::cloneForAnswer() const
     message->_tags = _tags;
     message->_maxTimeLife = _maxTimeLife;
     message->_proxyId = _proxyId;
+    message->_accessId = _accessId;
     message->_socketType = _socketType;
     message->_sourcePoint = _sourcePoint;
     message->_socketDescriptor = _socketDescriptor;
@@ -261,6 +262,9 @@ int Message::size() const
     if (_proxyId != 0)
         sz += sizeof(_proxyId);
 
+    if (!_accessId.isEmpty())
+        sz += _accessId.size() + sizeof(quint32);
+
     if (!_content.isEmpty())
         sz += _content.size() + sizeof(quint32);
 
@@ -274,6 +278,7 @@ void Message::initEmptyTraits() const
     _flag.maxTimeLifeIsEmpty = (_maxTimeLife == quint64(-1));
     _flag.contentIsEmpty     = (_content.isEmpty());
     _flag.proxyIdIsEmpty     = (_proxyId == 0);
+    _flag.accessIdIsEmpty    = (_accessId.isEmpty());
 }
 
 #ifdef PPROTO_QBINARY_SERIALIZE
@@ -321,6 +326,9 @@ void Message::toDataStream(QDataStream& stream) const
     if (!_flag.proxyIdIsEmpty)
         stream << _proxyId;
 
+    if (!_flag.accessIdIsEmpty)
+        stream << _accessId;
+
     if (!_flag.contentIsEmpty)
         stream << _content;
 }
@@ -355,6 +363,12 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     if (!message->_flag.proxyIdIsEmpty)
         stream >> message->_proxyId;
+
+    if (!message->_flag.accessIdIsEmpty)
+    {
+        //stream >> message->_accessId;
+        serialize::readByteArray(stream, message->_accessId);
+    }
 
     if (!message->_flag.contentIsEmpty)
     {
@@ -429,6 +443,15 @@ QByteArray Message::toJson(bool webFlags) const
         // stream << _proxyId;
         writer.Key("proxyId");
         writer.Uint64(_proxyId);
+    }
+    if (!_flag.accessIdIsEmpty)
+    {
+        // stream << _accessId;
+        writer.Key("accessId");
+        QByteArray ba {"\""};
+        ba.append(_accessId);
+        ba.append("\"");
+        writer.RawValue(ba.constData(), size_t(ba.length()), kStringType);
     }
     if (!_flag.contentIsEmpty)
     {
@@ -513,6 +536,7 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     bool maxTimeLifeIsEmpty = true;
     bool contentIsEmpty = true;
     bool proxyIdIsEmpty = true;
+    bool accessIdIsEmpty = true;
     bool flags2IsEmpty = true;
 
     quint32 flags = 0, flags2 = 0;
@@ -566,6 +590,14 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         {
             proxyIdIsEmpty = false;
             message->_proxyId = quint64(member->value.GetUint64());
+        }
+        else if (stringEqual("accessId", member->name) && member->value.IsString())
+        {
+            accessIdIsEmpty = false;
+            StringBuffer buff;
+            rapidjson::Writer<StringBuffer> writer {buff};
+            member->value.Accept(writer);
+            message->_accessId = QByteArray(buff.GetString());
         }
         else if (stringEqual("content", member->name) && member->value.IsObject())
         {
@@ -622,6 +654,7 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     message->_flag.maxTimeLifeIsEmpty = maxTimeLifeIsEmpty;
     message->_flag.contentIsEmpty     = contentIsEmpty;
     message->_flag.proxyIdIsEmpty     = proxyIdIsEmpty;
+    message->_flag.accessIdIsEmpty    = accessIdIsEmpty;
     message->_flag.flags2IsEmpty      = flags2IsEmpty;
 
     if (flags)
