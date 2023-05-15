@@ -60,7 +60,7 @@ Message::Message() : _flags(0), _flags2(0)
 {
     // Флаги  _flags,  _flags2  должны  быть  инициализированы  обязательно
     // в конструкторе, так как невозможно корректно выполнить инициализацию
-    // не именованных union-параметров при их объявлении в классе
+    // неименованных union-параметров при их объявлении в классе
 }
 
 Message::Ptr Message::create(const QUuidEx& command, SerializeFormat contentFormat)
