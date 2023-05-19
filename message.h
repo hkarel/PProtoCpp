@@ -333,15 +333,15 @@ public:
 #endif
 
     // Возвращает максимально возможную длину сообщения в сериализованном виде.
-    // Данный метод используется для оценки возможности передачи сообщения
-    // посредством UDP датаграммы
+    // Метод используется для оценки возможности передачи сообщения посредством
+    // UDP датаграммы
     int size() const;
 
 private:
     Message();
     DISABLE_DEFAULT_COPY(Message)
 
-    void initEmptyTraits() const;
+    void initNotEmptyTraits() const;
     void decompress(QByteArray&) const;
 
 #ifdef PPROTO_QBINARY_SERIALIZE
@@ -392,13 +392,13 @@ private:
             // Параметр соответствует enum Compression
             quint32 compression: 3;
 
-            // Признаки пустых полей. Признаки используются для оптимизации
-            // размера сообщения при его сериализации
-            mutable quint32 tagsIsEmpty: 1;
-            mutable quint32 maxTimeLifeIsEmpty: 1;
-            mutable quint32 contentIsEmpty: 1;
-            mutable quint32 proxyIdIsEmpty: 1;
-            mutable quint32 accessIdIsEmpty: 1;
+            // Признаки не пустых полей, используются для оптимизации размера
+            // сообщения при его сериализации
+            mutable quint32 tagsNotEmpty: 1;
+            mutable quint32 maxTimeLfNotEmpty: 1;
+            mutable quint32 contentNotEmpty: 1;
+            mutable quint32 proxyIdNotEmpty: 1;
+            mutable quint32 accessIdNotEmpty: 1;
 
             //--- Байт 3 ---
             quint32 reserved3: 8;
@@ -408,10 +408,10 @@ private:
             quint32 contentFormat: 3;
             quint32 reserved4: 4;
 
-            // Признак пустого флага _flags2. Признак используется для оптимиза-
-            // ции размера сообщения при его сериализации.  Данный признак идет
-            // последним битом в поле _flags
-            mutable quint32 flags2IsEmpty: 1;
+            // Признак не пустого флага _flags2, используется для оптимизации
+            // размера сообщения при его сериализации. Признак идет последним
+            // битом в поле _flags
+            mutable quint32 flags2NotEmpty: 1;
         } _flag;
     };
 
