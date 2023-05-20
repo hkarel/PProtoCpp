@@ -57,6 +57,26 @@ Line& operator<< (Line& line, const pproto::CommandNameLog& cnl)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 
+Line& operator<< (Line& line, pproto::SerializeFormat serializeFormat)
+{
+    if (line.toLogger())
+        switch (serializeFormat)
+        {
+            case pproto::SerializeFormat::QBinary:
+                line << "QBinary";
+                break;
+
+            case pproto::SerializeFormat::Json:
+                line << "Json";
+                break;
+
+            default:
+                line << "Unknown";
+        }
+
+    return line;
+}
+
 Line& operator<< (Line& line, pproto::Message::Type type)
 {
     if (line.toLogger())

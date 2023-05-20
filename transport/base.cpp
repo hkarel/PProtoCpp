@@ -992,7 +992,8 @@ void Socket::run()
                             break;
 #endif
                         default:
-                            log_error_m << "Unsupported message serialize format";
+                            log_error_m << "Unsupported message serialize format: "
+                                        << _messageFormat;
                             prog_abort();
                     }
 

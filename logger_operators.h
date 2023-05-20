@@ -50,6 +50,7 @@ namespace alog {
 
 Line& operator<< (Line&, const pproto::HostPoint&);
 Line& operator<< (Line&, const pproto::CommandNameLog&);
+Line& operator<< (Line&, pproto::SerializeFormat);
 Line& operator<< (Line&, pproto::Message::Type);
 Line& operator<< (Line&, pproto::Message::ExecStatus);
 

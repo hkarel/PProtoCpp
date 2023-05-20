@@ -182,7 +182,8 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 #endif
         default:
         {
-            log_error_m << "Unsupported message serialize format";
+            log_error_m << "Unsupported message serialize format: "
+                        << contentFormat;
             prog_abort();
         }
     }
@@ -370,7 +371,8 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
             break;
 #endif
         default:
-            log_error_m << "Unsupported message serialize format";
+            log_error_m << "Unsupported message serialize format: "
+                        << message->contentFormat();
             prog_abort();
     }
 
