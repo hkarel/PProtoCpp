@@ -599,7 +599,8 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             StringBuffer buff;
             rapidjson::Writer<StringBuffer> writer {buff};
             member->value.Accept(writer);
-            message->_accessId = QByteArray(buff.GetString());
+            message->_accessId = QByteArray(buff.GetString() + 1);
+            message->_accessId.chop(1);
         }
         else if (stringEqual("content", member->name) && member->value.IsObject())
         {
