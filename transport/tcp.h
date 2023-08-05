@@ -136,7 +136,7 @@ private:
 
     HostPoint _listenPoint;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 
 Listener& listener();

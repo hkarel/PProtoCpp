@@ -99,7 +99,7 @@ private:
     // содержать более одного значения
     QMap<QUuidEx, QSet<CommandTraits>> _map;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 
 Pool& pool();

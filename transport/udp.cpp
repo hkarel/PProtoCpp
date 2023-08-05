@@ -481,7 +481,7 @@ void Socket::run()
 
 Socket& socket()
 {
-    return ::safe_singleton<Socket>();
+    return safe::singleton<Socket>();
 }
 
 } // namespace pproto::transport::udp

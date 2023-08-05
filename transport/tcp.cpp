@@ -374,7 +374,7 @@ void Listener::disconnectSignals(base::Socket* socket)
 
 Listener& listener()
 {
-    return ::safe_singleton<Listener>();
+    return safe::singleton<Listener>();
 }
 
 } // namespace pproto::transport::tcp
