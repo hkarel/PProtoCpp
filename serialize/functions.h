@@ -125,7 +125,7 @@ auto messageWriteQBinary(const CommandDataT&, Message::Ptr&, long, long)
      -> SResult
 {
     QString err = "Method %1::toRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -151,7 +151,7 @@ auto messageWriteJson(CommandDataT&, Message::Ptr&, long)
      -> SResult
 {
     QString err = "Method %1::toJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -315,7 +315,7 @@ auto messageReadQBinary(const Message::Ptr&, CommandDataT&, long, long)
      -> SResult
 {
     QString err = "Method %1::fromRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -341,7 +341,7 @@ auto messageReadJson(const Message::Ptr&, CommandDataT&, long)
      -> SResult
 {
     QString err = "Method %1::fromJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
