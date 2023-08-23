@@ -308,7 +308,7 @@ bool Listener::init(const HostPoint& listenPoint)
     {
         if (++attempts > 10)
             break;
-        usleep(200*1000);
+        QThread::usleep(200*1000);
     }
     if (attempts > 10)
     {
