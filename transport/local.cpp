@@ -37,7 +37,6 @@
 #endif
 
 #include <stdexcept>
-#include <unistd.h>
 
 #define log_error_m   alog::logger().error   (alog_line_location, "TransportSoc")
 #define log_warn_m    alog::logger().warn    (alog_line_location, "TransportSoc")
@@ -238,7 +237,7 @@ bool Listener::init(const QString& serverName)
     {
         if (++attempts > 10)
             break;
-        usleep(200*1000);
+        QThread::usleep(200*1000);
     }
     if (attempts > 10)
         log_error_m << "Start listener of connection to " << _serverName

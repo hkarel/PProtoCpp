@@ -40,7 +40,6 @@
 #include "shared/logger/format.h"
 #include "shared/qt/logger_operators.h"
 
-#include <sys/time.h>
 #include <typeinfo>
 #include <stdexcept>
 #include <type_traits>

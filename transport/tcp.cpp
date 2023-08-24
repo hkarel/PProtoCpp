@@ -38,7 +38,6 @@
 #endif
 
 #include <stdexcept>
-#include <unistd.h>
 
 #define log_error_m   alog::logger().error   (alog_line_location, "TransportTCP")
 #define log_warn_m    alog::logger().warn    (alog_line_location, "TransportTCP")
