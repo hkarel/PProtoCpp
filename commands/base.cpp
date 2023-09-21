@@ -75,7 +75,7 @@ void MessageError::fromRaw(const bserial::RawVector& vect)
     B_QSTR_FROM_UTF8(stream, description);
     B_DESERIALIZE_END
 }
-#endif
+#endif // PPROTO_QBINARY_SERIALIZE
 
 MessageFailed::MessageFailed(qint32 group, const QUuidEx& code, const QString& description)
     : group(group), code(code), description(description)
