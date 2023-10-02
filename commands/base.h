@@ -267,6 +267,8 @@ struct Error : Data<&command::Error,
     QUuidEx code;        // Глобальный код ошибки
     QString description; // Описание ошибки (сериализуется в utf8)
 
+    void assign(const MessageError&);
+
 #ifdef PPROTO_QBINARY_SERIALIZE
     DECLARE_B_SERIALIZE_FUNC
 #endif

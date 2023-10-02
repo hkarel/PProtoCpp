@@ -190,6 +190,13 @@ void Unknown::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
+void Error::assign(const MessageError& msg)
+{
+    group = msg.group;
+    code = msg.code;
+    description = msg.description;
+}
+
 bserial::RawVector Error::toRaw() const
 {
     B_SERIALIZE_V1(stream)
