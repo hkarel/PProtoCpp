@@ -636,22 +636,24 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     return (std::memcmp(a, b_, sizeof(typename GenericValueT::Ch) * l1) == 0);
 }
 
+} // namespace pproto::serialize::json
+
+/**
+  Макросы для работы с функциями сериализации toJson(), fromJson()
+*/
 #define J_SERIALIZE_FUNC \
     QByteArray toJson() const { \
-        serialize::json::Writer writer; \
+        pproto::serialize::json::Writer writer; \
         jserialize(this, writer); \
         return QByteArray(writer.getString()); \
     } \
-    SResult fromJson(const QByteArray& json) { \
-        serialize::json::Reader reader; \
+    pproto::SResult fromJson(const QByteArray& json) { \
+        pproto::serialize::json::Reader reader; \
         if (reader.parse(json)) \
             jserialize(this, reader); \
         return reader.result(); \
     }
 
-/**
-  Макросы для работы с функциями сериализации toJson(), fromJson()
-*/
 #define DECLARE_J_SERIALIZE_FUNC \
     J_SERIALIZE_FUNC \
     template<typename This, typename Packer> \
@@ -712,5 +714,3 @@ bool stringEqual(const typename GenericValueT::Ch* a, const GenericValueT& b)
     J_SERIALIZE_BEGIN \
     t->jserializeBase(p); \
     J_SERIALIZE_END
-
-} // namespace pproto::serialize::json
