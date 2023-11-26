@@ -63,7 +63,7 @@ public:
     // соответствует уровню сжатия по умолчанию.
     // Значение параметра по умолчанию равно 0
     int compressionLevel() const {return _compressionLevel;}
-    void setCompressionLevel(int val);
+    void setCompressionLevel(int val) {_compressionLevel = qBound(-1, val, 9);}
 
     // Определяет размер потока данных (в байтах) по достижении которого выпол-
     // няется сжатие потока перед отправкой в TCP/Local сокет.

@@ -57,13 +57,6 @@ namespace pproto::transport {
 
 namespace base {
 
-//--------------------------------- Base -------------------------------------
-
-void Properties::setCompressionLevel(int val)
-{
-    _compressionLevel = qBound(-1, val, 9);
-}
-
 //----------------------------- SocketCommon ---------------------------------
 
 #pragma GCC diagnostic push
