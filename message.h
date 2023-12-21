@@ -182,7 +182,7 @@ public:
     // Максимальное время жизни сообщения.  Задается  в секундах  в формате UTC
     // от начала  эпохи.  Параметр  представляет  абсолютное  значение  времени,
     // по достижении которого сообщение перестает быть актуальным.
-    // Тайм-аут в 2 мин. можно задать так: setMaxTimeLife(std::time()+2*60)
+    // Тайм-аут в 2 мин. можно задать так: setMaxTimeLife(std::time(0) + 2*60)
     quint64 maxTimeLife() const {return _maxTimeLife;}
     void setMaxTimeLife(quint64 val) {_maxTimeLife = val;}
 
