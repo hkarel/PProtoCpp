@@ -86,7 +86,7 @@ private:
 
 private:
     simple_ptr<QUdpSocket> _socket;
-    mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
+    mutable QMutex _socketLock;
 
     HostPoint _bindPoint;
     QUdpSocket::BindMode _bindMode;

@@ -93,14 +93,26 @@ void Socket::waitBinding(int timeout)
 
 bool Socket::isBound() const
 {
-    SpinLocker locker {_socketLock}; (void) locker;
-    return (_socket && (_socket->state() == QAbstractSocket::BoundState));
+    bool res = false;
+    if (_socketLock.tryLock())
+    {
+        if (_socket)
+            res = (_socket->state() == QAbstractSocket::BoundState);
+        _socketLock.unlock();
+    }
+    return res;
 }
 
 SocketDescriptor Socket::socketDescriptor() const
 {
-    SpinLocker locker {_socketLock}; (void) locker;
-    return (_socket) ? _socket->socketDescriptor() : -1;
+    SocketDescriptor res = -1;
+    if (_socketLock.tryLock())
+    {
+        if (_socket)
+            res = _socket->socketDescriptor();
+        _socketLock.unlock();
+    }
+    return res;
 }
 
 QList<QHostAddress> Socket::discardAddresses() const
@@ -117,16 +129,17 @@ void Socket::setDiscardAddresses(const QList<QHostAddress>& val)
 
 void Socket::run()
 {
-    { //Block for SpinLocker
-        SpinLocker locker {_socketLock}; (void) locker;
+    { //Block for QMutexLocker
+        QMutexLocker locker {&_socketLock}; (void) locker;
+
         _socket = simple_ptr<QUdpSocket>(new QUdpSocket(nullptr));
-    }
-    if (!_socket->bind(_bindPoint.address(), _bindPoint.port(), _bindMode))
-    {
-        log_error_m << "Failed bind UDP socket"
-                    << ". Error code: " << int(_socket->error())
-                    << ". Detail: " << _socket->errorString();
-        return;
+        if (!_socket->bind(_bindPoint.address(), _bindPoint.port(), _bindMode))
+        {
+            log_error_m << "Failed bind UDP socket"
+                        << ". Error code: " << int(_socket->error())
+                        << ". Detail: " << _socket->errorString();
+            return;
+        }
     }
     log_debug_m << "UDP socket is successfully bound to point " << _bindPoint;
 
@@ -205,6 +218,7 @@ void Socket::run()
                     && messagesCount() != 0)
                 {
                     QMutexLocker locker {&_messagesLock}; (void) locker;
+
                     if (!_messagesHigh.empty())
                         message.attach(_messagesHigh.release(0));
 
@@ -465,7 +479,11 @@ void Socket::run()
             }
         } // while (true)
 
-        _socket->close();
+        { //Block for QMutexLocker
+            QMutexLocker locker {&_socketLock}; (void) locker;
+            _socket->close();
+            _socket.reset();
+        }
     }
     catch (std::exception& e)
     {

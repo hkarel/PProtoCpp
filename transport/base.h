@@ -307,7 +307,7 @@ private:
     volatile bool _isInsideListener = {false};
 
     SocketDescriptor _initSocketDescriptor = {-1};
-    mutable std::atomic_flag _socketLock = ATOMIC_FLAG_INIT;
+    mutable QMutex _socketLock;
 
     friend class Listener;
     friend class local::Socket;

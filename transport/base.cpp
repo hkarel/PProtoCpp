@@ -93,6 +93,7 @@ bool SocketCommon::send(const Message::Ptr& message)
     message->add_ref();
     { //Block for QMutexLocker
         QMutexLocker locker {&_messagesLock}; (void) locker;
+
         switch (message->priority())
         {
             case Message::Priority::High:
@@ -179,14 +180,24 @@ bool Socket::isConnected() const
 
 bool Socket::socketIsConnected() const
 {
-    SpinLocker locker {_socketLock}; (void) locker;
-    return socketIsConnectedInternal();
+    bool res = false;
+    if (_socketLock.tryLock())
+    {
+        res = socketIsConnectedInternal();
+        _socketLock.unlock();
+    }
+    return res;
 }
 
 bool Socket::isLocal() const
 {
-    SpinLocker locker {_socketLock}; (void) locker;
-    return isLocalInternal();
+    bool res = false;
+    if (_socketLock.tryLock())
+    {
+        res = isLocalInternal();
+        _socketLock.unlock();
+    }
+    return res;
 }
 
 Socket::ProtocolCompatible Socket::protocolCompatible() const
@@ -196,8 +207,13 @@ Socket::ProtocolCompatible Socket::protocolCompatible() const
 
 SocketDescriptor Socket::socketDescriptor() const
 {
-    SpinLocker locker {_socketLock}; (void) locker;
-    return socketDescriptorInternal();
+    SocketDescriptor res = -1;
+    if (_socketLock.tryLock())
+    {
+        res = socketDescriptorInternal();
+        _socketLock.unlock();
+    }
+    return res;
 }
 
 void Socket::connect()
@@ -213,7 +229,7 @@ void Socket::disconnect(unsigned long time)
 void Socket::socketDisconnected()
 {
     emit disconnected(_initSocketDescriptor);
-    _initSocketDescriptor = {-1};
+    _initSocketDescriptor = -1;
 }
 
 void Socket::waitConnection(int time)
@@ -294,21 +310,20 @@ void Socket::run()
     uchar* sharedSecretKey = externPublicKey + crypto_box_PUBLICKEYBYTES;
 #endif // SODIUM_ENCRYPTION
 
-    { // Block for SpinLocker
-        SpinLocker locker {_socketLock}; (void) locker;
-        socketCreate();
-    }
+    { //Block for QMutexLocker
+        QMutexLocker locker {&_socketLock}; (void) locker;
 
-    if (!socketInit())
-    {
-        SpinLocker locker {_socketLock}; (void) locker;
-        socketClose();
-        _initSocketDescriptor = {-1};
+        socketCreate();
+        if (!socketInit())
+        {
+            socketClose();
+            _initSocketDescriptor = -1;
 
 #ifdef SODIUM_ENCRYPTION
-        sodium_free(cryptoKeysBuff);
+            sodium_free(cryptoKeysBuff);
 #endif
-        return;
+            return;
+        }
     }
     _initSocketDescriptor = socketDescriptorInternal();
 
@@ -341,7 +356,7 @@ void Socket::run()
     if (!isListenerSide() && serializeSignature.isNull())
     {
         log_error_m << "Message serialize format signature undefined";
-        SpinLocker locker {_socketLock}; (void) locker;
+        QMutexLocker locker {&_socketLock}; (void) locker;
         socketClose();
         prog_abort();
     }
@@ -1403,11 +1418,11 @@ void Socket::run()
         log_error_m << "Unknown error";
     }
 
-    { // Block for SpinLocker
-        SpinLocker locker {_socketLock}; (void) locker;
+    { //Block for QMutexLocker
+        QMutexLocker locker {&_socketLock}; (void) locker;
         socketClose();
     }
-    _initSocketDescriptor = {-1};
+    _initSocketDescriptor = -1;
 
 #ifdef SODIUM_ENCRYPTION
     sodium_memzero(cryptoKeysBuff, cryptoKeysLen);
