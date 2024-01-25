@@ -94,7 +94,7 @@ void Socket::waitBinding(int timeout)
 bool Socket::isBound() const
 {
     bool res = false;
-    if (_socketLock.tryLock())
+    if (_socketLock.tryLock(10))
     {
         if (_socket)
             res = (_socket->state() == QAbstractSocket::BoundState);
@@ -106,7 +106,7 @@ bool Socket::isBound() const
 SocketDescriptor Socket::socketDescriptor() const
 {
     SocketDescriptor res = -1;
-    if (_socketLock.tryLock())
+    if (_socketLock.tryLock(10))
     {
         if (_socket)
             res = _socket->socketDescriptor();

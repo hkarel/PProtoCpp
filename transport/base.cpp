@@ -181,7 +181,7 @@ bool Socket::isConnected() const
 bool Socket::socketIsConnected() const
 {
     bool res = false;
-    if (_socketLock.tryLock())
+    if (_socketLock.tryLock(10))
     {
         res = socketIsConnectedInternal();
         _socketLock.unlock();
@@ -192,7 +192,7 @@ bool Socket::socketIsConnected() const
 bool Socket::isLocal() const
 {
     bool res = false;
-    if (_socketLock.tryLock())
+    if (_socketLock.tryLock(10))
     {
         res = isLocalInternal();
         _socketLock.unlock();
@@ -208,7 +208,7 @@ Socket::ProtocolCompatible Socket::protocolCompatible() const
 SocketDescriptor Socket::socketDescriptor() const
 {
     SocketDescriptor res = -1;
-    if (_socketLock.tryLock())
+    if (_socketLock.tryLock(10))
     {
         res = socketDescriptorInternal();
         _socketLock.unlock();
