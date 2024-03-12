@@ -72,7 +72,7 @@ bool SocketCommon::send(const Message::Ptr& message)
     }
     if (message.empty())
     {
-        log_error_m << "Cannot send empty message";
+        log_error_m << "Impossible send empty message";
         return false;
     }
     if (_checkUnknownCommands)
@@ -1621,6 +1621,12 @@ void send(const base::Socket::List& sockets,
           const Message::Ptr& message,
           const SocketDescriptorSet& excludeSockets)
 {
+    if (message.empty())
+    {
+        log_error_m << "Impossible send empty message";
+        return;
+    }
+
     if (message->type() == Message::Type::Unknown)
     {
         log_error_m << "Impossible send message: " << CommandNameLog(message->command())

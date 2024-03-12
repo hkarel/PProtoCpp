@@ -206,6 +206,11 @@ struct CreateMessageParams
     {}
 };
 
+inline Message::Ptr createMessage(const QUuidEx& command)
+{
+    return Message::create(command, SerializeFormat::QBinary);
+}
+
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
   команде. Структуры данных описаны в модулях commands_base и commands
@@ -260,12 +265,44 @@ Message::Ptr createMessage(const CommandDataT& data,
     return message;
 }
 
-inline Message::Ptr createMessage(const QUuidEx& command)
+namespace detail {
+
+template<typename CommandDataPtr>
+Message::Ptr createMessagePtr(const CommandDataPtr& data,
+                              const CreateMessageParams& params)
 {
-    return Message::create(command, SerializeFormat::QBinary);
+    if (data.empty())
+    {
+        log_error_m << "Impossible create message from empty data";
+#ifndef NDEBUG
+        prog_abort();
+#endif
+        return {};
+    }
+    return createMessage(*data, params);
+}
+} // namespace detail
+
+template<typename CommandDataT>
+Message::Ptr createMessage(const clife_ptr<CommandDataT>& data,
+                           const CreateMessageParams& params = CreateMessageParams())
+{
+    return detail::createMessagePtr(data, params);
+}
+
+template<typename CommandDataT>
+Message::Ptr createMessage(const container_ptr<CommandDataT>& data,
+                           const CreateMessageParams& params = CreateMessageParams())
+{
+    return detail::createMessagePtr(data, params);
 }
 
 #ifdef PPROTO_JSON_SERIALIZE
+inline Message::Ptr createJsonMessage(const QUuidEx& command)
+{
+    return Message::create(command, SerializeFormat::Json);
+}
+
 template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
                                Message::Type type = Message::Type::Command)
@@ -273,9 +310,18 @@ Message::Ptr createJsonMessage(const CommandDataT& data,
     return createMessage(data, {type, SerializeFormat::Json});
 }
 
-inline Message::Ptr createJsonMessage(const QUuidEx& command)
+template<typename CommandDataT>
+Message::Ptr createJsonMessage(const clife_ptr<CommandDataT>& data,
+                               Message::Type type = Message::Type::Command)
 {
-    return Message::create(command, SerializeFormat::Json);
+    return createMessage(data, {type, SerializeFormat::Json});
+}
+
+template<typename CommandDataT>
+Message::Ptr createJsonMessage(const container_ptr<CommandDataT>& data,
+                               Message::Type type = Message::Type::Command)
+{
+    return createMessage(data, {type, SerializeFormat::Json});
 }
 #endif
 
@@ -498,6 +544,35 @@ SResult readFromMessage(const Message::Ptr&, data::MessageError&,
 SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
                         ErrorSenderFunc errorSender = ErrorSenderFunc());
 
+namespace detail {
+
+template<typename CommandDataPtr>
+SResult readFromMessagePtr(const Message::Ptr& message, CommandDataPtr& data,
+                           ErrorSenderFunc errorSender)
+{
+    if (data.empty())
+    {
+        typedef typename CommandDataPtr::element_t element_t;
+        data = CommandDataPtr(new element_t());
+    }
+    return readFromMessage(message, *data, errorSender);
+}
+} // namespace detail
+
+template<typename CommandDataT>
+SResult readFromMessage(const Message::Ptr& message, clife_ptr<CommandDataT>& data,
+                        ErrorSenderFunc errorSender = ErrorSenderFunc())
+{
+    return detail::readFromMessagePtr(message, data, errorSender);
+}
+
+template<typename CommandDataT>
+SResult readFromMessage(const Message::Ptr& message, container_ptr<CommandDataT>& data,
+                        ErrorSenderFunc errorSender = ErrorSenderFunc())
+{
+    return detail::readFromMessagePtr(message, data, errorSender);
+}
+
 /**
   Преобразует структуру CommandDataT в Message-сообщение
 */
@@ -575,9 +650,54 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
     return detail::messageWriteContent(data, message, contentFormat);
 }
 
+namespace detail {
+
+template<typename CommandDataPtr>
+SResult writeToMessagePtr(const CommandDataPtr& data, Message::Ptr& message,
+                          SerializeFormat contentFormat)
+{
+    if (data.empty())
+    {
+        QString err = "Impossible write empty data to message";
+        log_error_m << err;
+#ifndef NDEBUG
+        prog_abort();
+#endif
+        return SResult(false, 0, err);
+    }
+    return writeToMessage(*data, message, contentFormat);
+}
+} // namespace detail
+
+template<typename CommandDataT>
+SResult writeToMessage(const clife_ptr<CommandDataT>& data, Message::Ptr& message,
+                       SerializeFormat contentFormat = SerializeFormat::QBinary)
+{
+    return detail::writeToMessagePtr(data, message, contentFormat);
+}
+
+template<typename CommandDataT>
+SResult writeToMessage(const container_ptr<CommandDataT>& data, Message::Ptr& message,
+                       SerializeFormat contentFormat = SerializeFormat::QBinary)
+{
+    return detail::writeToMessagePtr(data, message, contentFormat);
+}
+
 #ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
+{
+    return writeToMessage(data, message, SerializeFormat::Json);
+}
+
+template<typename CommandDataT>
+SResult writeToJsonMessage(const clife_ptr<CommandDataT>& data, Message::Ptr& message)
+{
+    return writeToMessage(data, message, SerializeFormat::Json);
+}
+
+template<typename CommandDataT>
+SResult writeToJsonMessage(const container_ptr<CommandDataT>& data, Message::Ptr& message)
 {
     return writeToMessage(data, message, SerializeFormat::Json);
 }
