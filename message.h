@@ -297,6 +297,12 @@ public:
     void setProxyId(quint64 val) {_proxyId = val;}
 
     // !!! Экспериментальная функция !!!
+    // Используется для передачи сообщения с информацией о выполняемой задаче
+    // через цепочку последовательных сервисов обработки данных
+    QUuidEx taskId() const {return _taskId;}
+    void setTaskId(QUuidEx val) {_taskId = val;}
+
+    // !!! Экспериментальная функция !!!
     // Используется для интеграции протокола с системами авторизации, например
     // Keycloak. При сериализации сообщения в Json-формат поле  должно  содер-
     // жать данные в строковом представлении utf8. При сериализации  сообщения
@@ -405,7 +411,8 @@ private:
             mutable quint32 accessIdNotEmpty: 1;
 
             //--- Байт 3 ---
-            quint32 reserved3: 8;
+            mutable quint32 taskIdNotEmpty: 1;
+            quint32 reserved3: 7;
 
             //--- Байт 4 ---
             // Формат сериализации контента, соответствует enum SerializeFormat
@@ -425,6 +432,7 @@ private:
     QVector<quint64> _tags;
     quint64 _maxTimeLife = {quint64(-1)};
     quint64 _proxyId = {0};
+    QUuidEx _taskId;
     QByteArray _accessId;
     QByteArray _content;
     SocketType _socketType = {SocketType::Unknown};

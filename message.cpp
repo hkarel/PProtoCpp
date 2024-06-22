@@ -93,6 +93,7 @@ Message::Ptr Message::cloneForAnswer() const
     message->_tags = _tags;
     message->_maxTimeLife = _maxTimeLife;
     message->_proxyId = _proxyId;
+    message->_taskId = _taskId;
     message->_accessId = _accessId;
     message->_socketType = _socketType;
     message->_sourcePoint = _sourcePoint;
@@ -264,6 +265,9 @@ int Message::size() const
     if (_flag.proxyIdNotEmpty)
         sz += sizeof(_proxyId);
 
+    if (_flag.taskIdNotEmpty)
+        sz += sizeof(_taskId);
+
     if (_flag.accessIdNotEmpty)
         sz += sizeof(quint32) + _accessId.size();
 
@@ -280,6 +284,7 @@ void Message::initNotEmptyTraits() const
     _flag.maxTimeLfNotEmpty = (_maxTimeLife != quint64(-1));
     _flag.contentNotEmpty   = !_content.isEmpty();
     _flag.proxyIdNotEmpty   = (_proxyId != 0);
+    _flag.taskIdNotEmpty    = !_taskId.isNull();
     _flag.accessIdNotEmpty  = !_accessId.isEmpty();
 }
 
@@ -328,6 +333,9 @@ void Message::toDataStream(QDataStream& stream) const
     if (_flag.proxyIdNotEmpty)
         stream << _proxyId;
 
+    if (_flag.taskIdNotEmpty)
+        stream << _taskId;
+
     if (_flag.accessIdNotEmpty)
         stream << _accessId;
 
@@ -365,6 +373,9 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     if (message->_flag.proxyIdNotEmpty)
         stream >> message->_proxyId;
+
+    if (message->_flag.taskIdNotEmpty)
+        stream >> message->_taskId;
 
     if (message->_flag.accessIdNotEmpty)
     {
@@ -445,6 +456,13 @@ QByteArray Message::toJson(bool webFlags) const
         // stream << _proxyId;
         writer.Key("proxyId");
         writer.Uint64(_proxyId);
+    }
+    if (_flag.taskIdNotEmpty)
+    {
+        // stream << _taskId;
+        writer.Key("taskId");
+        const QByteArray& taskId = _taskId.toByteArray();
+        writer.String(taskId.constData() + 1, SizeType(taskId.length() - 2));
     }
     if (_flag.accessIdNotEmpty)
     {
@@ -538,6 +556,7 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     bool maxTimeLfNotEmpty = false;
     bool contentNotEmpty   = false;
     bool proxyIdNotEmpty   = false;
+    bool taskIdNotEmpty    = false;
     bool accessIdNotEmpty  = false;
     bool flags2NotEmpty    = false;
 
@@ -592,6 +611,13 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         {
             proxyIdNotEmpty = true;
             message->_proxyId = quint64(member->value.GetUint64());
+        }
+        else if (stringEqual("taskId", member->name) && member->value.IsString())
+        {
+            taskIdNotEmpty = true;
+            const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
+                                                           member->value.GetStringLength());
+            message->_taskId = QUuidEx(ba);
         }
         else if (stringEqual("accessId", member->name) && member->value.IsString())
         {
@@ -657,6 +683,7 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
     message->_flag.maxTimeLfNotEmpty = maxTimeLfNotEmpty;
     message->_flag.contentNotEmpty   = contentNotEmpty;
     message->_flag.proxyIdNotEmpty   = proxyIdNotEmpty;
+    message->_flag.taskIdNotEmpty    = taskIdNotEmpty;
     message->_flag.accessIdNotEmpty  = accessIdNotEmpty;
     message->_flag.flags2NotEmpty    = flags2NotEmpty;
 
