@@ -578,7 +578,7 @@ SResult readFromMessage(const Message::Ptr& message, container_ptr<CommandDataT>
 */
 template<typename CommandDataT>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::QBinary,
+                       SerializeFormat contentFormat,
                        detail::not_error_data<CommandDataT> = 0)
 {
     static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
@@ -632,7 +632,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 */
 template<typename CommandDataT /*MessageError*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::QBinary,
+                       SerializeFormat contentFormat,
                        detail::is_error_data<CommandDataT> = 0)
 {
     message->setType(Message::Type::Answer);
@@ -642,7 +642,7 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
 
 template<typename CommandDataT /*MessageFailed*/>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::QBinary,
+                       SerializeFormat contentFormat,
                        detail::is_failed_data<CommandDataT> = 0)
 {
     message->setType(Message::Type::Answer);
@@ -671,16 +671,22 @@ SResult writeToMessagePtr(const CommandDataPtr& data, Message::Ptr& message,
 
 template<typename CommandDataT>
 SResult writeToMessage(const clife_ptr<CommandDataT>& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::QBinary)
+                       SerializeFormat contentFormat)
 {
     return detail::writeToMessagePtr(data, message, contentFormat);
 }
 
 template<typename CommandDataT>
 SResult writeToMessage(const container_ptr<CommandDataT>& data, Message::Ptr& message,
-                       SerializeFormat contentFormat = SerializeFormat::QBinary)
+                       SerializeFormat contentFormat)
 {
     return detail::writeToMessagePtr(data, message, contentFormat);
+}
+
+template<typename CommandDataT>
+SResult writeToMessage(const CommandDataT& data, Message::Ptr& message)
+{
+    return writeToMessage(data, message, message->contentFormat());
 }
 
 #ifdef PPROTO_JSON_SERIALIZE
