@@ -412,4 +412,14 @@ DECL_ERROR_CODE(qbinary_parse,         0, "ed291487-d373-4aa1-93f5-c4d953e5d974"
 DECL_ERROR_CODE(json_parse,            0, "db5d018b-592f-4e80-850f-ebfccfe08986", QObject::tr("Json parse error"))
 
 } // namespace error
+
+/**
+  Вспомогателный тип для работы с ошибками
+*/
+struct ErrorInfo : data::MessageError
+{
+    typedef container_ptr<ErrorInfo> Ptr;
+    static Ptr create(const data::MessageError&);
+};
+
 } // namespace pproto
