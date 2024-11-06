@@ -141,6 +141,7 @@ public:
     Reader& operator& (std::string&);
 
     template<typename T> Reader& operator& (T& t);
+    template<typename T> Reader& operator& (QSet<T>&);
     template<typename T> Reader& operator& (QList<T>&);
 #if QT_VERSION < 0x060000
     template<typename T> Reader& operator& (QVector<T>&);
@@ -271,6 +272,7 @@ public:
     Writer& operator& (const std::string&);
 
     template<typename T> Writer& operator& (const T& t);
+    template<typename T> Writer& operator& (const QSet<T>&);
     template<typename T> Writer& operator& (const QList<T>&);
 #if QT_VERSION < 0x060000
     template<typename T> Writer& operator& (const QVector<T>&);
@@ -503,10 +505,27 @@ Writer& Writer::operator& (const T& ct)
 }
 
 template<typename T>
+Reader& Reader::operator& (QSet<T>& s)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    QList<T> l;
+    detail::readArray(r, l);
+    s = l.toSet();
+    return  r;
+}
+
+template<typename T>
 Reader& Reader::operator& (QList<T>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
     return detail::readArray(r, l);
+}
+
+template<typename T>
+Writer& Writer::operator& (const QSet<T>& s)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    return detail::writeArray(w, s.toList());
 }
 
 template<typename T>
