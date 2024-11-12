@@ -206,9 +206,14 @@ struct CreateMessageParams
     {}
 };
 
+inline Message::Ptr createMessage(const QUuidEx& command, SerializeFormat format)
+{
+    return Message::create(command, format);
+}
+
 inline Message::Ptr createMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializeFormat::QBinary);
+    return createMessage(command, SerializeFormat::QBinary);
 }
 
 /**
@@ -300,7 +305,7 @@ Message::Ptr createMessage(const container_ptr<CommandDataT>& data,
 #ifdef PPROTO_JSON_SERIALIZE
 inline Message::Ptr createJsonMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializeFormat::Json);
+    return createMessage(command, SerializeFormat::Json);
 }
 
 template<typename CommandDataT>
