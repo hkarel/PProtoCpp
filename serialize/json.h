@@ -81,12 +81,7 @@ template<typename T>
 Reader& operatorAmp(Reader&, T&, not_enum_type<T> = 0);
 
 template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                  derived_from_clife_base<T> = 0);
-
-template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                  not_derived_from_clife_base<T> = 0);
+Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&);
 
 template<typename T> Reader& readArray(Reader&, T&);
 template<typename T> Reader& readPtr  (Reader&, T&);
@@ -221,12 +216,7 @@ private:
     friend Reader& detail::operatorAmp(Reader&, T&, detail::not_enum_type<T>);
 
     template<typename T, typename Compare, typename Allocator>
-    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     detail::derived_from_clife_base<T>);
-
-    template<typename T, typename Compare, typename Allocator>
-    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&,
-                                     detail::not_derived_from_clife_base<T>);
+    friend Reader& detail::readArray(Reader&, lst::List<T, Compare, Allocator>&);
 
     template<typename T> friend Reader& detail::readArray(Reader&, T&);
     template<typename T> friend Reader& detail::readPtr  (Reader&, T&);
@@ -297,7 +287,6 @@ private:
     rapidjson::Writer<StringBuffer> _writer;
 };
 
-
 //---------------------------- Reader, Writer --------------------------------
 
 namespace detail {
@@ -351,15 +340,12 @@ Writer& operatorAmp(Writer& w, const T t, is_enum_type<T> = 0)
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
-                  derived_from_clife_base<T>)
+Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list)
 {
-    /* Эта функция используется когда T унаследовано от clife_base */
-
+    list.clear();
     if (r.error())
         return r;
 
-    list.clear();
     if (r.stackTopIsNull())
     {
         r.next();
@@ -370,51 +356,62 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
     r.startArray(count);
     for (SizeType i = 0; i < count; ++i)
     {
-        typedef lst::List<T, Compare, Allocator> ListType;
-        typename ListType::ValueType* value = list.allocator().create();
-        if (value->clife_count() == 0)
-            value->add_ref();
-        r & (*value);
-        list.add(value);
+        if (r.stackTopIsNull())
+        {
+            list.add(nullptr);
+            r.next();
+        }
+        else if (r.stackTopIsObject())
+        {
+            auto value = list.allocator().create();
+            r & (*value);
+            list.add(value);
+        }
+        else
+        {
+            // Отладить
+            break_point
+
+            r.endArray();
+            r.setError(1);
+            alog::logger().error(alog_line_location, "JSerialize")
+                << "Stack top is not object"
+                << ". Field: " << r.stackFieldName()
+                << ". Stack path: " << r.stackPath()
+                << ". JIndex: " << r.jsonIndex();
+            return r;
+        }
     }
     return r.endArray();
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list,
-                  not_derived_from_clife_base<T>)
+Reader& readArray_(Reader& r, lst::List<T, Compare, Allocator>& list,
+                   derived_from_clife_base<T> = 0)
+{
+    /* Эта функция используется когда T унаследовано от clife_base */
+    readArray(r, list);
+    for (auto value : list)
+        if (value && (value->clife_count() == 0))
+            value->add_ref();
+    return r;
+}
+
+template<typename T, typename Compare, typename Allocator>
+Reader& readArray_(Reader& r, lst::List<T, Compare, Allocator>& list,
+                   not_derived_from_clife_base<T> = 0)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
-
-    if (r.error())
-        return r;
-
-    list.clear();
-    if (r.stackTopIsNull())
-    {
-        r.next();
-        return r;
-    }
-
-    SizeType count;
-    r.startArray(count);
-    for (SizeType i = 0; i < count; ++i)
-    {
-        typedef lst::List<T, Compare, Allocator> ListType;
-        typename ListType::ValueType* value = list.allocator().create();
-        r & (*value);
-        list.add(value);
-    }
-    return r.endArray();
+    return readArray(r, list);
 }
 
 template<typename T>
 Reader& readArray(Reader& r, T& arr)
 {
+    arr.clear();
     if (r.error())
         return r;
 
-    arr.clear();
     if (r.stackTopIsNull())
     {
         r.next();
@@ -633,7 +630,16 @@ template<typename T, typename Compare, typename Allocator>
 Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return detail::writeArray(w, l);
+    w.startArray();
+    for (int i = 0; i < l.count(); ++i)
+    {
+        auto item = l.item(i);
+        if (item)
+            w & *item;
+        else
+            w.setNull();
+    }
+    return w.endArray();
 }
 
 //-------------------------------- Functions ---------------------------------

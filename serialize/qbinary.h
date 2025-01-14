@@ -158,6 +158,40 @@ QDataStream& putToStreamPtr(QDataStream& s, const T& ptr)
     return s;
 }
 
+template<
+    typename T,
+    typename Compare,
+    typename Allocator
+>
+QDataStream& getFromStreamList(QDataStream& s, lst::List<T, Compare, Allocator>& list)
+{
+    list.clear();
+    if (s.atEnd())
+        return s;
+
+    quint32 count;
+    s >> count;
+    for (quint32 i = 0; i < count; ++i)
+    {
+        if (s.atEnd())
+            return s;
+
+        bool empty;
+        s >> empty;
+        if (empty)
+        {
+            list.add(nullptr);
+        }
+        else
+        {
+            auto value = list.allocator().create();
+            detail::getFromStream(s, *value);
+            list.add(value);
+        }
+    }
+    return s;
+}
+
 } // namespace detail
 
 template<typename T> using not_enum_type =
@@ -251,22 +285,14 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
                            derived_from_clife_base<T> = 0)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
-    if (s.atEnd())
-        return s;
 
-    quint32 listCount; s >> listCount;
-    for (quint32 i = 0; i < listCount; ++i)
-    {
-        // Отладить
-        break_point
+    // Отладить
+    break_point
 
-        typedef lst::List<T, Compare, Allocator> ListType;
-        typename ListType::ValueType* value = list.allocator().create();
-        if (value->clife_count() == 0)
+    detail::getFromStreamList(s, list);
+    for (auto value : list)
+        if (value && (value->clife_count() == 0))
             value->add_ref();
-        detail::getFromStream(s, *value);
-        list.add(value);
-    }
     return s;
 }
 
@@ -280,18 +306,7 @@ QDataStream& getFromStream(QDataStream& s, lst::List<T, Compare, Allocator>& lis
 
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
-    if (s.atEnd())
-        return s;
-
-    quint32 listCount; s >> listCount;
-    for (quint32 i = 0; i < listCount; ++i)
-    {
-        typedef lst::List<T, Compare, Allocator> ListType;
-        typename ListType::ValueType* value = list.allocator().create();
-        detail::getFromStream(s, *value);
-        list.add(value);
-    }
-    return s;
+    return detail::getFromStreamList(s, list);
 }
 
 template<
@@ -303,7 +318,12 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
 {
     s << quint32(list.count());
     for (int i = 0; i < list.count(); ++i)
-        detail::putToStream(s, list.at(i));
+    {
+        auto item = list.item(i);
+        s << bool(item == nullptr); // is empty
+        if (item)
+            detail::putToStream(s, *item);
+    }
     return s;
 }
 
