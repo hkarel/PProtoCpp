@@ -386,8 +386,8 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list)
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& readArray_(Reader& r, lst::List<T, Compare, Allocator>& list,
-                   derived_from_clife_base<T> = 0)
+Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list, int,
+                  derived_from_clife_base<T> = 0)
 {
     /* Эта функция используется когда T унаследовано от clife_base */
     readArray(r, list);
@@ -398,8 +398,8 @@ Reader& readArray_(Reader& r, lst::List<T, Compare, Allocator>& list,
 }
 
 template<typename T, typename Compare, typename Allocator>
-Reader& readArray_(Reader& r, lst::List<T, Compare, Allocator>& list,
-                   not_derived_from_clife_base<T> = 0)
+Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list, int,
+                  not_derived_from_clife_base<T> = 0)
 {
     /* Эта функция используется когда T НЕ унаследовано от clife_base */
     return readArray(r, list);
@@ -623,7 +623,7 @@ template<typename T, typename Compare, typename Allocator>
 Reader& Reader::operator& (lst::List<T, Compare, Allocator>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return detail::readArray(r, l);
+    return detail::readArray(r, l, 0);
 }
 
 template<typename T, typename Compare, typename Allocator>
