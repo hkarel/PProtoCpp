@@ -41,7 +41,8 @@
 #include <QtCore>
 #include <atomic>
 
-namespace pproto::transport {
+namespace pproto {
+namespace transport {
 
 namespace local {class Socket;}
 namespace tcp   {class Socket;}
@@ -410,4 +411,5 @@ base::Socket::List concatSockets(const base::Listener& listener, const Args&... 
     return sl;
 }
 
-} // namespace pproto::transport
+} // namespace transport
+} // namespace pproto

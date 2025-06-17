@@ -38,12 +38,6 @@ QDataStream& operator<< (QDataStream&, const timeval&);
 } // namespace data
 
 /**
-  Выполняет проверку пересечения диапазонов версий  бинарного  протокола.
-  Если диапазоны не пересекаются, то считаем, что протоколы не совместимы
-*/
-bool protocolCompatible(quint16 versionLow, quint16 versionHigh);
-
-/**
   Функция регистрации Qt-метатипов для работы с коммуникационными механизмами
 */
 void registrationQtMetatypes();

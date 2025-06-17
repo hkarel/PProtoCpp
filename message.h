@@ -54,6 +54,12 @@ namespace tcp   {class Socket;}
 namespace udp   {class Socket;}
 } // namespace transport
 
+struct ProtocolVersion
+{
+    quint16 low  = {PPROTO_VERSION_LOW};
+    quint16 high = {PPROTO_VERSION_HIGH};
+};
+
 enum class SocketType : quint32
 {
     Unknown = 0,
@@ -140,7 +146,7 @@ public:
     // Идентификатор команды
     QUuidEx command() const {return _command;}
 
-    // Функции возвращают нижнюю и верхнюю границы версий бинарного протокола.
+    // Функция возвращает нижнюю и верхнюю границы версий бинарного протокола.
     // Причины по которым версии протокола передаются вместе с сообщением:
     // 1) Изначально бинарный протокол и система сообщений была  спроектирована
     // для распределенной сети. Это означает, что сообщение могло быть трансли-
@@ -153,8 +159,7 @@ public:
     // сокет для дальнейшего транслирования.  Для UDP сокета версия  протокола
     // должна всегда передаваться вместе с сообщением, это единственный способ
     // проверки совместимости протоколов
-    quint16 protocolVersionLow()  const {return _protocolVersionLow;}
-    quint16 protocolVersionHigh() const {return _protocolVersionHigh;}
+    ProtocolVersion protocolVersion() const {return _protocolVersion;}
 
     // Тип пересылаемого сообщения
     Type type() const;
@@ -375,8 +380,7 @@ private:
     QUuidEx _id;
     QUuidEx _command;
 
-    quint16 _protocolVersionLow  = {PPROTO_VERSION_LOW};
-    quint16 _protocolVersionHigh = {PPROTO_VERSION_HIGH};
+    ProtocolVersion _protocolVersion;
 
     // Битовые флаги
     // TODO: Проверить значения битовых флагов при пересылке сообщения

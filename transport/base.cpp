@@ -53,8 +53,27 @@
 #define log_debug_m   alog::logger().debug   (alog_line_location, "Transport")
 #define log_debug2_m  alog::logger().debug2  (alog_line_location, "Transport")
 
-namespace pproto::transport {
+namespace pproto {
 
+// Выполняет проверку пересечения диапазонов версий  бинарного  протокола.
+// Если диапазоны не пересекаются, то считаем, что протоколы не совместимы
+bool protocolCompatible(const ProtocolVersion& version)
+{
+    if (version.low > version.high
+        || PPROTO_VERSION_LOW > PPROTO_VERSION_HIGH)
+        return false;
+
+    quint16 protocolVersionLow = PPROTO_VERSION_LOW;
+    if (version.high < protocolVersionLow)
+        return false;
+
+    if (version.low > PPROTO_VERSION_HIGH)
+        return false;
+
+    return true;
+}
+
+namespace transport {
 namespace base {
 
 //----------------------------- SocketCommon ---------------------------------
@@ -378,8 +397,7 @@ void Socket::run()
 
         if (message->type() == Message::Type::Command)
         {
-            quint16 protocolVersionLow  = message->protocolVersionLow();
-            quint16 protocolVersionHigh = message->protocolVersionHigh();
+            ProtocolVersion protocolVersion = message->protocolVersion();
 
             _protocolCompatible = ProtocolCompatible::Yes;
             if (_checkProtocolCompatibility)
@@ -388,9 +406,9 @@ void Socket::run()
                             << ". This protocol version: "
                             << PPROTO_VERSION_LOW << "-" << PPROTO_VERSION_HIGH
                             << ". Remote protocol version: "
-                            << protocolVersionLow << "-" << protocolVersionHigh;
+                            << protocolVersion.low << "-" << protocolVersion.high;
 
-                if (!pproto::protocolCompatible(protocolVersionLow, protocolVersionHigh))
+                if (!pproto::protocolCompatible(protocolVersion))
                     _protocolCompatible = ProtocolCompatible::No;
             }
 
@@ -411,7 +429,7 @@ void Socket::run()
                 )
                 // Инвертируем версии протокола, иначе на принимающей стороне
                 // будет путаница с восприятием
-                .arg(protocolVersionLow).arg(protocolVersionHigh)
+                .arg(protocolVersion.low).arg(protocolVersion.high)
                 .arg(PPROTO_VERSION_LOW).arg(PPROTO_VERSION_HIGH);
 
                 log_verbose_m << "Send request to close connection"
@@ -1703,4 +1721,5 @@ base::Socket::List concatSockets(const base::Listener& listener)
     return listener.sockets();
 }
 
-} // namespace pproto::transport
+} // namespace transport
+} // namespace pproto

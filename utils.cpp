@@ -48,22 +48,6 @@ QDataStream& operator<< (QDataStream& s, const timeval& tv)
 }
 } // namespace data
 
-bool protocolCompatible(quint16 versionLow, quint16 versionHigh)
-{
-    if (versionLow > versionHigh
-        || PPROTO_VERSION_LOW > PPROTO_VERSION_HIGH)
-        return false;
-
-    quint16 protocolVersionLow = PPROTO_VERSION_LOW;
-    if (versionHigh < protocolVersionLow)
-        return false;
-
-    if (versionLow > PPROTO_VERSION_HIGH)
-        return false;
-
-    return true;
-}
-
 void registrationQtMetatypes()
 {
     static bool first {true};

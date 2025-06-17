@@ -86,8 +86,7 @@ Message::Ptr Message::cloneForAnswer() const
     // Клонируемые параметры
     message->_id = _id;
     message->_command = _command;
-    message->_protocolVersionLow = _protocolVersionLow;
-    message->_protocolVersionHigh = _protocolVersionHigh;
+    message->_protocolVersion = _protocolVersion;
     message->_flags = _flags;
     message->_flags2 = _flags2;
     message->_tags = _tags;
@@ -249,8 +248,8 @@ int Message::size() const
 
     int sz = sizeof(_id)
              + sizeof(_command)
-             + sizeof(_protocolVersionLow)
-             + sizeof(_protocolVersionHigh)
+             + sizeof(_protocolVersion.low)
+             + sizeof(_protocolVersion.high)
              + sizeof(_flags);
 
     if (_flag.flags2NotEmpty)
@@ -314,8 +313,8 @@ void Message::toDataStream(QDataStream& stream) const
 
     stream << _id;
     stream << _command;
-    stream << _protocolVersionLow;
-    stream << _protocolVersionHigh;
+    stream << _protocolVersion.low;
+    stream << _protocolVersion.high;
     stream << _flags;
 
     if (_flag.flags2NotEmpty)
@@ -349,8 +348,8 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     stream >> message->_id;
     stream >> message->_command;
-    stream >> message->_protocolVersionLow;
-    stream >> message->_protocolVersionHigh;
+    stream >> message->_protocolVersion.low;
+    stream >> message->_protocolVersion.high;
     stream >> message->_flags;
 
     if (message->_flag.flags2NotEmpty)
@@ -414,17 +413,23 @@ QByteArray Message::toJson(bool webFlags) const
     const QByteArray& command = _command.toByteArray();
     writer.String(command.constData() + 1, SizeType(command.length() - 2));
 
-    if (_protocolVersionLow != 0)
+    if (_protocolVersion.low || _protocolVersion.high)
     {
-        // stream << _protocolVersionLow;
+        // stream << _protocolVersion.low;
+        /* Deprecated */
         writer.Key("protocolVersionLow");
-        writer.Uint(_protocolVersionLow);
-    }
-    if (_protocolVersionHigh != 0)
-    {
-        // stream << _protocolVersionHigh;
+        writer.Uint(_protocolVersion.low);
+
+        // stream << _protocolVersion.high;
+        /* Deprecated */
         writer.Key("protocolVersionHigh");
-        writer.Uint(_protocolVersionHigh);
+        writer.Uint(_protocolVersion.high);
+
+        writer.Key("protocolVersion");
+        writer.StartArray();
+        writer.Uint(_protocolVersion.low);
+        writer.Uint(_protocolVersion.high);
+        writer.EndArray();
     }
 
     // stream << _flags;
@@ -577,13 +582,25 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
                                                            member->value.GetStringLength());
             message->_command = QUuidEx(ba);
         }
+        /* Deprecated */
         else if (stringEqual("protocolVersionLow", member->name) && member->value.IsUint())
         {
-            message->_protocolVersionLow = quint16(member->value.GetUint());
+            message->_protocolVersion.low = quint16(member->value.GetUint());
         }
+        /* Deprecated */
         else if (stringEqual("protocolVersionHigh", member->name) && member->value.IsUint())
         {
-            message->_protocolVersionHigh = quint16(member->value.GetUint());
+            message->_protocolVersion.high = quint16(member->value.GetUint());
+        }
+        else if (stringEqual("protocolVersion", member->name) && member->value.IsArray())
+        {
+            if (member->value.Size() == SizeType(2))
+            {
+                message->_protocolVersion.low  = member->value[SizeType(0)].GetUint();
+                message->_protocolVersion.high = member->value[SizeType(1)].GetUint();
+            }
+            else
+                log_error_m << "Incorrect protocolVersion field format";
         }
         else if (stringEqual("flags", member->name) && member->value.IsUint())
         {
