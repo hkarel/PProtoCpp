@@ -275,8 +275,13 @@ struct Error : Data<&command::Error,
 
 #ifdef PPROTO_JSON_SERIALIZE
     J_SERIALIZE_BEGIN
+    #ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        J_SERIALIZE_MAP_ITEM( "command_id", commandId )
+        J_SERIALIZE_MAP_ITEM( "message_id", messageId )
+    #else
         J_SERIALIZE_ITEM( commandId   )
         J_SERIALIZE_ITEM( messageId   )
+    #endif
         J_SERIALIZE_ITEM( group       )
         J_SERIALIZE_ITEM( code        )
         J_SERIALIZE_ITEM( description )
@@ -327,10 +332,18 @@ Packer& Unknown::jserialize(const This* ct, Packer& p)
     This* t = const_cast<This*>(ct);
 
     p.startObject();
-    p.member("commandId")        & t->commandId;
-    p.member("socketType")       & t->socketType;
-    p.member("socketDescriptor") & t->socketDescriptor;
-    p.member("socketName")       & t->socketName;
+
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+    p.member("command_id")        & t->commandId;
+    p.member("socket_type")       & t->socketType;
+    p.member("socket_descriptor") & t->socketDescriptor;
+    p.member("socket_name")       & t->socketName;
+#else
+    p.member("commandId")         & t->commandId;
+    p.member("socketType")        & t->socketType;
+    p.member("socketDescriptor")  & t->socketDescriptor;
+    p.member("socketName")        & t->socketName;
+#endif
 
     QString addressProtocol = "ip4";
     QString addressString;
@@ -345,9 +358,16 @@ Packer& Unknown::jserialize(const This* ct, Packer& p)
             addressScopeId = t->address.scopeId();
         }
     }
-    p.member("addressProtocol") & addressProtocol;
-    p.member("address")         & addressString;
-    p.member("addressScopeId")  & addressScopeId;
+
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+    p.member("address_protocol")  & addressProtocol;
+    p.member("address")           & addressString;
+    p.member("address_scope_id")  & addressScopeId;
+#else
+    p.member("addressProtocol")   & addressProtocol;
+    p.member("address")           & addressString;
+    p.member("addressScopeId")    & addressScopeId;
+#endif
 
     if (p.isReader())
     {
@@ -356,6 +376,7 @@ Packer& Unknown::jserialize(const This* ct, Packer& p)
             t->address.setScopeId(addressScopeId);
     }
     p.member("port") & t->port;
+
     return p.endObject();
 }
 #endif // PPROTO_JSON_SERIALIZE

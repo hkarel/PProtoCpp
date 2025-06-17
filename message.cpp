@@ -425,7 +425,11 @@ QByteArray Message::toJson(bool webFlags) const
         writer.Key("protocolVersionHigh");
         writer.Uint(_protocolVersion.high);
 
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("protocol_version");
+#else
         writer.Key("protocolVersion");
+#endif
         writer.StartArray();
         writer.Uint(_protocolVersion.low);
         writer.Uint(_protocolVersion.high);
@@ -453,26 +457,42 @@ QByteArray Message::toJson(bool webFlags) const
     if (_flag.maxTimeLfNotEmpty)
     {
         // stream << _maxTimeLife;
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("max_time_life");
+#else
         writer.Key("maxTimeLife");
+#endif
         writer.Uint64(_maxTimeLife);
     }
     if (_flag.proxyIdNotEmpty)
     {
         // stream << _proxyId;
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("proxy_id");
+#else
         writer.Key("proxyId");
+#endif
         writer.Uint64(_proxyId);
     }
     if (_flag.taskIdNotEmpty)
     {
         // stream << _taskId;
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("task_id");
+#else
         writer.Key("taskId");
+#endif
         const QByteArray& taskId = _taskId.toByteArray();
         writer.String(taskId.constData() + 1, SizeType(taskId.length() - 2));
     }
     if (_flag.accessIdNotEmpty)
     {
         // stream << _accessId;
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("access_id");
+#else
         writer.Key("accessId");
+#endif
         QByteArray ba {"\""};
         ba.append(_accessId);
         ba.append("\"");
@@ -490,7 +510,11 @@ QByteArray Message::toJson(bool webFlags) const
 
     if (webFlags)
     {
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("web_flags");
+#else
         writer.Key("webFlags");
+#endif
         writer.StartObject();
 
         writer.Key("type");
@@ -502,7 +526,11 @@ QByteArray Message::toJson(bool webFlags) const
             default:                     writer.String("unknown"); break;
         }
 
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("exec_status");
+#else
         writer.Key("execStatus");
+#endif
         switch (execStatus())
         {
             case Message::ExecStatus::Success: writer.String("success"); break;
@@ -521,7 +549,11 @@ QByteArray Message::toJson(bool webFlags) const
 
         // compression() не используется при json-сериализации
 
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        writer.Key("content_format");
+#else
         writer.Key("contentFormat");
+#endif
         writer.String("json");
 
         writer.EndObject(); // Key("webFlags")
@@ -592,7 +624,11 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
         {
             message->_protocolVersion.high = quint16(member->value.GetUint());
         }
-        else if (stringEqual("protocolVersion", member->name) && member->value.IsArray())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("protocol_version", member->name) && member->value.IsArray())
+#else
+        else if (stringEqual("protocolVersion",  member->name) && member->value.IsArray())
+#endif
         {
             if (member->value.Size() == SizeType(2))
             {
@@ -619,24 +655,40 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             for (int i = 0; i < size; ++i)
                 message->_tags[i] = member->value[SizeType(i)].GetUint64();
         }
-        else if (stringEqual("maxTimeLife", member->name) && member->value.IsUint64())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("max_time_life", member->name) && member->value.IsUint64())
+#else
+        else if (stringEqual("maxTimeLife",   member->name) && member->value.IsUint64())
+#endif
         {
             maxTimeLfNotEmpty = true;
             message->_maxTimeLife = quint64(member->value.GetUint64());
         }
-        else if (stringEqual("proxyId", member->name) && member->value.IsUint64())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("proxy_id", member->name) && member->value.IsUint64())
+#else
+        else if (stringEqual("proxyId",  member->name) && member->value.IsUint64())
+#endif
         {
             proxyIdNotEmpty = true;
             message->_proxyId = quint64(member->value.GetUint64());
         }
-        else if (stringEqual("taskId", member->name) && member->value.IsString())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("task_id", member->name) && member->value.IsString())
+#else
+        else if (stringEqual("taskId",  member->name) && member->value.IsString())
+#endif
         {
             taskIdNotEmpty = true;
             const QByteArray& ba = QByteArray::fromRawData(member->value.GetString(),
                                                            member->value.GetStringLength());
             message->_taskId = QUuidEx(ba);
         }
-        else if (stringEqual("accessId", member->name) && member->value.IsString())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("access_id", member->name) && member->value.IsString())
+#else
+        else if (stringEqual("accessId",  member->name) && member->value.IsString())
+#endif
         {
             accessIdNotEmpty = true;
             StringBuffer buff;
@@ -653,7 +705,11 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             member->value.Accept(writer);
             message->_content = QByteArray(buff.GetString());
         }
-        else if (stringEqual("webFlags", member->name) && member->value.IsObject())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+        else if (stringEqual("web_flags", member->name) && member->value.IsObject())
+#else
+        else if (stringEqual("webFlags",  member->name) && member->value.IsObject())
+#endif
         {
             webFlagsExists = true;
             for (auto wflag = member->value.MemberBegin(); wflag != member->value.MemberEnd(); ++wflag)
@@ -670,7 +726,11 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
                     else if (equal(s, "event"  )) message->setType(Message::Type::Event);
                     else                          message->setType(Message::Type::Unknown);
                 }
-                else if (stringEqual("execStatus", wflag->name) && wflag->value.IsString())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+                else if (stringEqual("exec_status", wflag->name) && wflag->value.IsString())
+#else
+                else if (stringEqual("execStatus",  wflag->name) && wflag->value.IsString())
+#endif
                 {
                     const char* s = wflag->value.GetString();
                     if      (equal(s, "success")) message->setExecStatus(Message::ExecStatus::Success);
@@ -688,7 +748,11 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
 
                 // compression() не используется при json-сериализации
 
-                else if (stringEqual("contentFormat", wflag->name) && wflag->value.IsString())
+#ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
+                else if (stringEqual("content_format", wflag->name) && wflag->value.IsString())
+#else
+                else if (stringEqual("contentFormat",  wflag->name) && wflag->value.IsString())
+#endif
                 {
                     message->setContentFormat(SerializeFormat::Json);
                 }
