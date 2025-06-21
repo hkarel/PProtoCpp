@@ -158,9 +158,14 @@ void Message::compress(int level, Compression compression)
         switch (compression)
         {
             case Compression::Zip:
-                _content = qCompress(_content, level);
+            {
+                QByteArray content = qCompress(_content, level);
+                _content = content;
+                _contentRef = false;
+                _rawMsg.clear();
                 _flag.compression = static_cast<quint32>(Compression::Zip);
                 break;
+            }
 #ifdef LZMA_COMPRESSION
             case Compression::Lzma:
             {
@@ -168,6 +173,8 @@ void Message::compress(int level, Compression compression)
                 if (qlzma::compress(_content, content, level) == 0)
                 {
                     _content = content;
+                    _contentRef = false;
+                    _rawMsg.clear();
                     _flag.compression = static_cast<quint32>(Compression::Lzma);
                 }
                 break;
@@ -180,6 +187,8 @@ void Message::compress(int level, Compression compression)
                 if (qppmd::compress(_content, content, level) == 0)
                 {
                     _content = content;
+                    _contentRef = false;
+                    _rawMsg.clear();
                     _flag.compression = static_cast<quint32>(Compression::Ppmd);
                 }
                 break;
@@ -198,7 +207,10 @@ void Message::decompress(QByteArray& content) const
     {
         case Compression::None:
         case Compression::Disable:
-            content = _content;
+            if (_contentRef)
+                content = QByteArray(_content.constData(), _content.length());
+            else
+                content = _content;
             break;
 
         case Compression::Zip:
@@ -231,6 +243,8 @@ void Message::decompress()
         QByteArray content;
         decompress(content);
         _content = content;
+        _contentRef = false;
+        _rawMsg.clear();
         _flag.compression = static_cast<quint32>(Compression::None);
     }
 }
@@ -240,6 +254,18 @@ QByteArray Message::content() const
     QByteArray content;
     decompress(content);
     return content;
+}
+
+void Message::clearContent()
+{
+    if (_contentRef)
+    {
+        _content = {};
+        _contentRef = false;
+        _rawMsg.clear();
+    }
+    else
+        _content.clear();
 }
 
 int Message::size() const
@@ -304,7 +330,7 @@ Message::Ptr Message::fromQBinary(const QByteArray& ba)
 {
     QDataStream stream {(QByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
     STREAM_INIT(stream);
-    return fromDataStream(stream);
+    return fromDataStream(stream, ba);
 }
 
 void Message::toDataStream(QDataStream& stream) const
@@ -342,9 +368,11 @@ void Message::toDataStream(QDataStream& stream) const
         stream << _content;
 }
 
-Message::Ptr Message::fromDataStream(QDataStream& stream)
+Message::Ptr Message::fromDataStream(QDataStream& stream, const QByteArray& rawMsg)
 {
     Ptr message {new Message};
+
+    message->_rawMsg = rawMsg;
 
     stream >> message->_id;
     stream >> message->_command;
@@ -378,14 +406,25 @@ Message::Ptr Message::fromDataStream(QDataStream& stream)
 
     if (message->_flag.accessIdNotEmpty)
     {
-        //stream >> message->_accessId;
+        /* stream >> message->_accessId */
         serialize::readByteArray(stream, message->_accessId);
     }
 
     if (message->_flag.contentNotEmpty)
     {
-        //stream >> message->_content;
-        serialize::readByteArray(stream, message->_content);
+        /* stream >> message->_content */
+        // serialize::readByteArray(stream, message->_content);
+
+        quint32 contentLen;
+        stream >> contentLen;
+        if (contentLen != 0xffffffff)
+        {
+            QIODevice* device = stream.device();
+            qint64 contentPos = device->pos();
+            const char* contentData = rawMsg.constData() + contentPos;
+            message->_content = QByteArray::fromRawData(contentData, contentLen);
+            message->_contentRef = true;
+        }
     }
 
     return message;
@@ -704,6 +743,8 @@ Message::Ptr Message::fromJson(const QByteArray& ba)
             rapidjson::Writer<StringBuffer> writer {buff};
             member->value.Accept(writer);
             message->_content = QByteArray(buff.GetString());
+            message->_contentRef = false;
+            message->_rawMsg.clear();
         }
 #ifdef PPROTO_MESSAGE_NEW_JSON_FORMAT
         else if (stringEqual("web_flags", member->name) && member->value.IsObject())

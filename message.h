@@ -266,7 +266,7 @@ public:
     QByteArray content() const;
 
     // Удаляет контент сообщения
-    void clearContent() {_content.clear();}
+    void clearContent();
 
     // Возвращает TRUE если сообщение не содержит контент
     bool contentIsEmpty() const {return _content.isEmpty();}
@@ -331,7 +331,7 @@ public:
     static Ptr fromQBinary(const QByteArray&);
 
     void toDataStream(QDataStream&) const;
-    static Ptr fromDataStream(QDataStream&);
+    static Ptr fromDataStream(QDataStream&, const QByteArray& rawMsg);
 #endif
 
 #ifdef PPROTO_JSON_SERIALIZE
@@ -377,6 +377,8 @@ private:
     void setContentFormat(SerializeFormat);
 
 private:
+    QByteArray _rawMsg;
+
     QUuidEx _id;
     QUuidEx _command;
 
@@ -439,6 +441,7 @@ private:
     QUuidEx _taskId;
     QByteArray _accessId;
     QByteArray _content;
+    bool _contentRef = {false};
     SocketType _socketType = {SocketType::Unknown};
     HostPoint _sourcePoint;
     HostPoint::Set _destinationPoints;
@@ -460,7 +463,15 @@ private:
 template<typename... Args>
 SResult Message::writeContent(const Args&... args)
 {
-    _content.clear();
+    if (_contentRef)
+    {
+        _content = {};
+        _contentRef = false;
+        _rawMsg.clear();
+    }
+    else
+        _content.clear();
+
     setContentFormat(SerializeFormat::QBinary);
     QDataStream stream {&_content, QIODevice::WriteOnly};
     STREAM_INIT(stream);
@@ -507,6 +518,12 @@ void Message::readInternal(QDataStream& s, T& t, Args&... args) const
 template<typename T>
 SResult Message::writeJsonContent(const T& t)
 {
+    if (_contentRef)
+    {
+        _content = {};
+        _contentRef = false;
+        _rawMsg.clear();
+    }
     setContentFormat(SerializeFormat::Json);
     _content = const_cast<T&>(t).toJson();
     return SResult(true);

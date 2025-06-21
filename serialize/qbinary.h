@@ -44,6 +44,7 @@
 #include "shared/qt/stream_init.h"
 
 #include <QByteArray>
+#include <QBuffer>
 #include <QDataStream>
 #include <QVector>
 #include <type_traits>
@@ -52,6 +53,27 @@
 namespace pproto::serialize::qbinary {
 
 typedef QVector<QByteArray> RawVector;
+
+#if QT_VERSION >= 0x060000
+#  define QIODEVICE QIODeviceBase
+#else
+#  define QIODEVICE QIODevice
+#endif
+
+/**
+  Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
+  для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
+  чтения/записи  enum-типов  реализованными  в этом  модуле.  Данный  фиктивный
+  класс  позволяет  установить  приоритет  использования  потоковых  операторов
+  из текущего модуля
+*/
+struct DataStream : QDataStream
+{
+    DataStream() : QDataStream() {}
+    explicit DataStream(QIODevice* d) : QDataStream(d) {}
+    DataStream(QByteArray* ba, QIODEVICE::OpenMode om) : QDataStream(ba, om) {}
+    DataStream(const QByteArray& ba) : QDataStream(ba) {}
+};
 
 namespace detail {
 
@@ -64,13 +86,31 @@ QDataStream& getFromStream(QDataStream& s, T& t)
     if (s.atEnd())
         return s;
 
-    quint8 size;
-    s >> size;
+    quint8 size; s >> size;
     RawVector rv {int(size)};
-    for (quint8 i = 0; i < size; ++i)
+
+    if (QBuffer* qbuff = dynamic_cast<QBuffer*>(s.device()))
     {
-        QByteArray ba {serialize::readByteArray(s)}; // Старый вариант: s >> ba;
-        rv[i] = std::move(ba);
+        const char* beginData = qbuff->data().constData();
+        for (quint8 i = 0; i < size; ++i)
+        {
+            quint32 len; s >> len;
+            if (len != 0xffffffff)
+            {
+                qint64 pos = qbuff->pos();
+                const char* data = beginData + pos;
+                rv[i] = QByteArray::fromRawData(data, len);
+                qbuff->seek(pos + len);
+            }
+        }
+    }
+    else
+    {
+        for (quint8 i = 0; i < size; ++i)
+        {
+            QByteArray ba {serialize::readByteArray(s)}; // Старый вариант: s >> ba;
+            rv[i] = std::move(ba);
+        }
     }
     t.fromRaw(rv);
     return s;
@@ -79,15 +119,20 @@ QDataStream& getFromStream(QDataStream& s, T& t)
 template<typename T>
 QDataStream& putToStream(QDataStream& s, const T& t)
 {
-    const RawVector rv = t.toRaw();
-    if (rv.size() > 255)
-    {
-        log_error << "For qbinary serialize the limit of versions is exceeded (255)";
-        prog_abort();
-    }
-    s << quint8(rv.size());
-    for (const QByteArray& ba : rv)
-        s << ba;
+    // const RawVector rv = t.toRaw();
+    // if (rv.size() > 255)
+    // {
+    //     log_error << "For qbinary serialize the limit of versions is exceeded (255)";
+    //     prog_abort();
+    // }
+    // s << quint8(rv.size());
+    // for (const QByteArray& ba : rv)
+    //     s << ba;
+
+    // pproto::serialize::qbinary::DataStream stream {s.device()};
+    // t.toRaw(stream);
+
+    t.toRaw(static_cast<pproto::serialize::qbinary::DataStream&>(s));
     return s;
 }
 
@@ -327,27 +372,6 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
-#if QT_VERSION >= 0x060000
-#  define QIODEVICE QIODeviceBase
-#else
-#  define QIODEVICE QIODevice
-#endif
-
-/**
-  Начиная с версии Qt 5.14 в QDataStream  были  добавлены  потоковые  операторы
-  для работы с enum-типами. Новые потоковые операторы конфликтуют с операторами
-  чтения/записи  enum-типов  реализованными  в этом  модуле.  Данный  фиктивный
-  класс  позволяет  установить  приоритет  использования  потоковых  операторов
-  из текущего модуля
-*/
-struct DataStream : QDataStream
-{
-    DataStream() : QDataStream() {}
-    explicit DataStream(QIODevice* d) : QDataStream(d) {}
-    DataStream(QByteArray* ba, QIODEVICE::OpenMode om) : QDataStream(ba, om) {}
-    DataStream(const QByteArray& ba) : QDataStream(ba) {}
-};
-
 template<typename T> using not_enum_type_operator =
 typename std::enable_if<!std::is_enum<T>::value, QDataStream>::type;
 
@@ -376,7 +400,7 @@ namespace bserial = pproto::serialize::qbinary;
     friend QDataStream& bserial::detail::putToStream(QDataStream&, const T&);
 
 #define DECLARE_B_SERIALIZE_FUNC \
-    bserial::RawVector toRaw() const; \
+    void toRaw(bserial::DataStream&) const; \
     void fromRaw(const bserial::RawVector&); \
     DECLARE_B_SERIALIZE_FRIENDS
 
@@ -470,55 +494,67 @@ namespace bserial = pproto::serialize::qbinary;
     B_DESERIALIZE_END
   }
 */
-#define B_SERIALIZE_V1(STREAM, RESERVE...) \
-    bserial::RawVector to__raw__vect__; \
-    { QByteArray to__raw__ba__; \
-      bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM {&to__raw__ba__, QIODEVICE::WriteOnly}; \
-        STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
-        STREAM.setVersion(QDATASTREAM_VERSION);
+#define B_SERIALIZE_V1 \
+    QIODevice* device__ = stream.device(); \
+    qint64 pos__begin__ = device__->pos(); \
+    quint8 version__count__ = 0; \
+    stream << version__count__; \
+    { ++version__count__; \
+      qint64 pos__data__size__ = device__->pos(); \
+      quint32 data__size__ = 0; \
+      stream << data__size__; \
+      qint64 pos__begin__data__n__ = device__->pos();
 
-#define B_SERIALIZE_N(STREAM, RESERVE...) \
-      } \
-      to__raw__vect__.append(std::move(to__raw__ba__)); \
+#define B_SERIALIZE_N \
+      qint64 pos__end__data__n__ = device__->pos(); \
+      data__size__ = pos__end__data__n__ - pos__begin__data__n__; \
+      device__->seek(pos__data__size__); \
+      stream << data__size__; \
+      device__->seek(pos__end__data__n__); \
     } \
-    { QByteArray to__raw__ba__; \
-      bserial::Reserve{to__raw__ba__}.size(RESERVE); \
-      { bserial::DataStream STREAM {&to__raw__ba__, QIODEVICE::WriteOnly}; \
-        STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
-        STREAM.setVersion(QDATASTREAM_VERSION);
+    { ++version__count__; \
+      qint64 pos__data__size__ = device__->pos(); \
+      quint32 data__size__ = 0; \
+      stream << data__size__; \
+      qint64 pos__begin__data__n__ = device__->pos();
 
-#define B_SERIALIZE_V2(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
-#define B_SERIALIZE_V3(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
-#define B_SERIALIZE_V4(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
-#define B_SERIALIZE_V5(STREAM, RESERVE...) B_SERIALIZE_N(STREAM, RESERVE)
+#define B_SERIALIZE_V2 B_SERIALIZE_N
+#define B_SERIALIZE_V3 B_SERIALIZE_N
+#define B_SERIALIZE_V4 B_SERIALIZE_N
+#define B_SERIALIZE_V5 B_SERIALIZE_N
 
 #define B_SERIALIZE_RETURN \
-      } \
-      to__raw__vect__.append(std::move(to__raw__ba__)); \
+      qint64 pos__end__data__n__ = device__->pos(); \
+      data__size__ = pos__end__data__n__ - pos__begin__data__n__; \
+      device__->seek(pos__data__size__); \
+      stream << data__size__; \
+      device__->seek(pos__end__data__n__); \
     } \
-    return to__raw__vect__;
+    qint64 pos__end__ = device__->pos(); \
+    device__->seek(pos__begin__); \
+    stream << version__count__; \
+    device__->seek(pos__end__);
 
-#define B_DESERIALIZE_V1(VECT, STREAM) \
+#define B_DESERIALIZE_V1(VECT) \
     if (VECT.count() >= 1) { \
         const QByteArray& ba__from__raw__ = VECT.at(0); \
-        bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
+        bserial::DataStream stream {(QByteArray*)&ba__from__raw__, \
                                     QIODEVICE::ReadOnly | QIODEVICE::Unbuffered}; \
-        STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
-        STREAM.setVersion(QDATASTREAM_VERSION);
+        stream.setByteOrder(QDATASTREAM_BYTEORDER); \
+        stream.setVersion(QDATASTREAM_VERSION);
 
-#define B_DESERIALIZE_N(N, VECT, STREAM) \
+#define B_DESERIALIZE_N(N, VECT) \
     } if (VECT.count() >= N) { \
         const QByteArray& ba__from__raw__ = VECT.at(N - 1); \
-        bserial::DataStream STREAM {(QByteArray*)&ba__from__raw__, \
+        bserial::DataStream stream {(QByteArray*)&ba__from__raw__, \
                                     QIODEVICE::ReadOnly | QIODEVICE::Unbuffered}; \
-        STREAM.setByteOrder(QDATASTREAM_BYTEORDER); \
-        STREAM.setVersion(QDATASTREAM_VERSION);
+        stream.setByteOrder(QDATASTREAM_BYTEORDER); \
+        stream.setVersion(QDATASTREAM_VERSION);
 
-#define B_DESERIALIZE_V2(VECT, STREAM) B_DESERIALIZE_N(2, VECT, STREAM)
-#define B_DESERIALIZE_V3(VECT, STREAM) B_DESERIALIZE_N(3, VECT, STREAM)
-#define B_DESERIALIZE_V4(VECT, STREAM) B_DESERIALIZE_N(4, VECT, STREAM)
-#define B_DESERIALIZE_V5(VECT, STREAM) B_DESERIALIZE_N(5, VECT, STREAM)
+#define B_DESERIALIZE_V2(VECT) B_DESERIALIZE_N(2, VECT)
+#define B_DESERIALIZE_V3(VECT) B_DESERIALIZE_N(3, VECT)
+#define B_DESERIALIZE_V4(VECT) B_DESERIALIZE_N(4, VECT)
+#define B_DESERIALIZE_V5(VECT) B_DESERIALIZE_N(5, VECT)
 
 #define B_DESERIALIZE_END }
 

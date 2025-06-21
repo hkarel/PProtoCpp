@@ -56,9 +56,9 @@ MessageError::MessageError(qint32 group, const QUuidEx& code, const char* descri
 {}
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-bserial::RawVector MessageError::toRaw() const
+void MessageError::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << group;
     stream << code;
     /* stream << description */
@@ -68,7 +68,7 @@ bserial::RawVector MessageError::toRaw() const
 
 void MessageError::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> group;
     stream >> code;
     /* stream >> description */
@@ -86,9 +86,9 @@ MessageFailed::MessageFailed(qint32 group, const QUuidEx& code, const char* desc
 {}
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-bserial::RawVector MessageFailed::toRaw() const
+void MessageFailed::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << group;
     stream << code;
     /* stream << description */
@@ -98,7 +98,7 @@ bserial::RawVector MessageFailed::toRaw() const
 
 void MessageFailed::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> group;
     stream >> code;
     /* stream >> description */
@@ -106,9 +106,9 @@ void MessageFailed::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 
-bserial::RawVector Unknown::toRaw() const
+void Unknown::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << commandId;
     stream << socketType;
     stream << socketDescriptor;
@@ -147,7 +147,7 @@ bserial::RawVector Unknown::toRaw() const
 
 void Unknown::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> commandId;
     stream >> socketType;
     stream >> socketDescriptor;
@@ -197,9 +197,9 @@ void Error::assign(const MessageError& msg)
     description = msg.description;
 }
 
-bserial::RawVector Error::toRaw() const
+void Error::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << commandId;
     stream << messageId;
     stream << group;
@@ -211,7 +211,7 @@ bserial::RawVector Error::toRaw() const
 
 void Error::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> commandId;
     stream >> messageId;
     stream >> group;
@@ -230,9 +230,9 @@ CloseConnection::CloseConnection(const MessageError& messageError)
 }
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-bserial::RawVector CloseConnection::toRaw() const
+void CloseConnection::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << group;
     stream << code;
     /* stream << description */
@@ -242,7 +242,7 @@ bserial::RawVector CloseConnection::toRaw() const
 
 void CloseConnection::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> group;
     stream >> code;
     /* stream >> description */

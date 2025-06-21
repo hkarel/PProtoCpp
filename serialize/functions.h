@@ -112,9 +112,16 @@ SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
     return message->writeContent(static_cast<const data::MessageFailed&>(data), data);
 }
 
+// Переменная dummyDataStream используется в функции messageWriteQBinary()
+// в конструкции decltype(data.toRaw(dummyDataStream), SResult()).
+// Переменная декларирована, но не определена.  Без  явного  декларирования
+// переменной механизм проверки наличия функции toRaw(bserial::DataStream&)
+// работать не будет
+extern bserial::DataStream dummyDataStream;
+
 template<typename CommandDataT>
 auto messageWriteQBinary(const CommandDataT& data, Message::Ptr& message, int, int)
-     -> decltype(data.toRaw(), SResult())
+     -> decltype(data.toRaw(dummyDataStream), SResult())
 {
     return message->writeContent(data);
 }

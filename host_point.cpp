@@ -69,9 +69,9 @@ void HostPoint::setPort(int port)
 #ifdef PPROTO_QBINARY_SERIALIZE
 DEFINE_B_SERIALIZE_STREAM_OPERATORS
 
-bserial::RawVector HostPoint::toRaw() const
+void HostPoint::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << _address;
     stream << _port;
     B_SERIALIZE_RETURN
@@ -79,7 +79,7 @@ bserial::RawVector HostPoint::toRaw() const
 
 void HostPoint::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> _address;
     stream >> _port;
     B_DESERIALIZE_END

@@ -28,9 +28,9 @@
 namespace pproto::data {
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-bserial::RawVector PagingInfo::toRaw() const
+void PagingInfo::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << limit;
     stream << offset;
     stream << total;
@@ -39,7 +39,7 @@ bserial::RawVector PagingInfo::toRaw() const
 
 void PagingInfo::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> limit;
     stream >> offset;
     stream >> total;

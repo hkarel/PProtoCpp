@@ -28,9 +28,9 @@
 namespace pproto::data {
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-bserial::RawVector TimeRange::toRaw() const
+void TimeRange::toRaw(bserial::DataStream& stream) const
 {
-    B_SERIALIZE_V1(stream)
+    B_SERIALIZE_V1
     stream << begin;
     stream << end;
     B_SERIALIZE_RETURN
@@ -38,7 +38,7 @@ bserial::RawVector TimeRange::toRaw() const
 
 void TimeRange::fromRaw(const bserial::RawVector& vect)
 {
-    B_DESERIALIZE_V1(vect, stream)
+    B_DESERIALIZE_V1(vect)
     stream >> begin;
     stream >> end;
     B_DESERIALIZE_END
