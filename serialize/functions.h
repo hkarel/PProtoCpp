@@ -125,7 +125,7 @@ auto messageWriteQBinary(const CommandDataT&, Message::Ptr&, long, long)
      -> SResult
 {
     QString err = "Method %1::toRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -151,7 +151,7 @@ auto messageWriteJson(CommandDataT&, Message::Ptr&, long)
      -> SResult
 {
     QString err = "Method %1::toJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -182,7 +182,8 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
 #endif
         default:
         {
-            log_error_m << "Unsupported message serialize format";
+            log_error_m << "Unsupported message serialize format: "
+                        << contentFormat;
             prog_abort();
         }
     }
@@ -205,6 +206,16 @@ struct CreateMessageParams
         : type{type}, format{format}
     {}
 };
+
+inline Message::Ptr createMessage(const QUuidEx& command, SerializeFormat format)
+{
+    return Message::create(command, format);
+}
+
+inline Message::Ptr createMessage(const QUuidEx& command)
+{
+    return createMessage(command, SerializeFormat::QBinary);
+}
 
 /**
   Создает сообщение на основе структуры данных соответствующей определнной
@@ -260,22 +271,17 @@ Message::Ptr createMessage(const CommandDataT& data,
     return message;
 }
 
-inline Message::Ptr createMessage(const QUuidEx& command)
+#ifdef PPROTO_JSON_SERIALIZE
+inline Message::Ptr createJsonMessage(const QUuidEx& command)
 {
-    return Message::create(command, SerializeFormat::QBinary);
+    return createMessage(command, SerializeFormat::Json);
 }
 
-#ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
                                Message::Type type = Message::Type::Command)
 {
     return createMessage(data, {type, SerializeFormat::Json});
-}
-
-inline Message::Ptr createJsonMessage(const QUuidEx& command)
-{
-    return Message::create(command, SerializeFormat::Json);
 }
 #endif
 
@@ -314,7 +320,7 @@ auto messageReadQBinary(const Message::Ptr&, CommandDataT&, long, long)
      -> SResult
 {
     QString err = "Method %1::fromRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -340,7 +346,7 @@ auto messageReadJson(const Message::Ptr&, CommandDataT&, long)
      -> SResult
 {
     QString err = "Method %1::fromJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>());
+    err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -370,7 +376,8 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
             break;
 #endif
         default:
-            log_error_m << "Unsupported message serialize format";
+            log_error_m << "Unsupported message serialize format: "
+                        << message->contentFormat();
             prog_abort();
     }
 

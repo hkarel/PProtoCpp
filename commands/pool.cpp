@@ -100,7 +100,7 @@ bool Pool::CommandTraits::operator== (const CommandTraits& ct) const
 
 Pool& pool()
 {
-    return ::safe_singleton<Pool, 0>();
+    return safe::singleton<Pool, 0>();
 }
 
 uint qHash(const Pool::CommandTraits& ct)

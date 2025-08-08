@@ -133,7 +133,7 @@ private:
 
     QString _serverName;
 
-    template<typename T, int> friend T& ::safe_singleton();
+    template<typename T, int> friend T& safe::singleton();
 };
 
 Listener& listener();
