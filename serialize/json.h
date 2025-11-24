@@ -507,7 +507,11 @@ Reader& Reader::operator& (QSet<T>& s)
     Reader& r = const_cast<Reader&>(*this);
     QList<T> l;
     detail::readArray(r, l);
+#if QT_VERSION > QT_VERSION_CHECK(5, 14, 0)
+    s = QSet<T>(l.begin(), l.end());
+#else
     s = l.toSet();
+#endif
     return  r;
 }
 
@@ -522,7 +526,7 @@ template<typename T>
 Writer& Writer::operator& (const QSet<T>& s)
 {
     Writer& w = const_cast<Writer&>(*this);
-    return detail::writeArray(w, s.toList());
+    return detail::writeArray(w, s.values());
 }
 
 template<typename T>

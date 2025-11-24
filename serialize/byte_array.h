@@ -26,7 +26,13 @@
 #pragma once
 
 #include <QByteArray>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 #include <QDataStream>
+
+#pragma GCC diagnostic pop
 
 namespace pproto {
 namespace serialize {
