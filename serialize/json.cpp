@@ -38,6 +38,7 @@ namespace pproto::serialize::json {
 
 #include <cassert>
 #include <cctype>
+#include <cmath>
 
 //---------------------------------- Reader ----------------------------------
 
@@ -472,7 +473,7 @@ Reader& Reader::operator& (double& d)
         }
         else if (_stack.top().value->IsNull())
         {
-            d = 0;
+            d = std::numeric_limits<double>::quiet_NaN();
             next();
         }
         else
@@ -492,7 +493,12 @@ Reader& Reader::operator& (float& f)
     double val;
     this->operator& (val);
     if (!error())
-        f = float(val);
+    {
+        if (std::isnan(val))
+            f = std::numeric_limits<float>::quiet_NaN();
+        else
+            f = float(val);
+    }
     return *this;
 }
 
@@ -782,13 +788,19 @@ Writer& Writer::operator& (const quint64 u)
 
 Writer& Writer::operator& (const double d)
 {
-    _writer.Double(d);
+    if (std::isnan(d))
+        _writer.Null();
+    else
+        _writer.Double(d);
     return *this;
 }
 
 Writer& Writer::operator& (const float f)
 {
-    _writer.Double(f);
+    if (std::isnan(f))
+        _writer.Null();
+    else
+        _writer.Double(f);
     return *this;
 }
 
