@@ -169,6 +169,9 @@ SResult messageWriteJson(const CommandDataT& data, Message::Ptr& message)
 }
 #endif // PPROTO_JSON_SERIALIZE
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 template<typename CommandDataT>
 SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
                             SerializeFormat contentFormat)
@@ -195,6 +198,9 @@ SResult messageWriteContent(const CommandDataT& data, Message::Ptr& message,
     }
     return res;
 }
+
+#pragma GCC diagnostic pop
+
 } // namespace detail
 
 struct CreateMessageParams
@@ -410,6 +416,9 @@ SResult messageReadJson(const Message::Ptr& message, CommandDataT& data)
 }
 #endif // PPROTO_JSON_SERIALIZE
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 template<typename CommandDataT>
 SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
                            ErrorSenderFunc errorSender)
@@ -446,6 +455,9 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
     }
     return res;
 }
+
+#pragma GCC diagnostic pop
+
 } // namespace detail
 
 /**
