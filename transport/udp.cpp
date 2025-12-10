@@ -386,7 +386,7 @@ void Socket::run()
                         }
                         continue;
                     }
-                    message = Message::fromDataStream(stream, datagram);
+                    message = Message::fromDataStream(stream);
                 }
                 if (alog::logger().level() == alog::Level::Debug2)
                 {

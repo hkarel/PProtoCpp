@@ -330,7 +330,7 @@ Message::Ptr Message::fromQBinary(const QByteArray& ba)
 {
     QDataStream stream {(QByteArray*)&ba, QIODevice::ReadOnly | QIODevice::Unbuffered};
     STREAM_INIT(stream);
-    return fromDataStream(stream, ba);
+    return fromDataStream(stream);
 }
 
 void Message::toDataStream(QDataStream& stream) const
@@ -368,11 +368,9 @@ void Message::toDataStream(QDataStream& stream) const
         stream << _content;
 }
 
-Message::Ptr Message::fromDataStream(QDataStream& stream, const QByteArray& rawMsg)
+Message::Ptr Message::fromDataStream(QDataStream& stream)
 {
     Ptr message {new Message};
-
-    message->_rawMsg = rawMsg;
 
     stream >> message->_id;
     stream >> message->_command;
@@ -412,18 +410,23 @@ Message::Ptr Message::fromDataStream(QDataStream& stream, const QByteArray& rawM
 
     if (message->_flag.contentNotEmpty)
     {
-        /* stream >> message->_content */
-        // serialize::readByteArray(stream, message->_content);
-
-        quint32 contentLen;
-        stream >> contentLen;
-        if (contentLen != 0xffffffff)
+        if (QBuffer* buff = dynamic_cast<QBuffer*>(stream.device()))
         {
-            QIODevice* device = stream.device();
-            qint64 contentPos = device->pos();
-            const char* contentData = rawMsg.constData() + contentPos;
-            message->_content = QByteArray::fromRawData(contentData, contentLen);
-            message->_contentRef = true;
+            quint32 contentLen;
+            stream >> contentLen;
+            if (contentLen != 0xffffffff)
+            {
+                message->_rawMsg = buff->data();
+                qint64 contentPos = buff->pos();
+                const char* contentData = message->_rawMsg.constData() + contentPos;
+                message->_content = QByteArray::fromRawData(contentData, contentLen);
+                message->_contentRef = true;
+            }
+        }
+        else
+        {
+            /* stream >> message->_content */
+            serialize::readByteArray(stream, message->_content);
         }
     }
 

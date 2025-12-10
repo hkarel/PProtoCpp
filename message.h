@@ -331,7 +331,7 @@ public:
     static Ptr fromQBinary(const QByteArray&);
 
     void toDataStream(QDataStream&) const;
-    static Ptr fromDataStream(QDataStream&, const QByteArray& rawMsg);
+    static Ptr fromDataStream(QDataStream&);
 #endif
 
 #ifdef PPROTO_JSON_SERIALIZE
