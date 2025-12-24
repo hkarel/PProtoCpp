@@ -50,10 +50,12 @@
 #include <QDateTime>
 #include <QByteArray>
 #include <QString>
+#include <QMap>
 #include <QList>
 #include <QVector>
 #include <QStack>
 
+#include <map>
 #include <list>
 #include <vector>
 #include <type_traits>
@@ -85,6 +87,7 @@ Reader& readArray(Reader&, lst::List<T, Compare, Allocator>&);
 
 template<typename T> Reader& readArray(Reader&, T&);
 template<typename T> Reader& readPtr  (Reader&, T&);
+template<typename T> Reader& readMap  (Reader&, T&);
 
 } // namespace detail
 
@@ -150,6 +153,9 @@ public:
 
     template<typename T, typename Compare, typename Allocator>
     Reader& operator& (lst::List<T, Compare, Allocator>&);
+
+    template<typename K, typename V> Reader& operator& (QMap<K, V>&);
+    template<typename K, typename V> Reader& operator& (std::map<K, V>&);
 
     bool isReader() const {return true;}
     bool isWriter() const {return false;}
@@ -220,6 +226,7 @@ private:
 
     template<typename T> friend Reader& detail::readArray(Reader&, T&);
     template<typename T> friend Reader& detail::readPtr  (Reader&, T&);
+    template<typename T> friend Reader& detail::readMap  (Reader&, T&);
 };
 
 class Writer
@@ -276,6 +283,9 @@ public:
 
     template<typename T, typename Compare, typename Allocator>
     Writer& operator& (const lst::List<T, Compare, Allocator>&);
+
+    template<typename K, typename V> Writer& operator& (const QMap<K, V>&);
+    template<typename K, typename V> Writer& operator& (const std::map<K, V>&);
 
     bool isReader() const {return false;}
     bool isWriter() const {return true;}
@@ -481,6 +491,49 @@ Writer& writePtr(Writer& w, const T& ptr)
     return w;
 }
 
+template<typename T>
+Reader& readMap(Reader& r, T& map)
+{
+    map.clear();
+    if (r.error())
+        return r;
+
+    if (r.stackTopIsNull())
+    {
+        r.next();
+        return r;
+    }
+
+    SizeType count;
+    r.startArray(count);
+    for (SizeType i = 0; i < count; ++i)
+    {
+        typedef typename T::key_type KeyType;
+        typedef typename T::mapped_type ValType;
+
+        KeyType key;
+        ValType val;
+        r.startObject();
+        r.member("k") & key;
+        r.member("v") & val;
+        r.endObject();
+
+        if constexpr (std::is_same<T, QMap<KeyType, ValType>>::value)
+        {
+            map[key] = std::move(val);
+        }
+        else if constexpr (std::is_same<T, std::map<KeyType, ValType>>::value)
+        {
+            map.insert_or_assign(key, val);
+        }
+        else
+        {
+            static_assert(false, "Unknown map type");
+        }
+    }
+    return r.endArray();
+}
+
 } // namespace detail
 
 template<typename T>
@@ -642,6 +695,50 @@ Writer& Writer::operator& (const lst::List<T, Compare, Allocator>& l)
             w & *item;
         else
             w.setNull();
+    }
+    return w.endArray();
+}
+
+template<typename K, typename V>
+Reader& Reader::operator& (QMap<K, V>& m)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readMap(r, m);
+}
+
+template<typename K, typename V>
+Reader& Reader::operator& (std::map<K, V>& m)
+{
+    Reader& r = const_cast<Reader&>(*this);
+    return detail::readMap(r, m);
+}
+
+template<typename K, typename V>
+Writer& Writer::operator& (const QMap<K, V>& m)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    w.startArray();
+    for (auto it = m.cbegin(); it != m.cend(); ++it)
+    {
+        w.startObject();
+        w.member("k") & it.key();
+        w.member("v") & it.value();
+        w.endObject();
+    }
+    return w.endArray();
+}
+
+template<typename K, typename V>
+Writer& Writer::operator& (const std::map<K, V>& m)
+{
+    Writer& w = const_cast<Writer&>(*this);
+    w.startArray();
+    for (const auto& [key, value] : m)
+    {
+        w.startObject();
+        w.member("k") & key;
+        w.member("v") & value;
+        w.endObject();
     }
     return w.endArray();
 }
