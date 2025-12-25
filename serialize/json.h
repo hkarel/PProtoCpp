@@ -73,12 +73,6 @@ typename std::enable_if<!std::is_enum<T>::value, int>::type;
 template<typename T> using is_enum_type =
 typename std::enable_if<std::is_enum<T>::value, int>::type;
 
-template<typename T> using derived_from_clife_base =
-typename std::enable_if<std::is_base_of<clife_base, T>::value, int>::type;
-
-template<typename T> using not_derived_from_clife_base =
-typename std::enable_if<!std::is_base_of<clife_base, T>::value, int>::type;
-
 template<typename T>
 Reader& operatorAmp(Reader&, T&, not_enum_type<T> = 0);
 
@@ -392,27 +386,13 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list)
             return r;
         }
     }
+    if constexpr(std::is_base_of<clife_base, T>::value)
+    {
+        for (auto value : list)
+            if (value && (value->clife_count() == 0))
+                value->add_ref();
+    }
     return r.endArray();
-}
-
-template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list, int,
-                  derived_from_clife_base<T> = 0)
-{
-    /* Эта функция используется когда T унаследовано от clife_base */
-    readArray(r, list);
-    for (auto value : list)
-        if (value && (value->clife_count() == 0))
-            value->add_ref();
-    return r;
-}
-
-template<typename T, typename Compare, typename Allocator>
-Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list, int,
-                  not_derived_from_clife_base<T> = 0)
-{
-    /* Эта функция используется когда T НЕ унаследовано от clife_base */
-    return readArray(r, list);
 }
 
 template<typename T>
@@ -680,7 +660,7 @@ template<typename T, typename Compare, typename Allocator>
 Reader& Reader::operator& (lst::List<T, Compare, Allocator>& l)
 {
     Reader& r = const_cast<Reader&>(*this);
-    return detail::readArray(r, l, 0);
+    return detail::readArray(r, l);
 }
 
 template<typename T, typename Compare, typename Allocator>
