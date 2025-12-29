@@ -38,6 +38,8 @@
 #include "shared/clife_ptr.h"
 #include "shared/container_ptr.h"
 #include "shared/break_point.h"
+#include "shared/type_name.h"
+#include "shared/prog_abort.h"
 #include "shared/logger/logger.h"
 #include "shared/qt/quuidex.h"
 #include "shared/qt/logger_operators.h"
@@ -508,7 +510,10 @@ Reader& readMap(Reader& r, T& map)
         }
         else
         {
-            static_assert(false, "Unknown map type");
+            alog::logger().error(alog_line_location, "JSerialize")
+                << log_format("Failed deserialization. Unknown map type %?",
+                              abi_type_name<T>());
+            prog_abort();
         }
     }
     return r.endArray();
