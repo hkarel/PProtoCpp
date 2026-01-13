@@ -137,7 +137,8 @@ public:
     template<typename T> Reader& operator& (T& t);
     template<typename T> Reader& operator& (QSet<T>&);
     template<typename T> Reader& operator& (QList<T>&);
-#if QT_VERSION < 0x060000
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     template<typename T> Reader& operator& (QVector<T>&);
 #endif
     template<typename T> Reader& operator& (clife_ptr<T>&);
@@ -267,7 +268,8 @@ public:
     template<typename T> Writer& operator& (const T& t);
     template<typename T> Writer& operator& (const QSet<T>&);
     template<typename T> Writer& operator& (const QList<T>&);
-#if QT_VERSION < 0x060000
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     template<typename T> Writer& operator& (const QVector<T>&);
 #endif
     template<typename T> Writer& operator& (const clife_ptr<T>&);
@@ -574,7 +576,7 @@ Writer& Writer::operator& (const QList<T>& l)
     return detail::writeArray(w, l);
 }
 
-#if QT_VERSION < 0x060000
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 template<typename T>
 Reader& Reader::operator& (QVector<T>& v)
 {

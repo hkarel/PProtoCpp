@@ -136,7 +136,7 @@ bool Socket::socketInit()
 
 bool Socket::isLocalInternal() const
 {
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     return (_socket && _socket->peerAddress().isLoopback());
 #else
     return (_socket && (_socket->peerAddress() == QHostAddress::LocalHost));
