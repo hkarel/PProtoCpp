@@ -206,7 +206,7 @@ private:
 private:
     DISABLE_DEFAULT_COPY(Reader)
 
-    Document _document;
+    rapidjson::Document _document;
     Stack _stack;
 
     int _error = {0};
