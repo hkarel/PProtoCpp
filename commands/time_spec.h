@@ -42,11 +42,7 @@ struct TimeSpec
     TimeSpec& operator= (TimeSpec&&) = default;
     TimeSpec& operator= (const TimeSpec&) = default;
 
-    TimeSpec& operator= (const timespec& ts) {
-        tv_sec = ts.tv_sec;
-        tv_nsec = ts.tv_nsec;
-        return *this;
-    }
+    TimeSpec& operator= (const timespec&);
 
     operator timespec() const {return {tv_sec, tv_nsec};}
 
@@ -64,5 +60,7 @@ struct TimeSpec
     J_SERIALIZE_END
 #endif
 };
+
+bool operator== (const timespec&, const timespec&);
 
 } // namespace pproto::data

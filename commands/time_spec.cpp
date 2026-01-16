@@ -27,6 +27,13 @@
 
 namespace pproto::data {
 
+TimeSpec& TimeSpec::operator= (const timespec& ts)
+{
+    tv_sec = ts.tv_sec;
+    tv_nsec = ts.tv_nsec;
+    return *this;
+}
+
 #ifdef PPROTO_QBINARY_SERIALIZE
 void TimeSpec::toRaw(bserial::DataStream& stream) const
 {
@@ -44,5 +51,10 @@ void TimeSpec::fromRaw(const bserial::RawVector& vect)
     B_DESERIALIZE_END
 }
 #endif
+
+bool operator== (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec == ts2.tv_sec) && (ts1.tv_nsec == ts2.tv_nsec);
+}
 
 } // namespace pproto::data
