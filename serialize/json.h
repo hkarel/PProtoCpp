@@ -300,7 +300,7 @@ private:
 namespace detail {
 
 template<typename T>
-Reader& operatorAmp(Reader& r, T& t, not_enum_type<T>)
+Reader& operatorAmp(Reader& r, T& t, not_enum_type<T> /*= 0*/)
 {
     if (r.stackTopIsOptional() && r.stackTopIsNull())
     {
@@ -449,8 +449,9 @@ Reader& readPtr(Reader& r, T& ptr)
         typedef T Ptr;
         typedef typename Ptr::element_t element_t;
         if (ptr.empty())
-            ptr = Ptr(new element_t());
-        r & (*ptr);
+            ptr = Ptr::create();
+        //r & (*ptr); Старая реализация
+        element_t::jserialize(ptr.get(), r);
     }
     else
     {
