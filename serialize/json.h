@@ -376,8 +376,9 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list)
         }
         else if (r.stackTopIsObject())
         {
-            auto value = list.allocator().create();
-            r & (*value);
+            T* value = list.allocator().create();
+            //r & (*value); Старая реализация
+            T::jserialize(value, r);
             list.add(value);
         }
         else
@@ -397,7 +398,7 @@ Reader& readArray(Reader& r, lst::List<T, Compare, Allocator>& list)
     }
     if constexpr(std::is_base_of<clife_base, T>::value)
     {
-        for (auto value : list)
+        for (T* value : list)
             if (value && (value->clife_count() == 0))
                 value->add_ref();
     }
