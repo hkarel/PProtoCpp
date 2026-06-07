@@ -59,6 +59,7 @@
 
 #include <map>
 #include <list>
+#include <atomic>
 #include <vector>
 #include <type_traits>
 
@@ -144,6 +145,8 @@ public:
     template<typename T> Reader& operator& (clife_ptr<T>&);
     template<typename T> Reader& operator& (container_ptr<T>&);
     template<int N>      Reader& operator& (QUuidT<N>&);
+
+    template<typename T> Reader& operator& (std::atomic<T>&);
 
     template<typename T> Reader& operator& (std::list<T>&);
     template<typename T> Reader& operator& (std::vector<T>&);
@@ -275,6 +278,8 @@ public:
     template<typename T> Writer& operator& (const clife_ptr<T>&);
     template<typename T> Writer& operator& (const container_ptr<T>&);
     template<int N>      Writer& operator& (const QUuidT<N>&);
+
+    template<typename T> Writer& operator& (const std::atomic<T>&);
 
     template<typename T> Writer& operator& (const std::list<T>&);
     template<typename T> Writer& operator& (const std::vector<T>&);
@@ -553,7 +558,7 @@ Reader& Reader::operator& (QSet<T>& s)
 #else
     s = l.toSet();
 #endif
-    return  r;
+    return r;
 }
 
 template<typename T>
@@ -634,6 +639,26 @@ template<int N>
 Writer& Writer::operator& (const QUuidT<N>& uuid)
 {
     return this->operator& (static_cast<const QUuid&>(uuid));
+}
+
+template<typename T>
+Reader& Reader::operator& (std::atomic<T>& a)
+{
+    if (!error())
+    {
+        typename std::atomic<T>::value_type v{};
+        this->operator& (v);
+        a.store(v);
+    }
+    return *this;
+}
+
+template<typename T>
+Writer& Writer::operator& (const std::atomic<T>& a)
+{
+    typename std::atomic<T>::value_type v = a.load();
+    this->operator& (v);
+    return *this;
 }
 
 template<typename T>
