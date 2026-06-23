@@ -33,7 +33,6 @@ Line& operator<< (Line& line, const pproto::HostPoint& hp)
 {
     if (line.toLogger())
         line << hp.address() << ":" << hp.port();
-
     return line;
 }
 
