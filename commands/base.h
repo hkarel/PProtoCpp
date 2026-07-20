@@ -40,7 +40,7 @@
 #include "message.h"
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-#include "bserialize_space.h"
+#include "pproto/serialize/qbinary.h"
 #endif
 
 #ifdef PPROTO_JSON_SERIALIZE
@@ -102,6 +102,10 @@ extern const QUuidEx EchoConnection;
 //------------------------ Список базовых структур ---------------------------
 
 namespace data {
+
+#ifdef PPROTO_QBINARY_SERIALIZE
+DEFINE_B_SERIALIZE_STREAM_OPERATORS
+#endif
 
 /**
   Структура Data используется для ассоциации целевой структуры  данных с опре-
