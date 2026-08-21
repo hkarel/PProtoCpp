@@ -40,7 +40,7 @@
 #include "message.h"
 
 #ifdef PPROTO_QBINARY_SERIALIZE
-#include "pproto/serialize/qbinary.h"
+#include "serialize/qbinary.h"
 #endif
 
 #ifdef PPROTO_JSON_SERIALIZE
