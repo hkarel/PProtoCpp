@@ -1510,9 +1510,14 @@ int Listener::socketsCount() const
 
     int count = 0;
     for (Socket* s : _sockets)
+    {
+        // Примечание: для проверки подключенного сокета было  бы  правильно
+        // использовать Socket::isConnected(), но этот метод может оказаться
+        // медленным из-за наличия внутренних блокировок, поэтому  для  под-
+        // счета используется более формальный метод QThread::isRunning()
         if (s->isRunning())
             ++count;
-
+    }
     return count;
 }
 
