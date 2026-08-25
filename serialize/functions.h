@@ -84,6 +84,15 @@ template<typename T> using not_error_data =
 typename std::enable_if<!std::is_base_of<data::MessageError, T>::value
                      && !std::is_base_of<data::MessageFailed, T>::value, int>::type;
 
+template <typename T>
+struct is_smart_ptr : std::false_type {};
+
+template <typename T>
+struct is_smart_ptr<clife_ptr<T>> : std::true_type {};
+
+template <typename T>
+struct is_smart_ptr<container_ptr<T>> : std::true_type {};
+
 #ifdef PPROTO_QBINARY_SERIALIZE
 template<typename CommandDataT>
 SResult messageWriteQBinary(const CommandDataT& data, Message::Ptr& message,
@@ -127,11 +136,32 @@ auto messageWriteQBinary(const CommandDataT& data, Message::Ptr& message, int, i
 }
 
 template<typename CommandDataT>
+auto messageWriteQBinary(const clife_ptr<CommandDataT>& data, Message::Ptr& message, int, int)
+     -> decltype(std::declval<CommandDataT>().toRaw(dummyDataStream), SResult())
+{
+    if (!data.empty())
+        return message->writeContent(*data);
+    return SResult();
+}
+
+template<typename CommandDataT>
+auto messageWriteQBinary(const container_ptr<CommandDataT>& data, Message::Ptr& message, int, int)
+     -> decltype(std::declval<CommandDataT>().toRaw(dummyDataStream), SResult())
+{
+    if (!data.empty())
+        return message->writeContent(*data);
+    return SResult();
+}
+
+template<typename CommandDataT>
 auto messageWriteQBinary(const CommandDataT&, Message::Ptr&, long, long)
      -> SResult
 {
     QString err = "Method %1::toRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>().c_str());
+    if constexpr(is_smart_ptr<CommandDataT>::value)
+        err = err.arg(abi_type_name<typename CommandDataT::element_t>().c_str());
+    else
+        err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -153,11 +183,32 @@ auto messageWriteJson(CommandDataT& data, Message::Ptr& message, int)
 }
 
 template<typename CommandDataT>
+auto messageWriteJson(clife_ptr<CommandDataT>& data, Message::Ptr& message, int)
+     -> decltype(std::declval<CommandDataT>().toJson(), SResult())
+{
+    if (!data.empty())
+        return message->writeJsonContent(*data);
+    return SResult();
+}
+
+template<typename CommandDataT>
+auto messageWriteJson(container_ptr<CommandDataT>& data, Message::Ptr& message, int)
+     -> decltype(std::declval<CommandDataT>().toJson(), SResult())
+{
+    if (!data.empty())
+        return message->writeJsonContent(*data);
+    return SResult();
+}
+
+template<typename CommandDataT>
 auto messageWriteJson(CommandDataT&, Message::Ptr&, long)
      -> SResult
 {
     QString err = "Method %1::toJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>().c_str());
+    if constexpr(is_smart_ptr<CommandDataT>::value)
+        err = err.arg(abi_type_name<typename CommandDataT::element_t>().c_str());
+    else
+        err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -229,23 +280,17 @@ inline Message::Ptr createMessage(const QUuidEx& command)
     return createMessage(command, SerializeFormat::QBinary);
 }
 
-/**
-  Создает сообщение на основе структуры данных соответствующей определнной
-  команде. Структуры данных описаны в модулях commands_base и commands
-*/
-template<typename CommandDataT>
-Message::Ptr createMessage(const CommandDataT& data,
-                           const CreateMessageParams& params = CreateMessageParams())
-{
-    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from pproto::data::Data");
+namespace detail {
 
+template<typename CommandDataT>
+Message::Ptr preCreateMessage(const CreateMessageParams& params)
+{
     static_assert(CommandDataT::forCommandMessage()
                   || CommandDataT::forEventMessage(),
                   "In this function is allow 'Message::Type::Command'"
                   " or 'Message::Type::Event' type of struct only");
 
-    Message::Ptr message = Message::create(data.command(), params.format);
+    Message::Ptr message = Message::create(CommandDataT::command(), params.format);
 
     if (params.type == Message::Type::Command)
     {
@@ -277,42 +322,37 @@ Message::Ptr createMessage(const CommandDataT& data,
                                   CommandNameLog(message->command()), params.type);
         prog_abort();
     }
-
-    message->setExecStatus(Message::ExecStatus::Unknown);
-    detail::messageWriteContent(data, message, params.format);
     return message;
-}
-
-namespace detail {
-
-template<typename CommandDataPtr>
-Message::Ptr createMessagePtr(const CommandDataPtr& data,
-                              const CreateMessageParams& params)
-{
-    if (data.empty())
-    {
-        log_error_m << "Impossible create message from empty data";
-#ifndef NDEBUG
-        prog_abort();
-#endif
-        return {};
-    }
-    return createMessage(*data, params);
 }
 } // namespace detail
 
+/**
+  Создает сообщение на основе структуры данных соответствующей определнной
+  команде. Структуры данных описаны в модулях commands_base и commands
+*/
 template<typename CommandDataT>
-Message::Ptr createMessage(const clife_ptr<CommandDataT>& data,
+Message::Ptr createMessage(const CommandDataT& data,
                            const CreateMessageParams& params = CreateMessageParams())
 {
-    return detail::createMessagePtr(data, params);
-}
+    Message::Ptr message;
+    if constexpr(detail::is_smart_ptr<CommandDataT>::value)
+    {
+        typedef typename CommandDataT::element_t CommandDataType;
+        static_assert(detail::is_derived_from_data_t<CommandDataType>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
 
-template<typename CommandDataT>
-Message::Ptr createMessage(const container_ptr<CommandDataT>& data,
-                           const CreateMessageParams& params = CreateMessageParams())
-{
-    return detail::createMessagePtr(data, params);
+        message = detail::preCreateMessage<CommandDataType>(params);
+    }
+    else
+    {
+        static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
+
+        message = detail::preCreateMessage<CommandDataT>(params);
+    }
+    message->setExecStatus(Message::ExecStatus::Unknown);
+    detail::messageWriteContent(data, message, params.format);
+    return message;
 }
 
 #ifdef PPROTO_JSON_SERIALIZE
@@ -323,20 +363,6 @@ inline Message::Ptr createJsonMessage(const QUuidEx& command)
 
 template<typename CommandDataT>
 Message::Ptr createJsonMessage(const CommandDataT& data,
-                               Message::Type type = Message::Type::Command)
-{
-    return createMessage(data, {type, SerializeFormat::Json});
-}
-
-template<typename CommandDataT>
-Message::Ptr createJsonMessage(const clife_ptr<CommandDataT>& data,
-                               Message::Type type = Message::Type::Command)
-{
-    return createMessage(data, {type, SerializeFormat::Json});
-}
-
-template<typename CommandDataT>
-Message::Ptr createJsonMessage(const container_ptr<CommandDataT>& data,
                                Message::Type type = Message::Type::Command)
 {
     return createMessage(data, {type, SerializeFormat::Json});
@@ -374,11 +400,42 @@ auto messageReadQBinary(const Message::Ptr& message, CommandDataT& data, int, in
 }
 
 template<typename CommandDataT>
+auto messageReadQBinary(const Message::Ptr& message, clife_ptr<CommandDataT>& data, int, int)
+     -> decltype(std::declval<CommandDataT>().fromRaw(bserial::RawVector()), SResult())
+{
+    if (message->contentIsEmpty())
+    {
+        data.reset();
+        return SResult();
+    }
+    if (data.empty())
+        data = clife_ptr<CommandDataT>::create();
+    return message->readContent(*data);
+}
+
+template<typename CommandDataT>
+auto messageReadQBinary(const Message::Ptr& message, container_ptr<CommandDataT>& data, int, int)
+     -> decltype(std::declval<CommandDataT>().fromRaw(bserial::RawVector()), SResult())
+{
+    if (message->contentIsEmpty())
+    {
+        data.reset();
+        return SResult();
+    }
+    if (data.empty())
+        data = container_ptr<CommandDataT>::create();
+    return message->readContent(*data);
+}
+
+template<typename CommandDataT>
 auto messageReadQBinary(const Message::Ptr&, CommandDataT&, long, long)
      -> SResult
 {
     QString err = "Method %1::fromRaw not exists";
-    err = err.arg(abi_type_name<CommandDataT>().c_str());
+    if constexpr(is_smart_ptr<CommandDataT>::value)
+        err = err.arg(abi_type_name<typename CommandDataT::element_t>().c_str());
+    else
+        err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -400,11 +457,42 @@ auto messageReadJson(const Message::Ptr& message, CommandDataT& data, int)
 }
 
 template<typename CommandDataT>
+auto messageReadJson(const Message::Ptr& message, clife_ptr<CommandDataT>& data, int)
+     -> decltype(std::declval<CommandDataT>().fromJson(QByteArray()), SResult())
+{
+    if (message->contentIsEmpty())
+    {
+        data.reset();
+        return SResult();
+    }
+    if (data.empty())
+        data = clife_ptr<CommandDataT>::create();
+    return message->readJsonContent(*data);
+}
+
+template<typename CommandDataT>
+auto messageReadJson(const Message::Ptr& message, container_ptr<CommandDataT>& data, int)
+     -> decltype(std::declval<CommandDataT>().fromJson(QByteArray()), SResult())
+{
+    if (message->contentIsEmpty())
+    {
+        data.reset();
+        return SResult();
+    }
+    if (data.empty())
+        data = container_ptr<CommandDataT>::create();
+    return message->readJsonContent(*data);
+}
+
+template<typename CommandDataT>
 auto messageReadJson(const Message::Ptr&, CommandDataT&, long)
      -> SResult
 {
     QString err = "Method %1::fromJson not exists";
-    err = err.arg(abi_type_name<CommandDataT>().c_str());
+    if constexpr(is_smart_ptr<CommandDataT>::value)
+        err = err.arg(abi_type_name<typename CommandDataT::element_t>().c_str());
+    else
+        err = err.arg(abi_type_name<CommandDataT>().c_str());
     log_error_m << err;
     return SResult(false, 0, err);
 }
@@ -458,6 +546,94 @@ SResult messageReadContent(const Message::Ptr& message, CommandDataT& data,
 
 #pragma GCC diagnostic pop
 
+template<typename CommandDataT>
+bool preReadFromMessage(const Message::Ptr& message)
+{
+    if (message->command() != CommandDataT::command())
+    {
+        log_error_m << log_format(
+            "Command of message %? is not equivalent command for data %?",
+            CommandNameLog(message->command()), CommandNameLog(CommandDataT::command()));
+    }
+    else if (message->type() == Message::Type::Command)
+    {
+        if (CommandDataT::forCommandMessage())
+        {
+            // SResult res = detail::messageReadContent(message, data, errorSender);
+            // data.dataIsValid = (bool)res;
+            // return res;
+            return true;
+        }
+        log_error_m << "Message " << CommandNameLog(message->command())
+                    << " with type 'Command' cannot write data to struct "
+                    << abi_type_name<CommandDataT>() << ". Mismatched types";
+    }
+    else if (message->type() == Message::Type::Event)
+    {
+        if (CommandDataT::forEventMessage())
+        {
+            // SResult res = detail::messageReadContent(message, data, errorSender);
+            // data.dataIsValid = (bool)res;
+            // return res;
+            return true;
+        }
+        log_error_m << "Message " << CommandNameLog(message->command())
+                    << " with type 'Event' cannot write data to struct "
+                    << abi_type_name<CommandDataT>() << ". Mismatched types";
+    }
+    else if (message->type() == Message::Type::Answer)
+    {
+        if (message->execStatus() == Message::ExecStatus::Success)
+        {
+            if (CommandDataT::forAnswerMessage())
+            {
+                // SResult res = detail::messageReadContent(message, data, errorSender);
+                // data.dataIsValid = (bool)res;
+                // return res;
+                return true;
+            }
+            log_error_m << "Message " << CommandNameLog(message->command())
+                        << " with type 'Answer' cannot write data to struct "
+                        << abi_type_name<CommandDataT>() << ". Mismatched types";
+        }
+        else if (message->execStatus() == Message::ExecStatus::Failed)
+        {
+            if (CommandDataT::forAnswerMessage()
+                && std::is_base_of<data::MessageFailed, CommandDataT>::value)
+            {
+                // SResult res = detail::messageReadContent(message, data, errorSender);
+                // data.dataIsValid = (bool)res;
+                // return res;
+                return true;
+            }
+            log_error_m << "Message is failed. Type of data must be "
+                        << "derived from pproto::data::MessageFailed"
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
+        }
+        else if (message->execStatus() == Message::ExecStatus::Error)
+        {
+            if (CommandDataT::forAnswerMessage()
+                && std::is_base_of<data::MessageError, CommandDataT>::value)
+            {
+                // SResult res = detail::messageReadContent(message, data, errorSender);
+                // data.dataIsValid = (bool)res;
+                // return res;
+                return true;
+            }
+            log_error_m << "Message is error. Type of data must be "
+                        << "derived from pproto::data::MessageError"
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
+        }
+        else
+            log_error_m << "Message exec status is unknown: "
+                        << static_cast<quint32>(message->execStatus())
+                        << ". Command: " << CommandNameLog(message->command())
+                        << ". Struct: "  << abi_type_name<CommandDataT>();
+    }
+    return false;
+}
 } // namespace detail
 
 /**
@@ -470,88 +646,36 @@ template<typename CommandDataT>
 SResult readFromMessage(const Message::Ptr& message, CommandDataT& data,
                         ErrorSenderFunc errorSender = ErrorSenderFunc())
 {
-    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from pproto::data::Data");
-
-    data.dataIsValid = false;
-
-    if (message->command() != data.command())
+    if constexpr(detail::is_smart_ptr<CommandDataT>::value)
     {
-        log_error_m << log_format(
-            "Command of message %? is not equivalent command for data %?",
-            CommandNameLog(message->command()), CommandNameLog(data.command()));
+        typedef typename CommandDataT::element_t CommandDataType;
+        static_assert(detail::is_derived_from_data_t<CommandDataType>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
+
+        if (!data.empty())
+            data->dataIsValid = false;
+
+        if (detail::preReadFromMessage<CommandDataType>(message))
+        {
+            SResult res = detail::messageReadContent(message, data, errorSender);
+            if (!data.empty())
+                data->dataIsValid = (bool)res;
+            return res;
+        }
     }
-    else if (message->type() == Message::Type::Command)
+    else
     {
-        if (data.forCommandMessage())
+        static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
+
+        data.dataIsValid = false;
+
+        if (detail::preReadFromMessage<CommandDataT>(message))
         {
             SResult res = detail::messageReadContent(message, data, errorSender);
             data.dataIsValid = (bool)res;
             return res;
         }
-        log_error_m << "Message " << CommandNameLog(message->command())
-                    << " with type 'Command' cannot write data to struct "
-                    << abi_type_name<CommandDataT>() << ". Mismatched types";
-    }
-    else if (message->type() == Message::Type::Event)
-    {
-        if (data.forEventMessage())
-        {
-            SResult res = detail::messageReadContent(message, data, errorSender);
-            data.dataIsValid = (bool)res;
-            return res;
-        }
-        log_error_m << "Message " << CommandNameLog(message->command())
-                    << " with type 'Event' cannot write data to struct "
-                    << abi_type_name<CommandDataT>() << ". Mismatched types";
-    }
-    else if (message->type() == Message::Type::Answer)
-    {
-        if (message->execStatus() == Message::ExecStatus::Success)
-        {
-            if (data.forAnswerMessage())
-            {
-                SResult res = detail::messageReadContent(message, data, errorSender);
-                data.dataIsValid = (bool)res;
-                return res;
-            }
-            log_error_m << "Message " << CommandNameLog(message->command())
-                        << " with type 'Answer' cannot write data to struct "
-                        << abi_type_name<CommandDataT>() << ". Mismatched types";
-        }
-        else if (message->execStatus() == Message::ExecStatus::Failed)
-        {
-            if (data.forAnswerMessage()
-                && std::is_base_of<data::MessageFailed, CommandDataT>::value)
-            {
-                SResult res = detail::messageReadContent(message, data, errorSender);
-                data.dataIsValid = (bool)res;
-                return res;
-            }
-            log_error_m << "Message is failed. Type of data must be "
-                        << "derived from pproto::data::MessageFailed"
-                        << ". Command: " << CommandNameLog(message->command())
-                        << ". Struct: "  << abi_type_name<CommandDataT>();
-        }
-        else if (message->execStatus() == Message::ExecStatus::Error)
-        {
-            if (data.forAnswerMessage()
-                && std::is_base_of<data::MessageError, CommandDataT>::value)
-            {
-                SResult res = detail::messageReadContent(message, data, errorSender);
-                data.dataIsValid = (bool)res;
-                return res;
-            }
-            log_error_m << "Message is error. Type of data must be "
-                        << "derived from pproto::data::MessageError"
-                        << ". Command: " << CommandNameLog(message->command())
-                        << ". Struct: "  << abi_type_name<CommandDataT>();
-        }
-        else
-            log_error_m << "Message exec status is unknown: "
-                        << static_cast<quint32>(message->execStatus())
-                        << ". Command: " << CommandNameLog(message->command())
-                        << ". Struct: "  << abi_type_name<CommandDataT>();
     }
 #ifndef NDEBUG
     prog_abort();
@@ -570,32 +694,50 @@ SResult readFromMessage(const Message::Ptr&, data::MessageFailed&,
 
 namespace detail {
 
-template<typename CommandDataPtr>
-SResult readFromMessagePtr(const Message::Ptr& message, CommandDataPtr& data,
-                           ErrorSenderFunc errorSender)
+template<typename CommandDataT>
+bool preWriteToMessage(Message::Ptr& message)
 {
-    if (data.empty())
+    if (CommandDataT::command() != message->command())
     {
-        typedef typename CommandDataPtr::element_t element_t;
-        data = CommandDataPtr(new element_t());
+        log_error_m << "Command of message " << CommandNameLog(message->command())
+                    << " is not equal command of data " << CommandNameLog(CommandDataT::command());
     }
-    return readFromMessage(message, *data, errorSender);
+    else if (message->type() == Message::Type::Command)
+    {
+        if (CommandDataT::forCommandMessage())
+        {
+            message->setExecStatus(Message::ExecStatus::Unknown);
+            //return detail::messageWriteContent(data, message, contentFormat);
+            return true;
+        }
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Command'-message";
+    }
+    else if (message->type() == Message::Type::Event)
+    {
+        if (CommandDataT::forEventMessage())
+        {
+            message->setExecStatus(Message::ExecStatus::Unknown);
+            //return detail::messageWriteContent(data, message, contentFormat);
+            return true;
+        }
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Event'-message";
+    }
+    else if (message->type() == Message::Type::Answer)
+    {
+        if (CommandDataT::forAnswerMessage())
+        {
+            message->setExecStatus(Message::ExecStatus::Success);
+            //return detail::messageWriteContent(data, message, contentFormat);
+            return true;
+        }
+        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
+                    << " cannot be used for 'Answer'-message";
+    }
+    return false;
 }
 } // namespace detail
-
-template<typename CommandDataT>
-SResult readFromMessage(const Message::Ptr& message, clife_ptr<CommandDataT>& data,
-                        ErrorSenderFunc errorSender = ErrorSenderFunc())
-{
-    return detail::readFromMessagePtr(message, data, errorSender);
-}
-
-template<typename CommandDataT>
-SResult readFromMessage(const Message::Ptr& message, container_ptr<CommandDataT>& data,
-                        ErrorSenderFunc errorSender = ErrorSenderFunc())
-{
-    return detail::readFromMessagePtr(message, data, errorSender);
-}
 
 /**
   Преобразует структуру CommandDataT в Message-сообщение
@@ -605,43 +747,22 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
                        SerializeFormat contentFormat,
                        detail::not_error_data<CommandDataT> = 0)
 {
-    static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
-                  "CommandDataT must be derived from pproto::data::Data");
+    if constexpr(detail::is_smart_ptr<CommandDataT>::value)
+    {
+        typedef typename CommandDataT::element_t CommandDataType;
+        static_assert(detail::is_derived_from_data_t<CommandDataType>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
 
-    if (data.command() != message->command())
-    {
-        log_error_m << "Command of message " << CommandNameLog(message->command())
-                    << " is not equal command of data " << CommandNameLog(data.command());
-    }
-    else if (message->type() == Message::Type::Command)
-    {
-        if (data.forCommandMessage())
-        {
-            message->setExecStatus(Message::ExecStatus::Unknown);
+        if (detail::preWriteToMessage<CommandDataType>(message))
             return detail::messageWriteContent(data, message, contentFormat);
-        }
-        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
-                    << " cannot be used for 'Command'-message";
     }
-    else if (message->type() == Message::Type::Event)
+    else
     {
-        if (data.forEventMessage())
-        {
-            message->setExecStatus(Message::ExecStatus::Unknown);
+        static_assert(detail::is_derived_from_data_t<CommandDataT>::value,
+                      "CommandDataT must be derived from pproto::data::Data");
+
+        if (detail::preWriteToMessage<CommandDataT>(message))
             return detail::messageWriteContent(data, message, contentFormat);
-        }
-        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
-                    << " cannot be used for 'Event'-message";
-    }
-    else if (message->type() == Message::Type::Answer)
-    {
-        if (data.forAnswerMessage())
-        {
-            message->setExecStatus(Message::ExecStatus::Success);
-            return detail::messageWriteContent(data, message, contentFormat);
-        }
-        log_error_m << "Structure of data " << abi_type_name<CommandDataT>()
-                    << " cannot be used for 'Answer'-message";
     }
 #ifndef NDEBUG
     prog_abort();
@@ -674,39 +795,6 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message,
     return detail::messageWriteContent(data, message, contentFormat);
 }
 
-namespace detail {
-
-template<typename CommandDataPtr>
-SResult writeToMessagePtr(const CommandDataPtr& data, Message::Ptr& message,
-                          SerializeFormat contentFormat)
-{
-    if (data.empty())
-    {
-        QString err = "Impossible write empty data to message";
-        log_error_m << err;
-#ifndef NDEBUG
-        prog_abort();
-#endif
-        return SResult(false, 0, err);
-    }
-    return writeToMessage(*data, message, contentFormat);
-}
-} // namespace detail
-
-template<typename CommandDataT>
-SResult writeToMessage(const clife_ptr<CommandDataT>& data, Message::Ptr& message,
-                       SerializeFormat contentFormat)
-{
-    return detail::writeToMessagePtr(data, message, contentFormat);
-}
-
-template<typename CommandDataT>
-SResult writeToMessage(const container_ptr<CommandDataT>& data, Message::Ptr& message,
-                       SerializeFormat contentFormat)
-{
-    return detail::writeToMessagePtr(data, message, contentFormat);
-}
-
 template<typename CommandDataT>
 SResult writeToMessage(const CommandDataT& data, Message::Ptr& message)
 {
@@ -716,18 +804,6 @@ SResult writeToMessage(const CommandDataT& data, Message::Ptr& message)
 #ifdef PPROTO_JSON_SERIALIZE
 template<typename CommandDataT>
 SResult writeToJsonMessage(const CommandDataT& data, Message::Ptr& message)
-{
-    return writeToMessage(data, message, SerializeFormat::Json);
-}
-
-template<typename CommandDataT>
-SResult writeToJsonMessage(const clife_ptr<CommandDataT>& data, Message::Ptr& message)
-{
-    return writeToMessage(data, message, SerializeFormat::Json);
-}
-
-template<typename CommandDataT>
-SResult writeToJsonMessage(const container_ptr<CommandDataT>& data, Message::Ptr& message)
 {
     return writeToMessage(data, message, SerializeFormat::Json);
 }
