@@ -44,7 +44,7 @@ public:
     Result(bool, int code = 0, const QString& description = QString());
 
     Result(const Result&) = default;
-    Result& operator = (const Result&) = default;
+    Result& operator= (const Result&) = default;
 
     Result(Result&&);
     Result& operator= (Result&&);

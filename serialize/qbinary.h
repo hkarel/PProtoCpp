@@ -49,6 +49,7 @@
 #include <QVector>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace pproto::serialize::qbinary {
 
@@ -214,8 +215,7 @@ QDataStream& getFromStreamList(QDataStream& s, lst::List<T, Compare, Allocator>&
     if (s.atEnd())
         return s;
 
-    quint32 count;
-    s >> count;
+    quint32 count; s >> count;
     for (quint32 i = 0; i < count; ++i)
     {
         if (s.atEnd())
@@ -372,6 +372,35 @@ QDataStream& putToStream(QDataStream& s, const lst::List<T, Compare, Allocator>&
     return s;
 }
 
+/* Экспериментальные функции для сериализации std::vector */
+template<typename T>
+QDataStream& getFromStream(QDataStream& s, std::vector<T>& vector)
+{
+    vector.clear();
+    if (s.atEnd())
+        return s;
+
+    quint32 size; s >> size;
+    for (quint32 i = 0; i < size; ++i)
+    {
+        if (s.atEnd())
+            return s;
+
+        T value; s >> value;
+        vector.push_back(value);
+    }
+    return s;
+}
+
+template<typename T>
+QDataStream& putToStream(QDataStream& s, const std::vector<T>& vector)
+{
+    s << quint32(vector.size());
+    for (auto it = vector.begin(); it < vector.end(); ++it)
+        s << *it;
+    return s;
+}
+
 template<typename T> using not_enum_type_operator =
 typename std::enable_if<!std::is_enum<T>::value, QDataStream>::type;
 
@@ -447,7 +476,15 @@ namespace bserial = pproto::serialize::qbinary;
         {return bserial::getFromStream<T, Compare, Allocator>(s, p);} \
     template<typename T, typename Compare, typename Allocator> \
     inline QDataStream& operator<< (QDataStream& s, const lst::List<T, Compare, Allocator>& p) \
-        {return bserial::putToStream<T, Compare, Allocator>(s, p);}
+        {return bserial::putToStream<T, Compare, Allocator>(s, p);} \
+    \
+    /* Экспериментальные функции для сериализации std::vector */ \
+    template<typename T> \
+    inline QDataStream& operator>> (QDataStream& s, std::vector<T>& p) \
+        {return bserial::getFromStream(s, p);} \
+    template<typename T> \
+    inline QDataStream& operator<< (QDataStream& s, const std::vector<T>& p) \
+        {return bserial::putToStream(s, p);}
 
 /**
   Макросы для работы с функциями сериализации toRaw(), fromRaw()
