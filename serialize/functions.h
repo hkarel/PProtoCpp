@@ -139,18 +139,24 @@ template<typename CommandDataT>
 auto messageWriteQBinary(const clife_ptr<CommandDataT>& data, Message::Ptr& message, int, int)
      -> decltype(std::declval<CommandDataT>().toRaw(dummyDataStream), SResult())
 {
+    SResult result;
     if (!data.empty())
-        return message->writeContent(*data);
-    return SResult();
+        result = message->writeContent(*data);
+    else
+        message->clearContent();
+    return result;
 }
 
 template<typename CommandDataT>
 auto messageWriteQBinary(const container_ptr<CommandDataT>& data, Message::Ptr& message, int, int)
      -> decltype(std::declval<CommandDataT>().toRaw(dummyDataStream), SResult())
 {
+    SResult result;
     if (!data.empty())
-        return message->writeContent(*data);
-    return SResult();
+        result = message->writeContent(*data);
+    else
+        message->clearContent();
+    return result;
 }
 
 template<typename CommandDataT>
@@ -186,18 +192,24 @@ template<typename CommandDataT>
 auto messageWriteJson(clife_ptr<CommandDataT>& data, Message::Ptr& message, int)
      -> decltype(std::declval<CommandDataT>().toJson(), SResult())
 {
+    SResult result;
     if (!data.empty())
-        return message->writeJsonContent(*data);
-    return SResult();
+        result = message->writeJsonContent(*data);
+    else
+        message->clearContent();
+    return result;
 }
 
 template<typename CommandDataT>
 auto messageWriteJson(container_ptr<CommandDataT>& data, Message::Ptr& message, int)
      -> decltype(std::declval<CommandDataT>().toJson(), SResult())
 {
+    SResult result;
     if (!data.empty())
-        return message->writeJsonContent(*data);
-    return SResult();
+        result = message->writeJsonContent(*data);
+    else
+        message->clearContent();
+    return result;
 }
 
 template<typename CommandDataT>
