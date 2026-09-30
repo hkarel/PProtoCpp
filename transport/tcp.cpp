@@ -54,8 +54,8 @@ bool Socket::init(const HostPoint& peerPoint)
 {
     if (isRunning())
     {
-        log_error_m << "Impossible execute a initialization "
-                       "because Socket thread is running";
+        log_error_m << "Impossible initialize socket to " << peerPoint
+                    << ". Socket thread is running";
         return false;
     }
     _peerPoint = peerPoint;
