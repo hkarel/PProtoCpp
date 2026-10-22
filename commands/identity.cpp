@@ -44,7 +44,6 @@ void IdentityS::toRaw(bserial::DataStream& stream) const
     stream << id;
     stream << index;
     stream << name;
-    stream << findField;
     B_SERIALIZE_RETURN
 }
 
@@ -54,7 +53,6 @@ void IdentityS::fromRaw(const bserial::RawVector& vect)
     stream >> id;
     stream >> index;
     stream >> name;
-    stream >> findField;
     B_DESERIALIZE_END
 }
 

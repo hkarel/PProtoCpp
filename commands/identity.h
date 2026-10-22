@@ -53,10 +53,9 @@ struct IdentityS /*Identity Serialize*/ : Identity
     DECLARE_J_SERIALIZE_FUNC
 
     // J_SERIALIZE_BEGIN
-    //     J_SERIALIZE_MAP_OPT( "id"         , id        )
-    //     J_SERIALIZE_MAP_OPT( "index"      , index     )
-    //     J_SERIALIZE_MAP_OPT( "name"       , name      )
-    //     J_SERIALIZE_MAP_OPT( "find_field" , findField )
+    //     J_SERIALIZE_MAP_OPT( "id"    , id    )
+    //     J_SERIALIZE_MAP_OPT( "index" , index )
+    //     J_SERIALIZE_MAP_OPT( "name"  , name  )
     // J_SERIALIZE_END
 };
 
@@ -77,16 +76,12 @@ Packer& IdentityS::jserialize(const This* ct, Packer& p)
 
         if (!t->name.isEmpty())
             J_SERIALIZE_MAP_ITEM( "name", name )
-
-        if (!t->isNull())
-            J_SERIALIZE_MAP_ITEM( "find_field", findField )
     }
     else if (p.isReader())
     {
-        J_SERIALIZE_MAP_OPT( "id"         , id        )
-        J_SERIALIZE_MAP_OPT( "index"      , index     )
-        J_SERIALIZE_MAP_OPT( "name"       , name      )
-        J_SERIALIZE_MAP_OPT( "find_field" , findField )
+        J_SERIALIZE_MAP_OPT( "id"    , id    )
+        J_SERIALIZE_MAP_OPT( "index" , index )
+        J_SERIALIZE_MAP_OPT( "name"  , name  )
     }
     return p.endObject();
 }
