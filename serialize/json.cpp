@@ -369,8 +369,11 @@ Reader& Reader::operator& (qint32& i)
         }
         else if (_stack.top().value->IsNull())
         {
-            i = 0;
-            next();
+            setError(1);
+            log_error_m << "Cannot convert null to 'int' type value"
+                        << ". Field: " << stackFieldName()
+                        << ". Stack path: " << stackPath()
+                        << ". JIndex: " << _jsonIndex;
         }
         else
         {
@@ -395,13 +398,16 @@ Reader& Reader::operator& (quint32& u)
         }
         else if (_stack.top().value->IsNull())
         {
-            u = 0;
-            next();
+            setError(1);
+            log_error_m << "Cannot convert null to uint type value"
+                        << ". Field: " << stackFieldName()
+                        << ". Stack path: " << stackPath()
+                        << ". JIndex: " << _jsonIndex;
         }
         else
         {
             setError(1);
-            log_error_m << "Stack top is not 'uint' type"
+            log_error_m << "Stack top is not uint type"
                         << ". Field: " << stackFieldName()
                         << ". Stack path: " << stackPath()
                         << ". JIndex: " << _jsonIndex;
@@ -421,8 +427,11 @@ Reader& Reader::operator& (qint64& i)
         }
         else if (_stack.top().value->IsNull())
         {
-            i = 0;
-            next();
+            setError(1);
+            log_error_m << "Cannot convert null to int64 type value"
+                        << ". Field: " << stackFieldName()
+                        << ". Stack path: " << stackPath()
+                        << ". JIndex: " << _jsonIndex;
         }
         else
         {
@@ -447,8 +456,11 @@ Reader& Reader::operator& (quint64& u)
         }
         else if (_stack.top().value->IsNull())
         {
-            u = 0;
-            next();
+            setError(1);
+            log_error_m << "Cannot convert null to uint64 type value"
+                        << ". Field: " << stackFieldName()
+                        << ". Stack path: " << stackPath()
+                        << ". JIndex: " << _jsonIndex;
         }
         else
         {
