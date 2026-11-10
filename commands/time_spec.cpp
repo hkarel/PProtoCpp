@@ -57,4 +57,33 @@ bool operator== (const timespec& ts1, const timespec& ts2)
     return (ts1.tv_sec == ts2.tv_sec) && (ts1.tv_nsec == ts2.tv_nsec);
 }
 
+bool operator!= (const timespec& ts1, const timespec& ts2)
+{
+    return !(ts1 == ts2);
+}
+
+bool operator< (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec != ts2.tv_sec)
+           ? (ts1.tv_sec < ts2.tv_sec)
+           : (ts1.tv_nsec < ts2.tv_nsec);
+}
+
+bool operator<= (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1 < ts2) || (ts1 == ts2);
+}
+
+bool operator> (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec != ts2.tv_sec)
+           ? (ts1.tv_sec > ts2.tv_sec)
+           : (ts1.tv_nsec > ts2.tv_nsec);
+}
+
+bool operator>= (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1 > ts2) || (ts1 == ts2);
+}
+
 } // namespace pproto::data

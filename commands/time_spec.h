@@ -62,5 +62,10 @@ struct TimeSpec
 };
 
 bool operator== (const timespec&, const timespec&);
+bool operator!= (const timespec&, const timespec&);
+bool operator<  (const timespec&, const timespec&);
+bool operator<= (const timespec&, const timespec&);
+bool operator>  (const timespec&, const timespec&);
+bool operator>= (const timespec&, const timespec&);
 
 } // namespace pproto::data
