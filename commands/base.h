@@ -56,15 +56,27 @@ namespace pproto {
 
 namespace command {
 
+#define DECLARE_PPROTO_COMMAND(COMMAND) \
+    extern const QUuidEx COMMAND; \
+    namespace { \
+        static const QUuidEx* const __static_dummy__##COMMAND \
+        __attribute__((used, retain)) = &COMMAND; \
+    }
+
+#define REGISTRY_PPROTO_COMMAND(COMMAND, STRUUID, MLTPROC) \
+    const QUuidEx COMMAND = command::Pool::Registry{STRUUID, #COMMAND, MLTPROC};
+
+enum {SINGLPROC = false, MULTIPROC = true};
+
 /**
   Информирует противоположную сторону о том, что полученная команда неизвестна
 */
-extern const QUuidEx Unknown;
+DECLARE_PPROTO_COMMAND(Unknown)
 
 /**
   Команда используется для передачи информации об ошибке
 */
-extern const QUuidEx Error;
+DECLARE_PPROTO_COMMAND(Error)
 
 /**
   Запрос информации о совместимости. При подключении клиент и сервер отправляют
@@ -72,7 +84,7 @@ extern const QUuidEx Error;
   не будет отправлена/получена, то не произойдет запуск очереди обработки сооб-
   щений для установленного соединения
 */
-extern const QUuidEx ProtocolCompatible;
+DECLARE_PPROTO_COMMAND(ProtocolCompatible)
 
 /**
   Требование закрыть TCP соединение. Команда работает следующим образом: сторо-
@@ -83,7 +95,7 @@ extern const QUuidEx ProtocolCompatible;
   быть разорвано. Такое поведение реализовано для того, чтобы сторона, с кото-
   рой разрывают соединение, имела информацию о причине разрыва
 */
-extern const QUuidEx CloseConnection;
+DECLARE_PPROTO_COMMAND(CloseConnection)
 
 /**
   Команда для проверки актуальности TCP соединения. Иногда возникают ситуации,
@@ -95,7 +107,7 @@ extern const QUuidEx CloseConnection;
   щение EchoConnection. Таким образом, приложение может корректно  обработать
   потерю соединения
 */
-extern const QUuidEx EchoConnection;
+DECLARE_PPROTO_COMMAND(EchoConnection)
 
 } // namespace command
 
