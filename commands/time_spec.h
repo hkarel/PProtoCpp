@@ -61,11 +61,38 @@ struct TimeSpec
 #endif
 };
 
-bool operator== (const timespec&, const timespec&);
-bool operator!= (const timespec&, const timespec&);
-bool operator<  (const timespec&, const timespec&);
-bool operator<= (const timespec&, const timespec&);
-bool operator>  (const timespec&, const timespec&);
-bool operator>= (const timespec&, const timespec&);
+//--------------------------- Операторы сравнения ----------------------------
+
+inline bool operator== (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec == ts2.tv_sec) && (ts1.tv_nsec == ts2.tv_nsec);
+}
+
+inline bool operator!= (const timespec& ts1, const timespec& ts2)
+{
+    return !(ts1 == ts2);
+}
+
+inline bool operator< (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec != ts2.tv_sec) ? (ts1.tv_sec < ts2.tv_sec)
+                                      : (ts1.tv_nsec < ts2.tv_nsec);
+}
+
+inline bool operator<= (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1 < ts2) || (ts1 == ts2);
+}
+
+inline bool operator> (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1.tv_sec != ts2.tv_sec) ? (ts1.tv_sec > ts2.tv_sec)
+                                      : (ts1.tv_nsec > ts2.tv_nsec);
+}
+
+inline bool operator>= (const timespec& ts1, const timespec& ts2)
+{
+    return (ts1 > ts2) || (ts1 == ts2);
+}
 
 } // namespace pproto::data
