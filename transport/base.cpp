@@ -194,7 +194,7 @@ Socket::Socket(SocketType type) : _type(type)
 bool Socket::isConnected() const
 {
     return (socketIsConnected()
-            && _protocolCompatible == ProtocolCompatible::Yes);
+            && protocolCompatible() == ProtocolCompatible::Yes);
 }
 
 bool Socket::socketIsConnected() const
@@ -217,11 +217,6 @@ bool Socket::isLocal() const
         _socketLock.unlock();
     }
     return res;
-}
-
-Socket::ProtocolCompatible Socket::protocolCompatible() const
-{
-    return _protocolCompatible;
 }
 
 SocketDescriptor Socket::socketDescriptor() const
@@ -412,7 +407,7 @@ void Socket::run()
                     _protocolCompatible = ProtocolCompatible::No;
             }
 
-            if (_protocolCompatible == ProtocolCompatible::Yes)
+            if (protocolCompatible() == ProtocolCompatible::Yes)
             {
                 if (isListenerSide())
                     while (!isInsideListener()) {msleep(10);}
@@ -934,7 +929,7 @@ void Socket::run()
 
                     if (message.empty()
                         && messagesCount() != 0
-                        && _protocolCompatible == ProtocolCompatible::Yes)
+                        && protocolCompatible() == ProtocolCompatible::Yes)
                     {
                         QMutexLocker locker {&_messagesLock}; (void) locker;
 
@@ -1302,7 +1297,7 @@ void Socket::run()
                                      << ". Type: " << message->type()
                                      << ". ExecStatus: " << message->execStatus();
                     }
-                    if (_protocolCompatible == ProtocolCompatible::Unknown
+                    if (protocolCompatible() == ProtocolCompatible::Unknown
                         && message->command() == command::ProtocolCompatible)
                     {
                         processingProtocolCompatibleCommand(message);
@@ -1327,7 +1322,7 @@ void Socket::run()
                     }
                     else
                     {
-                        if (_protocolCompatible == ProtocolCompatible::Yes)
+                        if (protocolCompatible() == ProtocolCompatible::Yes)
                         {
                             acceptMessages.add(message.detach());
                         }
@@ -1360,7 +1355,7 @@ void Socket::run()
                 break;
 
             //--- Обработка принятых сообщений ---
-            if (_protocolCompatible == ProtocolCompatible::Yes)
+            if (protocolCompatible() == ProtocolCompatible::Yes)
             {
                 timer.start();
                 while (!acceptMessages.empty())

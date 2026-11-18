@@ -270,8 +270,8 @@ protected:
 
     // Возвращает TRUE когда сокет уже помещен в список listener-а, используется
     // для предотвращения преждевременного эмитирования сигнала connected()
-    bool isInsideListener() const {return _isInsideListener;}
-    void setInsideListener(bool val) {_isInsideListener = val;}
+    bool isInsideListener() const;
+    void setInsideListener(bool val);
 
     // Вспомогательная функция, используется для связывания сокета созданного
     // в Listener
@@ -283,7 +283,7 @@ private:
     DISABLE_DEFAULT_FUNC(Socket)
 
     const SocketType _type;
-    volatile ProtocolCompatible _protocolCompatible = {ProtocolCompatible::Unknown};
+    std::atomic<ProtocolCompatible> _protocolCompatible = {ProtocolCompatible::Unknown};
 
     struct ProtocolSign
     {
@@ -305,7 +305,7 @@ private:
     int  _echoTimeout = {0};
 
     bool _isListenerSide = {false};
-    volatile bool _isInsideListener = {false};
+    std::atomic_bool _isInsideListener = {false};
 
     SocketDescriptor _initSocketDescriptor = {-1};
     mutable QMutex _socketLock;
@@ -381,6 +381,21 @@ private:
     mutable QMutex _socketsLock;
     bool _checkUnknownCommands = {true};
 };
+
+inline Socket::ProtocolCompatible Socket::protocolCompatible() const
+{
+    return _protocolCompatible.load(std::memory_order_relaxed);
+}
+
+inline bool Socket::isInsideListener() const
+{
+    return _isInsideListener.load(std::memory_order_relaxed);
+}
+
+inline void Socket::setInsideListener(bool val)
+{
+    _isInsideListener = val;
+}
 
 } // namespace base
 
